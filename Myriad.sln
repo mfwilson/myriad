@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.23107.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Myriad.Core", "Core\Myriad.Core.fsproj", "{78A04ED6-655D-44BD-B83E-6032495B8538}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{78A04ED6-655D-44BD-B83E-6032495B8538}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{78A04ED6-655D-44BD-B83E-6032495B8538}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{78A04ED6-655D-44BD-B83E-6032495B8538}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{78A04ED6-655D-44BD-B83E-6032495B8538}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
