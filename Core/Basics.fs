@@ -40,4 +40,6 @@ type Cluster = { Id : Int32; Property : Property; Value : String; Dimensions : D
 //                x - - - -> 1          apricot
 //                - - - - -> 0          pumpkin
 // 3. Lookups are accomplished by, for a given key, matching the provided context against the set for the first
-//    positive match
+//    positive match; matches must match over all dimensions to be considered equal
+
+
