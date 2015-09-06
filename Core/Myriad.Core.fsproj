@@ -44,7 +44,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AssemblyInfo.fs" />
-    <Compile Include="MutableList.fs" />
+    <Compile Include="LockFreeList.fs" />
     <Compile Include="Model.fs" />
     <Compile Include="Basics.fs" />
     <None Include="BasicQuery.fsx" />

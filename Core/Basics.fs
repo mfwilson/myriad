@@ -14,13 +14,13 @@ open System.Collections.Generic
 // Properties -> db_setting="ConnectionString", max_size="10", password="secret"
 //
 
-type Dimension = { Id : Int32; Name : String }
-
-type DimensionSet = { Name : String; Dimensions : Dimension array }
-
-type Property = { Id : Int32; Name : String }
-
-type Cluster = { Id : Int32; Property : Property; Value : String; Dimensions : Dimension array }
+//type Dimension = { Id : Int32; Name : String }
+//
+//type DimensionSet = { Name : String; Dimensions : Dimension array }
+//
+//type Property = { Id : Int32; Name : String }
+//
+//type Cluster = { Id : Int32; Property : Property; Value : String; Dimensions : Dimension array }
 
 //type ConfigurationValue = { Value : String }
 //type ConfigurationKeySet = { Keys : ConfigurationKey array }

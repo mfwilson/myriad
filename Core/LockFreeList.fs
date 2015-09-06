@@ -5,8 +5,8 @@ open System.Threading
 
 /// Lock-free, mutable list that supports multi-threading scenarios.
 /// http://fssnip.net/ok
-type LockFreeList<'T when 'T : equality>(init) =
-    let mutable items: 'T list = init
+type LockFreeList<'T when 'T : equality>(collection) =
+    let mutable items: 'T list = collection
 
     member x.Value = items
 
