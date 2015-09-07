@@ -8,18 +8,66 @@ type Dimension = { Id : Int32; Name : String }
 
 type Property = { Id : Int32; Name : String }
 
-//type DimensionSet = { Name : String; Dimensions : Dimension array }
+/// Measures are equivalent over dimension id and value
+[<CustomEquality;CustomComparison>]
+type Measure = 
+    struct
+        val DimensionId : Int32
+        val DimensionName : String
+        val Value : String 
+        new(dimensionId : Int32, dimensionName : String, value : String) = 
+            { DimensionId = dimensionId; DimensionName = dimensionName; Value = value}
+        new(dimension : Dimension, value : String) = 
+            { DimensionId = dimension.Id; DimensionName = dimension.Name; Value = value}
+    end
 
-type Measure = { Id : Int32; Name : String; Value : String }
+    override x.ToString() = String.Format("'{0}' [{1}] = '{2}'", x.DimensionName, x.DimensionId, x.Value)
 
+    override x.Equals(obj) = 
+        match obj with
+        | :? Measure as y -> Measure.CompareTo(x, y) = 0
+        | _ -> false
+
+    override x.GetHashCode() = hash(x.DimensionId, x.Value)
+    
+    static member CompareTo(x : Measure, y : Measure) = compare (x.DimensionId, x.Value) (y.DimensionId, y.Value)
+
+    interface IComparable with
+        member x.CompareTo other = 
+            match other with 
+            | :? Measure as y -> Measure.CompareTo(x, y)
+            | _ -> invalidArg "other" "cannot compare value of different types" 
+
+/// Clusters are equivalent over their measures set
+[<CustomEquality;CustomComparison>]
 type Cluster = 
-    { Id : Int32; 
-      Timestamp : Int64; 
-      Property : Property; 
-      Value : String; 
-      Measures : Measure seq }
+    struct
+        val Id : Int32
+        val Timestamp : Int64
+        val Property : Property
+        val Value : String
+        val Measures : Set<Measure> 
+        new(id : Int32, timestamp : Int64, property : Property, value : String, measures : Set<Measure>) =
+            { Id = id; Timestamp = timestamp; Property = property; Value = value; Measures = measures }
+    end
 
-type Context = { Measures : Measure seq }
+    override x.Equals(obj) = 
+        match obj with
+        | :? Cluster as y -> (x.Measures = y.Measures)
+        | _ -> false
+
+    override x.GetHashCode() = hash(x.Measures)
+    
+    static member CompareTo(x : Set<Measure>, y : Set<Measure>) = compare x y
+
+    interface IComparable with
+        member x.CompareTo other = 
+            match other with 
+            | :? Cluster as y -> Cluster.CompareTo(x.Measures, y.Measures)
+            | _ -> invalidArg "other" "cannot compare value of different types" 
+
+
+type Context = { AsOf : DateTimeOffset; Measures : Set<Measure> }
 
 [<CustomEquality;CustomComparison>]
 type TimestampList = 
@@ -50,16 +98,12 @@ type DimensionCache(dimensions : Dimension seq, collection : Cluster seq) =
     let weights = dimensions |> Seq.mapi (fun i d -> int d.Id, int (2.0 ** float i)) |> Map.ofSeq
         
     let compareMeasures (x : Cluster) (y : Cluster) = 
-        let xWeight = x.Measures |> Seq.sumBy (fun m -> weights.[m.Id])  
-        let yWeight = y.Measures |> Seq.sumBy (fun m -> weights.[m.Id])  
-        xWeight.CompareTo(yWeight)
+        let xWeight = x.Measures |> Seq.sumBy (fun m -> weights.[m.DimensionId])  
+        let yWeight = y.Measures |> Seq.sumBy (fun m -> weights.[m.DimensionId])  
+        yWeight.CompareTo(xWeight)
 
-    /// If all the context's measures match, then it is a match
-    let matchMeasures (x : Context) (y : Cluster) = 
-        let source = x.Measures |> Seq.map (fun m -> m.Id, m.Value) |> Map.ofSeq 
-        let target = y.Measures |> Seq.map (fun m -> m.Id, m.Value) |> Map.ofSeq 
-        
-        false        
+    /// If the cluster's measures are a subset of the context's measures, then it is a match
+    let matchMeasures (context : Context) (cluster : Cluster) = Set.isSubset (cluster.Measures) (context.Measures)
 
     let addOrUpdate(key : String, clusters : Cluster seq) =        
         let clustersByWeight = clusters |> Seq.sortWith compareMeasures |> Seq.toList
@@ -71,7 +115,7 @@ type DimensionCache(dimensions : Dimension seq, collection : Cluster seq) =
         //collection |> Seq.sortWith compareClusters |> Seq.iter addOrUpdate
         collection |> Seq.groupBy (fun c -> c.Property.Name) |> Seq.iter addOrUpdate
 
-    member x.TryFind(key : String, asOf : DateTimeOffset, context : Context, [<Out>] value : byref<String>) =
+    member x.TryFind(key : String, context : Context, [<Out>] value : byref<String>) =
         value <- null
 
         let success, result = cache.TryGetValue key
@@ -80,7 +124,7 @@ type DimensionCache(dimensions : Dimension seq, collection : Cluster seq) =
         else
             // Find 1st item less then timestamp
             let current = result.Value
-            let instance = current |> List.tryFind (fun tlist -> tlist.Timestamp <= asOf.UtcTicks)
+            let instance = current |> List.tryFind (fun tlist -> tlist.Timestamp <= context.AsOf.UtcTicks)
             if instance.IsNone then
                 false
             else
