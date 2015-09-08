@@ -4,9 +4,18 @@ open System
 open System.Collections.Concurrent
 open System.Runtime.InteropServices
 
-type Dimension = { Id : Int32; Name : String }
+type Dimension = 
+    { Id : Int32; Name : String }
+    override x.ToString() = String.Concat("Dimension [", x.Name, "] [", x.Id, "]")
 
-type Property = { Id : Int32; Name : String }
+type Property = 
+    { Id : Int32; Name : String }
+    override x.ToString() = String.Concat("Property [", x.Name, "] [", x.Id, "]")
+
+/// type DimensionSet 
+/// map Int32 -> Dimension
+/// map String -> Dimension
+/// ds 
 
 /// Measures are equivalent over dimension id and value
 [<CustomEquality;CustomComparison>]
@@ -85,6 +94,10 @@ type TimestampList =
             match other with 
             | :? TimestampList as y -> x.Timestamp.CompareTo(y.Timestamp)
             | _ -> invalidArg "other" "cannot compare value of different types" 
+
+
+/// QueryCache
+/// QueryBuilder
 
 // string (key) -> Int64 (time) list -> sorted Cluster list 
 // 

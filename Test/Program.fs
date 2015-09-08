@@ -68,10 +68,10 @@ let scriptEntry(args) =
         let cache = DimensionCache(dimensions, clusters)
 
         let context = { AsOf = DateTimeOffset.UtcNow; 
-                        Measures = Set.ofList [ Measure(dimensionMap.["Environment"], "DEV");
+                        Measures = Set.ofList [ Measure(dimensionMap.["Environment"], "PROD");
                                                 Measure(dimensionMap.["Location"], "New York") 
                                                 Measure(dimensionMap.["Application"], "Bishop") 
-                                                Measure(dimensionMap.["Instance"], "mary")  
+                                                Measure(dimensionMap.["Instance"], "rex")  
                                               ] 
                       }
 
