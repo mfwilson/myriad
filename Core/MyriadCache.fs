@@ -29,6 +29,8 @@ type MyriadCache(dimensions : Dimension seq, collection : Cluster seq) =
         //collection |> Seq.sortWith compareClusters |> Seq.iter addOrUpdate
         collection |> Seq.groupBy (fun c -> c.Property.Name) |> Seq.iter addOrUpdate
 
+    member x.Keys with get() = cache.Keys
+
     member x.TryFind(key : String, context : Context, [<Out>] value : byref<String>) =
         value <- null
 
@@ -49,4 +51,14 @@ type MyriadCache(dimensions : Dimension seq, collection : Cluster seq) =
                 else
                     value <- cluster.Value.Value
                     true
-                
+
+    member x.Append(cluster : Cluster) =
+        // Operation: add, remove, update
+        let key = cluster.Property.Name
+
+        let success, result = cache.TryGetValue key
+        //if not success then
+            
+            
+
+        ignore()

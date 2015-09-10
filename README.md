@@ -1,5 +1,6 @@
 # myriad
-Configuration as a Service
+Configuration as a Service (CaaS)
+"having innumerable aspects or elements"
 
 ## Why?
 Inspired by this article:
