@@ -67,7 +67,7 @@ let scriptEntry(args) =
         
         let clusters = getClusters(dimensionMap)
 
-        let cache = DimensionCache(dimensions, clusters)
+        let cache = MyriadCache(dimensions, clusters)
 
         0
     with

@@ -47,9 +47,10 @@
     <Reference Include="System.Numerics" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="App.config" />
     <Compile Include="AssemblyInfo.fs" />
     <Compile Include="Program.fs" />
-    <None Include="App.config" />
+    <None Include="BasicQuery.fsx" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Core\Myriad.Core.fsproj">

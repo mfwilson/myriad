@@ -39,41 +39,36 @@ let getDimensions() =
       { Dimension.Id = 98; Name = "Instance" }
     ]   
 
-let getClusters(map : Map<String, Dimension>) =
-    
+let getClusters(mb : MeasureBuilder) =    
     let now = DateTimeOffset.UtcNow
     let utcTicks = now.UtcTicks
     let property = { Property.Id = 0; Name = "my.property.key" }
 
-    let Measure(dimensionName, value) = Measure(map.[dimensionName], value)    
-
     Seq.ofList
-        [
-            Cluster(0, utcTicks, property, "apple", Set.ofList [ Measure("Environment", "PROD"); Measure("Location", "London"); Measure("Instance", "rex") ] )
-            Cluster(0, utcTicks, property, "pear", Set.ofList [ Measure("Environment", "PROD"); Measure("Instance", "rex") ] )
-            Cluster(0, utcTicks, property, "pecan", Set.ofList [ Measure("Instance", "rex") ] )
-            Cluster(0, utcTicks, property, "peach", Set.ofList [ Measure("Application", "Rook"); ] )
-            Cluster(0, utcTicks, property, "strawberry", Set.ofList [ Measure("Location", "Chicago") ] )
-            Cluster(0, utcTicks, property, "apricot", Set.ofList [ Measure("Environment", "DEV") ] )
-            Cluster(0, utcTicks, property, "pumpkin", Set.ofList [ ] )
+        [                                           
+            Cluster(0, utcTicks, property, "apple", mb { yield "Environment", "PROD"; yield "Location", "London"; yield "Instance", "rex" } )
+            Cluster(0, utcTicks, property, "pear", mb { yield "Environment", "PROD"; yield "Instance", "rex" } )
+            Cluster(0, utcTicks, property, "pecan", mb { yield "Instance", "rex" } )
+            Cluster(0, utcTicks, property, "peach", mb { yield "Application", "Rook" } )
+            Cluster(0, utcTicks, property, "strawberry", mb { yield "Location", "Chicago" } )
+            Cluster(0, utcTicks, property, "apricot", mb { yield "Environment", "DEV" } )
+            Cluster(0, utcTicks, property, "pumpkin", Set.empty )
         ]
 
 let scriptEntry(args) = 
     try
         let dimensions = getDimensions()
         let dimensionMap = dimensions |> Seq.map (fun d -> d.Name, d) |> Map.ofSeq
-        
-        let clusters = getClusters(dimensionMap)
+        let mb = new MeasureBuilder(dimensionMap)
 
-        let cache = DimensionCache(dimensions, clusters)
+        let clusters = getClusters(mb)
 
-        let context = { AsOf = DateTimeOffset.UtcNow; 
-                        Measures = Set.ofList [ Measure(dimensionMap.["Environment"], "PROD");
-                                                Measure(dimensionMap.["Location"], "New York") 
-                                                Measure(dimensionMap.["Application"], "Bishop") 
-                                                Measure(dimensionMap.["Instance"], "rex")  
-                                              ] 
-                      }
+        let cache = MyriadCache(dimensions, clusters)        
+
+        let context = { 
+                AsOf = DateTimeOffset.UtcNow; 
+                Measures = mb { yield "Environment", "PROD"; yield "Location", "New York"; yield "Application", "Bishop"; yield "Instance", "rex" }
+            }
 
         let success, value = cache.TryFind("my.property.key", context)
 
