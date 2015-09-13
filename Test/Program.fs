@@ -4,7 +4,10 @@ open System
 open System.IO
 open System.Diagnostics
 
+open System.Runtime.Serialization.Json
+
 open Myriad
+open Myriad.Store
 
 let hasArguments args flags = 
     args 
@@ -57,6 +60,12 @@ let getClusters(mb : MeasureBuilder) =
 
 let scriptEntry(args) = 
     try
+        let redis = new RedisConnection()
+        let g = redis.GetDimensions()
+
+        let serializer = new DataContractJsonSerializer(typeof<Dimension>)
+        //serializer.Se
+
         let dimensions = getDimensions()
         let dimensionMap = dimensions |> Seq.map (fun d -> d.Name, d) |> Map.ofSeq
         let mb = new MeasureBuilder(dimensionMap)

@@ -1,9 +1,12 @@
 ﻿namespace Myriad
 
 open System
+open System.Runtime.Serialization
 
+[<DataContract>]
 type Dimension = 
-    { Id : Int32; Name : String }
+    { [<DataMember(Name = "Id")>] Id : Int32; 
+      [<DataMember(Name = "Name")>] Name : String }
     override x.ToString() = String.Concat("Dimension [", x.Name, "] [", x.Id, "]")
 
 type Property = 
