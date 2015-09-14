@@ -4,7 +4,8 @@ open System
 open System.IO
 open System.Diagnostics
 
-open System.Runtime.Serialization.Json
+open Newtonsoft.Json
+open Newtonsoft.Json.Serialization
 
 open Myriad
 open Myriad.Store
@@ -35,51 +36,56 @@ let print (color : System.ConsoleColor) (depth : int) (text : string) =
 // Location -> Chicago, New York, London, Amsterdam
 // Application -> Rook, Knight, Pawn, Bishop
 // Instance -> mary, jimmy, rex
-let getDimensions() =
-    [ { Dimension.Id = 32; Name = "Environment" };
-      { Dimension.Id = 21; Name = "Location" };
-      { Dimension.Id = 44; Name = "Application" };
-      { Dimension.Id = 98; Name = "Instance" }
-    ]   
+//let getDimensions() =
+//    [ { Dimension.Id = 32L; Name = "Environment" };
+//      { Dimension.Id = 21L; Name = "Location" };
+//      { Dimension.Id = 44L; Name = "Application" };
+//      { Dimension.Id = 98L; Name = "Instance" }
+//    ]   
 
-let getClusters(mb : MeasureBuilder) =    
-    let now = DateTimeOffset.UtcNow
-    let utcTicks = now.UtcTicks
-    let property = { Property.Id = 0; Name = "my.property.key" }
-
-    Seq.ofList
-        [                                           
-            Cluster(0, utcTicks, property, "apple", mb { yield "Environment", "PROD"; yield "Location", "London"; yield "Instance", "rex" } )
-            Cluster(0, utcTicks, property, "pear", mb { yield "Environment", "PROD"; yield "Instance", "rex" } )
-            Cluster(0, utcTicks, property, "pecan", mb { yield "Instance", "rex" } )
-            Cluster(0, utcTicks, property, "peach", mb { yield "Application", "Rook" } )
-            Cluster(0, utcTicks, property, "strawberry", mb { yield "Location", "Chicago" } )
-            Cluster(0, utcTicks, property, "apricot", mb { yield "Environment", "DEV" } )
-            Cluster(0, utcTicks, property, "pumpkin", Set.empty )
-        ]
+//let getClusters(mb : MeasureBuilder) =    
+//    let now = DateTimeOffset.UtcNow
+//    let utcTicks = now.UtcTicks
+//    let property = { Property.Id = 0; Name = "my.property.key" }
+//
+//    Seq.ofList
+//        [                                           
+//            Cluster(0, utcTicks, property, "apple", mb { yield "Environment", "PROD"; yield "Location", "London"; yield "Instance", "rex" } )
+//            Cluster(0, utcTicks, property, "pear", mb { yield "Environment", "PROD"; yield "Instance", "rex" } )
+//            Cluster(0, utcTicks, property, "pecan", mb { yield "Instance", "rex" } )
+//            Cluster(0, utcTicks, property, "peach", mb { yield "Application", "Rook" } )
+//            Cluster(0, utcTicks, property, "strawberry", mb { yield "Location", "Chicago" } )
+//            Cluster(0, utcTicks, property, "apricot", mb { yield "Environment", "DEV" } )
+//            Cluster(0, utcTicks, property, "pumpkin", Set.empty )
+//        ]
 
 let scriptEntry(args) = 
     try
         let redis = new RedisConnection()
-        let g = redis.GetDimensions()
 
-        let serializer = new DataContractJsonSerializer(typeof<Dimension>)
-        //serializer.Se
+        let dimensions = [ "Environment"; "Location"; "Application"; "Instance" ]
+                         |> List.map (fun e -> redis.CreateDimension(e))
+        redis.SetDimensions(dimensions) |> ignore
 
-        let dimensions = getDimensions()
-        let dimensionMap = dimensions |> Seq.map (fun d -> d.Name, d) |> Map.ofSeq
-        let mb = new MeasureBuilder(dimensionMap)
+        let read = redis.GetDimensions()
 
-        let clusters = getClusters(mb)
+        //let d1 = redis.CreateDimension("Environment")
+        
 
-        let cache = MyriadCache(dimensions, clusters)        
+//        let dimensions = getDimensions()
+//        let dimensionMap = dimensions |> Seq.map (fun d -> d.Name, d) |> Map.ofSeq
+//        let mb = new MeasureBuilder(dimensionMap)
 
-        let context = { 
-                AsOf = DateTimeOffset.UtcNow; 
-                Measures = mb { yield "Environment", "PROD"; yield "Location", "New York"; yield "Application", "Bishop"; yield "Instance", "rex" }
-            }
-
-        let success, value = cache.TryFind("my.property.key", context)
+//        let clusters = getClusters(mb)
+//
+//        let cache = MyriadCache(dimensions, clusters)        
+//
+//        let context = { 
+//                AsOf = DateTimeOffset.UtcNow; 
+//                Measures = mb { yield "Environment", "PROD"; yield "Location", "New York"; yield "Application", "Bishop"; yield "Instance", "rex" }
+//            }
+//
+//        let success, value = cache.TryFind("my.property.key", context)
 
         0
     with

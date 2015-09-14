@@ -1,31 +1,28 @@
 ﻿namespace Myriad
 
 open System
-open System.Runtime.Serialization
 
-[<DataContract>]
+type Operation = None = 0 | Create = 1 | Update = 2 | Delete = 3
+
+type Audit =
+    { Timestamp : Int64; UpdateUser : String; Operation : Operation }
+
 type Dimension = 
-    { [<DataMember(Name = "Id")>] Id : Int32; 
-      [<DataMember(Name = "Name")>] Name : String }
+    { Id : Int64; Name : String; Audit : Audit }
     override x.ToString() = String.Concat("Dimension [", x.Name, "] [", x.Id, "]")
 
 type Property = 
-    { Id : Int32; Name : String }
+    { Id : Int64; Name : String }
     override x.ToString() = String.Concat("Property [", x.Name, "] [", x.Id, "]")
-
-/// type DimensionSet 
-/// map Int32 -> Dimension
-/// map String -> Dimension
-/// ds 
 
 /// Measures are equivalent over dimension id and value
 [<CustomEquality;CustomComparison>]
 type Measure = 
     struct
-        val DimensionId : Int32
+        val DimensionId : Int64
         val DimensionName : String
         val Value : String 
-        new(dimensionId : Int32, dimensionName : String, value : String) = 
+        new(dimensionId : Int64, dimensionName : String, value : String) = 
             { DimensionId = dimensionId; DimensionName = dimensionName; Value = value}
         new(dimension : Dimension, value : String) = 
             { DimensionId = dimension.Id; DimensionName = dimension.Name; Value = value}
@@ -52,13 +49,13 @@ type Measure =
 [<CustomEquality;CustomComparison>]
 type Cluster = 
     struct
-        val Id : Int32
-        val Timestamp : Int64
+        val Id : Int64        
         val Property : Property
-        val Value : String
+        val Value : String       
         val Measures : Set<Measure> 
-        new(id : Int32, timestamp : Int64, property : Property, value : String, measures : Set<Measure>) =
-            { Id = id; Timestamp = timestamp; Property = property; Value = value; Measures = measures }
+        val Audit : Audit
+        new(id : Int64, property : Property, value : String, measures : Set<Measure>, audit : Audit) =
+            { Id = id; Property = property; Value = value; Measures = measures; Audit = audit }
     end
 
     override x.Equals(obj) = 
@@ -80,12 +77,16 @@ type Cluster =
 type Context = { AsOf : DateTimeOffset; Measures : Set<Measure> }
 
 [<CustomEquality;CustomComparison>]
-type ClusterTimeline = 
-    { Timestamp : Int64; Clusters : Cluster list }
+type ClusterSet = 
+    struct     
+        val Timestamp : Int64;
+        val Clusters : Set<Cluster>
+        new(timestamp : Int64, clusters : Set<Cluster>) = { Timestamp = timestamp; Clusters = clusters }
+    end
     
     override x.Equals(yobj) = 
         match yobj with
-        | :? ClusterTimeline as y -> (x.Timestamp = y.Timestamp)
+        | :? ClusterSet as y -> (x.Timestamp = y.Timestamp)
         | _ -> false
 
     override x.GetHashCode() = hash(x)
@@ -93,7 +94,7 @@ type ClusterTimeline =
     interface IComparable with
         member x.CompareTo other = 
             match other with 
-            | :? ClusterTimeline as y -> x.Timestamp.CompareTo(y.Timestamp)
+            | :? ClusterSet as y -> x.Timestamp.CompareTo(y.Timestamp)
             | _ -> invalidArg "other" "cannot compare value of different types" 
 
 

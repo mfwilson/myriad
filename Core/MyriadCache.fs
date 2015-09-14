@@ -6,10 +6,10 @@ open System.Runtime.InteropServices
 
 type MyriadCache(dimensions : Dimension seq, collection : Cluster seq) = 
     
-    let cache = new ConcurrentDictionary<String, LockFreeList<ClusterTimeline>>()
+    let cache = new ConcurrentDictionary<String, LockFreeList<ClusterSet>>()
     
     // Dimension Id -> weight
-    let weights = dimensions |> Seq.mapi (fun i d -> int d.Id, int (2.0 ** float i)) |> Map.ofSeq
+    let weights = dimensions |> Seq.mapi (fun i d -> d.Id, int (2.0 ** float i)) |> Map.ofSeq
         
     let compareMeasures (x : Cluster) (y : Cluster) = 
         let xWeight = x.Measures |> Seq.sumBy (fun m -> weights.[m.DimensionId])  
@@ -20,10 +20,10 @@ type MyriadCache(dimensions : Dimension seq, collection : Cluster seq) =
     let matchMeasures (context : Context) (cluster : Cluster) = Set.isSubset (cluster.Measures) (context.Measures)
 
     let addOrUpdate(key : String, clusters : Cluster seq) =        
-        let clustersByWeight = clusters |> Seq.sortWith compareMeasures |> Seq.toList
-        let lastCluster = clusters |> Seq.maxBy (fun c -> c.Timestamp) 
-        let timestampList = { Timestamp = lastCluster.Timestamp; Clusters = clustersByWeight }        
-        cache.[key] <- new LockFreeList<ClusterTimeline>( [ timestampList ] )
+        let clustersByWeight = clusters |> Seq.sortWith compareMeasures |> Set.ofSeq
+        let lastCluster = clusters |> Seq.maxBy (fun c -> c.Audit.Timestamp) 
+        let timestampList = new ClusterSet(lastCluster.Audit.Timestamp, clustersByWeight)
+        cache.[key] <- new LockFreeList<ClusterSet>( [ timestampList ] )
 
     do
         //collection |> Seq.sortWith compareClusters |> Seq.iter addOrUpdate
@@ -45,7 +45,7 @@ type MyriadCache(dimensions : Dimension seq, collection : Cluster seq) =
                 false
             else
                 // Find 1st matching context
-                let cluster = instance.Value.Clusters |> List.tryFind (fun c -> matchMeasures context c)
+                let cluster = instance.Value.Clusters |> Set.toSeq |> Seq.tryFind (fun c -> matchMeasures context c)
                 if cluster.IsNone then 
                     false 
                 else
