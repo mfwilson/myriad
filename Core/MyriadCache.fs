@@ -4,6 +4,9 @@ open System
 open System.Collections.Concurrent
 open System.Runtime.InteropServices
 
+type IMyriadDataSource =
+    abstract GetDimensions : unit -> Dimension seq
+
 type MyriadCache(dimensions : Dimension seq, collection : Cluster seq) = 
     
     let cache = new ConcurrentDictionary<String, LockFreeList<ClusterSet>>()
