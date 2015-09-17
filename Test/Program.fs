@@ -59,15 +59,36 @@ let print (color : System.ConsoleColor) (depth : int) (text : string) =
 //            Cluster(0, utcTicks, property, "pumpkin", Set.empty )
 //        ]
 
+// Set initial dimensions
+(*
+    let redis = new RedisConnection()
+    let dimensions = [ "Environment"; "Other"; "Location"; "Application"; "Instance" ]
+                        |> List.map (fun e -> redis.CreateDimension(e))
+    redis.SetDimensions(dimensions) |> ignore
+
+    let read = redis.GetDimensions()
+*)
+
+// Set new dimensions
+(*
+    let redis = new RedisConnection()
+    let read = redis.GetDimensions()
+    let newDimension = redis.CreateDimension("NewDim")
+    let newDimensions = newDimension :: read 
+    redis.SetDimensions(newDimensions) |> ignore
+*)
+
 let scriptEntry(args) = 
     try
         let redis = new RedisConnection()
 
-        let dimensions = [ "Environment"; "Location"; "Application"; "Instance" ]
-                         |> List.map (fun e -> redis.CreateDimension(e))
-        redis.SetDimensions(dimensions) |> ignore
+        let dimensions = redis.GetDimensions()
+        let dimensionMap = dimensions |> Seq.map (fun d -> d.Name, d) |> Map.ofSeq
+        let mb = new MeasureBuilder(dimensionMap)
 
-        let read = redis.GetDimensions()
+        redis.AddDimensionValues(dimensions.[0], [ "PROD"; "UAT"; "DEV" ] )
+        
+        let g = redis.GetDimensionValues(dimensions)
 
         //let d1 = redis.CreateDimension("Environment")
         

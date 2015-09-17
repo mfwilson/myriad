@@ -24,13 +24,13 @@ type MyriadCache(dimensions : Dimension seq, collection : Cluster seq) =
 
     let addOrUpdate(key : String, clusters : Cluster seq) =        
         let clustersByWeight = clusters |> Seq.sortWith compareMeasures |> Set.ofSeq
-        let lastCluster = clusters |> Seq.maxBy (fun c -> c.Audit.Timestamp) 
-        let timestampList = new ClusterSet(lastCluster.Audit.Timestamp, clustersByWeight)
+        let lastCluster = clusters |> Seq.maxBy (fun c -> c.Timestamp) 
+        let timestampList = new ClusterSet(lastCluster.Timestamp, clustersByWeight)
         cache.[key] <- new LockFreeList<ClusterSet>( [ timestampList ] )
 
     do
         //collection |> Seq.sortWith compareClusters |> Seq.iter addOrUpdate
-        collection |> Seq.groupBy (fun c -> c.Property.Name) |> Seq.iter addOrUpdate
+        collection |> Seq.groupBy (fun c -> c.Key) |> Seq.iter addOrUpdate
 
     member x.Keys with get() = cache.Keys
 
@@ -57,7 +57,7 @@ type MyriadCache(dimensions : Dimension seq, collection : Cluster seq) =
 
     member x.Append(cluster : Cluster) =
         // Operation: add, remove, update
-        let key = cluster.Property.Name
+        let key = cluster.Key
 
         let success, result = cache.TryGetValue key
         //if not success then
