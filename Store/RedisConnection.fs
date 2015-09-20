@@ -60,6 +60,7 @@ type RedisConnection(configuration : String) =
     member x.CreateDimension(name : String) =
         let id = x.GetId()
         let dimension = Dimension.Create(id, name, getAudit(Operation.Create))
+
         //let dimensionJson = JsonConvert.SerializeObject(dimension)
         //let database = getDatabase()
         //let key = getKey("dimensions", Some(id.ToString()))
