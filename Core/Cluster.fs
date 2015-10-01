@@ -42,6 +42,8 @@ type Cluster =
 [<CustomEquality;CustomComparison>]
 type ClusterSet = 
     struct     
+        //val Id : Int64        
+        //val Key : String
         val Timestamp : Int64;
         val Clusters : Set<Cluster>
         new(timestamp : Int64, clusters : Set<Cluster>) = { Timestamp = timestamp; Clusters = clusters }

@@ -5,18 +5,8 @@ open System
 /// Dimensions are equivalent over their ids
 [<CustomEquality;CustomComparison>]
 type Dimension =
-    { Id : Int64 
-      Name : String
-      Timestamp : Int64
-      UserName : String
-      Operation : Operation    
-    }
+    { Id : Int64; Name : String }
     
-    interface IAudit with
-        member x.Timestamp with get() = x.Timestamp
-        member x.UserName with get() = x.UserName
-        member x.Operation with get() = x.Operation
-
     interface IComparable with
         member x.CompareTo other = 
             match other with 
@@ -32,8 +22,7 @@ type Dimension =
 
     override x.GetHashCode() = hash(x.Id)
     
-    static member Create(id : Int64, name : String, audit : IAudit) =
-        { Id = id; Name = name; Timestamp = audit.Timestamp; UserName = audit.UserName; Operation = audit.Operation }    
+    static member Create(id : Int64, name : String) = { Id = id; Name = name }    
 
     static member CompareTo(x : Dimension, y : Dimension) = compare (x.Id) (y.Id)
 

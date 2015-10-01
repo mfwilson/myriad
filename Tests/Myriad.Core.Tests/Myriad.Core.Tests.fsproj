@@ -52,6 +52,7 @@
   <ItemGroup>
     <Compile Include="AssemblyInfo.fs" />
     <Compile Include="AuditTests.fs" />
+    <Compile Include="DimensionTests.fs" />
     <Content Include="packages.config" />
     <Content Include="app.config" />
     <Compile Include="FsCheckAddin.fs" />

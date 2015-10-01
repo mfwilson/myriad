@@ -26,3 +26,18 @@ type Audit =
 
     static member Create(timestamp : Int64, userName : String, operation : Operation) =
         { Timestamp = timestamp; UserName = userName; Operation = operation }
+
+type Audit<'T> =
+    { Value : 'T 
+      Timestamp : Int64
+      UserName : String
+      Operation : Operation    
+    }
+    
+    interface IAudit with
+        member x.Timestamp with get() = x.Timestamp
+        member x.UserName with get() = x.UserName
+        member x.Operation with get() = x.Operation
+
+    static member Create(value : 'T, timestamp : Int64, userName : String, operation : Operation) =
+        { Value = value; Timestamp = timestamp; UserName = userName; Operation = operation }
