@@ -19,7 +19,7 @@ type RedisConnection(configuration : String) =
 
     let getCurrentTimestamp() = Epoch.GetOffset(DateTimeOffset.UtcNow.Ticks)
 
-    let getAudit(operation) = Audit.Create(getCurrentTimestamp(), updateUser, operation)
+    let getAudit() = Audit.Create(getCurrentTimestamp(), updateUser)
 
     let getDatabase() = connection.GetDatabase().WithKeyPrefix(namespaceKey)
 
@@ -39,20 +39,20 @@ type RedisConnection(configuration : String) =
         let key = getKey("transaction_id", None)
         database.StringIncrement(key)
 
-    member x.GetDimensions() =         
+    member x.GetDimensions() =
         let database = getDatabase()
         let key = getKey("dimensions", None)
 
         let value = database.SortedSetRangeByScore(key, order = Order.Descending, take = 1L) |> Array.tryHead
         if value.IsNone then
-            List.empty            
+            List.empty
         else
             let json = value.Value.ToString()
-            JsonConvert.DeserializeObject<Dimension list>(json)            
+            JsonConvert.DeserializeObject<Dimension list>(json)
 
-    member x.SetDimensions(dimensions : Dimension seq) =         
+    member x.SetDimensions(dimensions : Dimension seq) =
         let database = getDatabase()
-        let key = getKey("dimensions", None)        
+        let key = getKey("dimensions", None)
         let score = float (getCurrentTimestamp())
         let dimensionsJson = JsonConvert.SerializeObject(dimensions)
         database.SortedSetAdd(key, RedisValue.op_Implicit(dimensionsJson), score)
@@ -64,8 +64,8 @@ type RedisConnection(configuration : String) =
         //let dimensionJson = JsonConvert.SerializeObject(dimension)
         //let database = getDatabase()
         //let key = getKey("dimensions", Some(id.ToString()))
-        //let result = database.SetAdd(key, RedisValue.op_Implicit(dimensionJson), float dimension.Timestamp)        
-        dimension        
+        //let result = database.SetAdd(key, RedisValue.op_Implicit(dimensionJson), float dimension.Timestamp)
+        dimension
 
     member x.AddDimensionValues(dimension : Dimension, values : String seq) =
         let database = getDatabase()
@@ -95,8 +95,8 @@ type RedisConnection(configuration : String) =
         ignore()
 
     member x.CreateCluster(key : String, value : String, measures : Set<Measure>) =
-        let id = x.GetId()        
-        let cluster = new Cluster(id, key, value, measures, getAudit(Operation.Create))
+        let id = x.GetId()
+        let cluster = new Cluster(id, key, value, measures, getAudit())
         let clusterJson = JsonConvert.SerializeObject(cluster)
 
         let database = getDatabase()
