@@ -9,29 +9,42 @@ type MyriadCache() =
 
     /// If the cluster's measures are a subset of the context's measures, then it is a match
     let matchMeasures (context : Context) (cluster : Cluster) = Set.isSubset (cluster.Measures) (context.Measures)
-    
+            
+    let getClusterSetByTime (ticks) (clusterSets : ClusterSet list) =
+        clusterSets |> List.tryFind (fun tlist -> tlist.Timestamp <= ticks)
+
+    let getClusterByContext (context) (clusters : Cluster list) =
+        clusters |> List.tryFind (fun c -> matchMeasures context c)
+
+    let tryHead (ls:seq<'a>) : option<'a>  = ls |> Seq.tryPick Some
+
     member x.Keys with get() = cache.Keys
 
-    member x.TryFind(key : String, context : Context, [<Out>] value : byref<String>) =
-        value <- null
+    member x.TryGetValue(key : String, context : Context, [<Out>] value : byref<String>) =
+        let success, property = x.TryFind(key, context)
+        if not success || property.IsNone then 
+            false 
+        else 
+            value <- property.Value.Value
+            true
 
+    member x.TryFind(key : String, context : Context, [<Out>] value : byref<Cluster option>) =
         let success, result = cache.TryGetValue key
         if not success then
+            value <- None
             false
         else
             // Find 1st item less then timestamp
-            let current = result.Value
-            let instance = current |> List.tryFind (fun tlist -> tlist.Timestamp <= context.AsOf.UtcTicks)
-            if instance.IsNone then
-                false
-            else
-                // Find 1st matching context
-                let cluster = instance.Value.Clusters |> Seq.tryFind (fun c -> matchMeasures context c)
-                if cluster.IsNone then 
-                    false 
-                else
-                    value <- cluster.Value.Value
-                    true
+            value <- [ result.Value ]
+                     |> Seq.choose (fun c -> getClusterSetByTime context.AsOf.UtcTicks c)
+                     |> Seq.choose (fun c -> getClusterByContext context c.Clusters)
+                     |> tryHead
+            value.IsSome
+
+    member x.GetProperties(context : Context) =
+        cache.Values 
+        |> Seq.choose (fun c -> getClusterSetByTime context.AsOf.UtcTicks c.Value)
+        |> Seq.choose (fun c -> getClusterByContext context c.Clusters)
 
     member x.Insert(clusterSet : ClusterSet) =
         let add = 

@@ -35,3 +35,6 @@ type Dimension =
     static member CompareTo(x : Dimension, y : Dimension) = compare (x.Id) (y.Id)
 
 type DimensionAudit = Audit<Dimension>
+
+type DimensionMap = Map<Dimension, String list>
+    

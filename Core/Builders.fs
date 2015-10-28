@@ -26,7 +26,7 @@ type ClusterSetBuilder(dimensions : IDimension seq) =
 //        collection |> Seq.groupBy (fun c -> c.Key) |> Seq.iter addOrUpdate
     
     member x.Create(clusters : Cluster seq) =
-        let clustersByWeight = clusters |> Seq.sortWith compareMeasures |> Seq.toList
+        let clustersByWeight = clusters |> Seq.toList |> List.sortWith compareMeasures 
         let lastCluster = clusters |> Seq.maxBy (fun c -> c.Timestamp) 
         ClusterSet(lastCluster.Key, lastCluster.Timestamp, clustersByWeight)
         

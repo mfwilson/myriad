@@ -43,12 +43,12 @@ type RedisConnection(configuration : String) =
         let database = getDatabase()
         let key = getKey("dimensions", None)
 
-        let value = database.SortedSetRangeByScore(key, order = Order.Descending, take = 1L) |> Array.tryHead
-        if value.IsNone then
-            List.empty
-        else
-            let json = value.Value.ToString()
-            JsonConvert.DeserializeObject<Dimension list>(json)
+        //let value = database.SortedSetRangeByScore(key, order = Order.Descending, take = 1L) |> Array.tryHead
+        //if value.IsNone then
+        List.empty
+        //else
+        //    let json = value.Value.ToString()
+        //    JsonConvert.DeserializeObject<Dimension list>(json)
 
     member x.SetDimensions(dimensions : Dimension seq) =
         let database = getDatabase()

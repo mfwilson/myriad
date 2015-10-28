@@ -33,7 +33,7 @@ type MyriadCacheTests() =
             ]
 
     [<Test>]
-    member x.TryFind() =
+    member x.TryGetValue() =
         let dimensions = getDimensions()
         let dimensionMap = dimensions |> Seq.map (fun d -> d.Name, d) |> Map.ofSeq
         let mb = new MeasureBuilder(dimensionMap)
@@ -50,6 +50,6 @@ type MyriadCacheTests() =
                 Measures = mb { yield "Environment", "PROD"; yield "Location", "New York"; yield "Application", "Bishop"; yield "Instance", "rex" }
             }
 
-        let success, value = cache.TryFind("my.property.key", context)
+        let success, value = cache.TryGetValue("my.property.key", context)
         Assert.True(success)
         Assert.AreEqual("pear", value)
