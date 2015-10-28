@@ -10,9 +10,14 @@ open Suave.Http.Successful
 open Suave.Types
 open Suave.Web
 
+open WebSharper
+open WebSharper.Sitelets
+open WebSharper.UI.Next.Html
+open WebSharper.UI.Next.Server
+open WebSharper.Suave
+
 open Myriad
 open Myriad.Store
-
 
 let store = new MockStore()
 
@@ -24,7 +29,7 @@ let dimensionsApp =
         async {
             let getHtmlBody(absolutePath : String) =
                 let dimension = 
-                    match absolutePath.LastIndexOf('/') with
+                    match absolutePath.LastIndexOf("/") with
                     | -1 -> ""
                     | index -> absolutePath.Substring(index + 1)
 
@@ -80,11 +85,54 @@ let findApp =
             return! OK message x
         }
 
+//[<JavaScript>]
+//module Client =
+//    open WebSharper.JavaScript
+//    open WebSharper.UI.Next.Client
+//    open WebSharper.Charting
+//
+//    let RadarChart () =
+//        let labels =    
+//            [| "Eating"; "Drinking"; "Sleeping";
+//               "Designing"; "Coding"; "Cycling"; "Running" |]
+//        let data1 = [|28.0; 48.0; 40.0; 19.0; 96.0; 27.0; 100.0|]
+//        let data2 = [|65.0; 59.0; 90.0; 81.0; 56.0; 55.0; 40.0|]
+//
+//        let ch =
+//            Chart.Combine [
+//                Chart.Radar(Seq.zip labels data1)
+//                    .WithFillColor(Color.Rgba(151, 187, 205, 0.2))
+//                    .WithStrokeColor(Color.Rgba(151, 187, 205, 1.))
+//                    .WithPointColor(Color.Rgba(151, 187, 205, 1.))
+//
+//                Chart.Radar(Seq.zip labels data2)
+//                    .WithFillColor(Color.Rgba(220, 220, 220, 0.2))
+//                    .WithStrokeColor(Color.Rgba(220, 220, 220, 1.))
+//                    .WithPointColor(Color.Rgba(220, 220, 220, 1.))
+//            ]
+//        Renderers.ChartJs.Render(ch, Size = Size(400, 400))
+
+open WebSharper.JavaScript
+
+let MySite =    
+    Application.SinglePage (fun ctx ->
+        Content.Page(
+            Body = [
+                h2 [ text "Myriad Configuration Home Page" ]
+                
+                aAttr [attr.href "/dimensions"] [text "Dimensions"]
+                
+                //div [client <@ Client.RadarChart() @>]
+            ])
+    )
+
 let app =
     choose [        
-        GET >>= path "/" >>= OK "<body><H2>Myriad Configuration Home Page</H2><a href='/dimensions'>Dimensions</a></body>"
+        //GET >>= path "/" >>= OK "<body><H2>Myriad Configuration Home Page</H2><a href='/dimensions'>Dimensions</a></body>"
+        GET >>= path "/" >>= (WebSharperAdapter.ToWebPart MySite)
         path "/find" >>= findApp
-        pathStarts "/dimensions" >>= dimensionsApp        
+        pathStarts "/dimensions" >>= dimensionsApp
+        path "/ws" >>= (WebSharperAdapter.ToWebPart MySite)
     ]
 
 let port = Sockets.Port.Parse("8083")
@@ -96,5 +144,5 @@ let serverConfig =
 
 [<EntryPoint>]
 let main argv =
-    startWebServer serverConfig app
+    startWebServer serverConfig app //(WebSharperAdapter.ToWebPart MySite)
     0 
