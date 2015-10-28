@@ -88,6 +88,12 @@ let scriptEntry(args) =
         let cache = new MyriadCache()
         cache.Insert(clusterSet)
 
+        let context = { 
+                AsOf = DateTimeOffset.UtcNow; 
+                Measures = mb { yield "Environment", "PROD"; yield "Location", "New York"; yield "Application", "Bishop"; yield "Instance", "rex" }
+            }
+
+        let success, value = cache.TryFind("my.property.key", context)
 
         //////
 
@@ -110,12 +116,6 @@ let scriptEntry(args) =
 //
 //        let cache = MyriadCache(dimensions, clusters)
 //
-//        let context = { 
-//                AsOf = DateTimeOffset.UtcNow; 
-//                Measures = mb { yield "Environment", "PROD"; yield "Location", "New York"; yield "Application", "Bishop"; yield "Instance", "rex" }
-//            }
-//
-//        let success, value = cache.TryFind("my.property.key", context)
 
         0
     with

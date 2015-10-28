@@ -26,7 +26,7 @@ type MyriadCache() =
                 false
             else
                 // Find 1st matching context
-                let cluster = instance.Value.Clusters |> Set.toSeq |> Seq.tryFind (fun c -> matchMeasures context c)
+                let cluster = instance.Value.Clusters |> Seq.tryFind (fun c -> matchMeasures context c)
                 if cluster.IsNone then 
                     false 
                 else

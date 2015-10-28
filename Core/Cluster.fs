@@ -37,6 +37,10 @@ type Cluster =
 
     override x.GetHashCode() = hash(x.Measures)
     
+    override x.ToString() = 
+        let measures = String.Join(", ", x.Measures)
+        String.Format("'{0}' [{1}] = '{2}', Measures: {3}", x.Key, x.Id, x.Value, measures)
+
     static member CompareTo(x : Set<Measure>, y : Set<Measure>) = compare x y
 
 [<CustomEquality;CustomComparison>]
@@ -44,8 +48,8 @@ type ClusterSet =
     struct
         val Key : String
         val Timestamp : Int64
-        val Clusters : Set<Cluster>
-        new(key : String, timestamp : Int64, clusters : Set<Cluster>) = 
+        val Clusters : Cluster list
+        new(key : String, timestamp : Int64, clusters : Cluster list) = 
             { Key = key; Timestamp = timestamp; Clusters = clusters }
     end
     
@@ -56,6 +60,9 @@ type ClusterSet =
 
     override x.GetHashCode() = hash(x)
     
+    override x.ToString() =
+        String.Format("'{0}' {1} clusters @ {2}", x.Key, Seq.length x.Clusters, x.Timestamp)
+
     interface IComparable with
         member x.CompareTo other = 
             match other with 
