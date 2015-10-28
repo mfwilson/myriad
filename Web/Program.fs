@@ -1,4 +1,5 @@
 ﻿open System
+open System.Net
 open System.Text
 open System.Web
 
@@ -81,11 +82,19 @@ let findApp =
 
 let app =
     choose [        
+        GET >>= path "/" >>= OK "<body><H2>Myriad Configuration Home Page</H2><a href='/dimensions'>Dimensions</a></body>"
         path "/find" >>= findApp
         pathStarts "/dimensions" >>= dimensionsApp        
     ]
 
+let port = Sockets.Port.Parse("8083")
+
+let serverConfig = 
+    { defaultConfig with
+       bindings = [ HttpBinding.mk HTTP IPAddress.Any port ]
+    }
+
 [<EntryPoint>]
 let main argv =
-    startWebServer defaultConfig app
+    startWebServer serverConfig app
     0 
