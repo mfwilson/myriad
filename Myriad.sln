@@ -23,6 +23,8 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Myriad.Core.Tests", "Tests\
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Myriad.Web", "Web\Myriad.Web.fsproj", "{D630C95D-8497-46CB-9F31-6E1998CF962F}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Myriad.WebUi", "WebUi\Myriad.WebUi.fsproj", "{8C70ACDE-7EA9-4B98-B62A-5FD2B80728AA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -49,6 +51,10 @@ Global
 		{D630C95D-8497-46CB-9F31-6E1998CF962F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D630C95D-8497-46CB-9F31-6E1998CF962F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D630C95D-8497-46CB-9F31-6E1998CF962F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8C70ACDE-7EA9-4B98-B62A-5FD2B80728AA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8C70ACDE-7EA9-4B98-B62A-5FD2B80728AA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8C70ACDE-7EA9-4B98-B62A-5FD2B80728AA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8C70ACDE-7EA9-4B98-B62A-5FD2B80728AA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
