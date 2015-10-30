@@ -8,8 +8,6 @@ open Suave.Http.Applicatives
 open Suave.Types
 open Suave.Web
 
-open WebSharper.Suave
-
 open Myriad
 open Myriad.Store
 open Myriad.Web
@@ -30,10 +28,9 @@ let serverConfig =
 let main argv =
     startWebServer 
         serverConfig 
-        (choose [        
-            GET >>= path "/" >>= (WebSharperAdapter.ToWebPart MyriadSite.MainPage)
+        (choose [
             path "/find" >>= RestHandlers.Find cache store
             path "/query" >>= RestHandlers.Query cache store
-            pathStarts "/dimensions" >>= RestHandlers.Dimensions store    
+            pathStarts "/dimensions" >>= RestHandlers.Dimensions store
         ])
     0 

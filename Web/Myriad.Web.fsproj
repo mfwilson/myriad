@@ -57,7 +57,6 @@
   <Import Project="$(FSharpTargetsPath)" />
   <ItemGroup>
     <Compile Include="AssemblyInfo.fs" />
-    <Compile Include="MyriadSite.fs" />
     <Compile Include="RestHandlers.fs" />
     <Compile Include="Program.fs" />
     <None Include="App.config" />
@@ -70,18 +69,6 @@
     </Reference>
     <Reference Include="FsNuGet">
       <HintPath>..\packages\FsNuGet.1.0.7\lib\net40\FsNuGet.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="HttpMultipartParser">
-      <HintPath>..\packages\WebSharper.Owin.3.5.5.112\lib\net45\HttpMultipartParser.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="IntelliFactory.Reactive">
-      <HintPath>..\packages\IntelliFactory.Reactive.3.5.5.60\lib\net40\IntelliFactory.Reactive.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="Microsoft.Owin">
-      <HintPath>..\packages\Microsoft.Owin.3.0.1\lib\net45\Microsoft.Owin.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Mono.Cecil">
@@ -101,14 +88,6 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="mscorlib" />
-    <Reference Include="Owin">
-      <HintPath>..\packages\Owin.1.0\lib\net40\Owin.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="SharpCompress">
-      <HintPath>..\packages\sharpcompress.0.2\lib\net40\SharpCompress.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="Suave">
       <HintPath>..\packages\Suave.0.32.1\lib\net40\Suave.dll</HintPath>
       <Private>True</Private>
@@ -130,78 +109,6 @@
     <Reference Include="System.Web" />
     <Reference Include="System.Xml" />
     <Reference Include="System.Xml.Linq" />
-    <Reference Include="WebSharper.Charting">
-      <HintPath>..\packages\WebSharper.Charting.3.5.6.25\lib\net40\WebSharper.Charting.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="WebSharper.ChartJs">
-      <HintPath>..\packages\WebSharper.ChartJs.3.5.6.52\lib\net40\WebSharper.ChartJs.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="WebSharper.Collections">
-      <HintPath>..\packages\WebSharper.3.5.13.214\lib\net40\WebSharper.Collections.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="WebSharper.Control">
-      <HintPath>..\packages\WebSharper.3.5.13.214\lib\net40\WebSharper.Control.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="WebSharper.Core">
-      <HintPath>..\packages\WebSharper.3.5.13.214\lib\net40\WebSharper.Core.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="WebSharper.Core.JavaScript">
-      <HintPath>..\packages\WebSharper.3.5.13.214\lib\net40\WebSharper.Core.JavaScript.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="WebSharper.InterfaceGenerator">
-      <HintPath>..\packages\WebSharper.3.5.13.214\lib\net40\WebSharper.InterfaceGenerator.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="WebSharper.JavaScript">
-      <HintPath>..\packages\WebSharper.3.5.13.214\lib\net40\WebSharper.JavaScript.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="WebSharper.JQuery">
-      <HintPath>..\packages\WebSharper.3.5.13.214\lib\net40\WebSharper.JQuery.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="WebSharper.Main">
-      <HintPath>..\packages\WebSharper.3.5.13.214\lib\net40\WebSharper.Main.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="WebSharper.Owin">
-      <HintPath>..\packages\WebSharper.Owin.3.5.5.112\lib\net45\WebSharper.Owin.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="WebSharper.Sitelets">
-      <HintPath>..\packages\WebSharper.3.5.13.214\lib\net40\WebSharper.Sitelets.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="WebSharper.Suave">
-      <HintPath>..\packages\WebSharper.Suave.3.5.6.19\lib\net45\WebSharper.Suave.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="WebSharper.Templates">
-      <HintPath>..\packages\WebSharper.Templates.3.5.9.39\lib\net40\WebSharper.Templates.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="WebSharper.Testing">
-      <HintPath>..\packages\WebSharper.3.5.13.214\lib\net40\WebSharper.Testing.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="WebSharper.UI.Next">
-      <HintPath>..\packages\WebSharper.UI.Next.3.5.17.191\lib\net40\WebSharper.UI.Next.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="WebSharper.UI.Next.Templating">
-      <HintPath>..\packages\WebSharper.UI.Next.3.5.17.191\lib\net40\WebSharper.UI.Next.Templating.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="WebSharper.Web">
-      <HintPath>..\packages\WebSharper.3.5.13.214\lib\net40\WebSharper.Web.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
   </ItemGroup>
   <Import Project="..\packages\WebSharper.3.5.13.214\build\WebSharper.targets" Condition="Exists('..\packages\WebSharper.3.5.13.214\build\WebSharper.targets')" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">

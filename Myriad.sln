@@ -23,7 +23,7 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Myriad.Core.Tests", "Tests\
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Myriad.Web", "Web\Myriad.Web.fsproj", "{D630C95D-8497-46CB-9F31-6E1998CF962F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebUi", "WebUi\WebUi.csproj", "{D29965F4-3E0D-444A-82B7-B7BBD549B7C1}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Myriad.WebUi", "WebUi\Myriad.WebUi.csproj", "{D29965F4-3E0D-444A-82B7-B7BBD549B7C1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
