@@ -2,35 +2,69 @@
     ViewBag.Title = "Home Page";
 }
 
-@for (var i = 10; i < 21; i++)
-{
-    <p>Line #: @i</p>
+@{
+    var client = new WebClient();
+    var json = client.DownloadString("http://localhost:8083/dimensions");
+    var dimensions = Json.Decode(json);
 }
 
-@*<div class="jumbotron">
-    <h1>ASP.NET</h1>
-    <p class="lead">ASP.NET is a free web framework for building great Web sites and Web applications using HTML, CSS and JavaScript.</p>
-    <p><a href="http://asp.net" class="btn btn-primary btn-lg">Learn more &raquo;</a></p>
-</div>
+<!DOCTYPE html>
 
-<div class="row">
-    <div class="col-md-4">
-        <h2>Getting started</h2>
-        <p>
-            ASP.NET MVC gives you a powerful, patterns-based way to build dynamic websites that
-            enables a clean separation of concerns and gives you full control over markup
-            for enjoyable, agile development.
-        </p>
-        <p><a class="btn btn-default" href="http://go.microsoft.com/fwlink/?LinkId=301865">Learn more &raquo;</a></p>
-    </div>
-    <div class="col-md-4">
-        <h2>Get more libraries</h2>
-        <p>NuGet is a free Visual Studio extension that makes it easy to add, remove, and update libraries and tools in Visual Studio projects.</p>
-        <p><a class="btn btn-default" href="http://go.microsoft.com/fwlink/?LinkId=301866">Learn more &raquo;</a></p>
-    </div>
-    <div class="col-md-4">
-        <h2>Web Hosting</h2>
-        <p>You can easily find a web hosting company that offers the right mix of features and price for your applications.</p>
-        <p><a class="btn btn-default" href="http://go.microsoft.com/fwlink/?LinkId=301867">Learn more &raquo;</a></p>
-    </div>
-</div>*@
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+
+    <script src="@Href("~/Scripts/jquery-1.10.2.min.js")" type="text/javascript"></script>
+    <script src="@Href("~/Scripts/jquery-ui-1.11.4/jquery-ui.min.js")" type="text/javascript"></script>
+    <link href="@Href("~/Scripts/jquery-ui-1.11.4/jquery-ui.theme.min.css")" type="text/css" rel="stylesheet"/>
+    <link href="@Href("~/Scripts/jquery-ui-1.11.4/jquery-ui.css")" type="text/css" rel="stylesheet"/>
+
+    <script type="text/javascript">
+        $(function() {
+            @foreach (var result in dimensions)
+            {
+                var addButton = "#btnAdd" + result.Dimension.Name;
+                var clearButton = "#btnClear" + result.Dimension.Name;
+                @:$('@addButton').button({ icons: { primary: "ui-icon-plusthick" }, text: false });
+                @:$('@clearButton').button({ icons: { primary: "ui-icon-closethick" }, text: false });
+
+                var selectList = "#list" + result.Dimension.Name;
+                @:$('@selectList ul').append(
+                @:    $('<li>').append(
+                @:      $('<a>').attr('href', '/user/messages').append(
+                @:          $('<span>').attr('class', 'tab').append("Message center")
+                @:)));
+
+                @:var values = [];
+                foreach (var value in result.Values)
+                {
+                    @:values.push('@value');
+                }
+                @:values.sort();
+                @:$('#@result.Dimension.Name').autocomplete({ source: values, minLength: 0 });                
+            }
+        });
+    </script>    
+</head>
+<body>
+
+    @foreach (var result in dimensions)
+    {
+        var addButton = "btnAdd" + result.Dimension.Name;
+        var clearButton = "btnClear" + result.Dimension.Name;
+        var selectList = "list" + result.Dimension.Name;
+        <form method="post">            
+            <label for="@result.Dimension.Name">@result.Dimension.Name</label>
+            <button id="@addButton">Add</button>
+            <button id="@clearButton">Clear</button> 
+            <p>
+            <input type="text" id="@result.Dimension.Name" onfocus="javascript:$(this).autocomplete('search','');" />
+            <div id="selectList">
+                <ul></ul>
+            </div>
+        </form>
+    }
+
+</body>
+</html>
