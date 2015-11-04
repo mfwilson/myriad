@@ -32,5 +32,6 @@ let main argv =
             path "/find" >>= RestHandlers.Find cache store
             path "/query" >>= RestHandlers.Query cache store
             pathStarts "/dimensions" >>= RestHandlers.Dimensions store
+            // pathStarts "/admin" >>= merge 1..N cluster sets
         ])
     0 

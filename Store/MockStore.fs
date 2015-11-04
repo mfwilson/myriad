@@ -2,6 +2,8 @@
 
 open System 
 
+open Newtonsoft.Json
+
 open Myriad
 
 type MockStore() =
@@ -17,15 +19,16 @@ type MockStore() =
     // Location -> Chicago, New York, London, Amsterdam
     // Application -> Rook, Knight, Pawn, Bishop
     // Instance -> mary, jimmy, rex, paulie
-    let dimensionMap = 
-        let elements = 
-            [
-                dimensions.[0].Name.ToLower(), [ "PROD"; "UAT"; "DEV" ];
-                dimensions.[1].Name.ToLower(), [ "Chicago"; "New York"; "London"; "Amsterdam" ];
-                dimensions.[2].Name.ToLower(), [ "Rook"; "Knight"; "Pawn"; "Bishop" ];
-                dimensions.[3].Name.ToLower(), [ "mary"; "jimmy"; "rex"; "paulie" ];
-            ]
-        Map<String, String list>(elements)
+    let internalList = 
+        [
+            { Dimension = dimensions.[0]; Values = [ "PROD"; "UAT"; "DEV" ] };
+            { Dimension = dimensions.[1]; Values = [ "Chicago"; "New York"; "London"; "Amsterdam" ] };
+            { Dimension = dimensions.[2]; Values = [ "Rook"; "Knight"; "Pawn"; "Bishop" ] };
+            { Dimension = dimensions.[3]; Values = [ "mary"; "jimmy"; "rex"; "paulie" ] };
+        ]
+
+    let dimensionMap =
+        internalList |> List.map (fun item -> item.Dimension.Name.ToLower(), item.Values ) |> Map.ofSeq
 
     let queryMap =
         dimensions |> Seq.map (fun d -> d.Name.ToLower(), d :> IDimension) |> Map.ofSeq
@@ -69,3 +72,14 @@ type MockStore() =
     member x.SampleProperties with get() = sampleProperties
 
     member x.GetDimension(key) = queryMap.TryFind key
+
+    member x.GetDimensions() =
+        JsonConvert.SerializeObject(internalList)
+
+    member x.GetDimensionValues(dimension : String) =
+        let dimensionValues = x.DimensionMap.TryFind(dimension.ToLower())
+        if dimensionValues.IsNone then
+            JsonConvert.SerializeObject( [] : String list )
+        else
+            let dimensions = dimensionValues.Value |> List.sort 
+            JsonConvert.SerializeObject( dimensions )

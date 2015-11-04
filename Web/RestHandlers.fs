@@ -23,19 +23,11 @@ module RestHandlers =
                     match absolutePath.LastIndexOf("/") with
                     | -1 -> ""
                     | index -> absolutePath.Substring(index + 1)
-
-                let dimensionValues = store.DimensionMap.TryFind(dimension.ToLower())
-                if dimensionValues.IsNone then
-                    "<body>No values for for dimension '" + dimension + "'</body>"
-                else
-                    let dimensions = dimensionValues.Value |> List.sort 
-                    "<body>" + String.Join("<p>", dimensions) + "</body>"
+                store.GetDimensionValues(dimension)
 
             let message = match x.request.url.AbsolutePath with
-                            | "/dimensions" ->
-                                let names = store.Dimensions |> Seq.map (fun d -> String.Format("<a href='/dimensions/{0}'>{0}</a>", d.Name)) 
-                                "<body>" + String.Join("<p>", names) + "</body>"
-                            | dimension -> getHtmlBody(dimension)
+                          | "/dimensions" | "/dimensions/" -> store.GetDimensions()
+                          | dimension -> getHtmlBody(dimension)
                                 
             return! OK message x
         }

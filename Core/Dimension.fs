@@ -36,5 +36,8 @@ type Dimension =
 
 type DimensionAudit = Audit<Dimension>
 
-type DimensionMap = Map<Dimension, String list>
+type DimensionValues = 
+    { Dimension : IDimension; Values : String list }
+
+type DimensionList = DimensionValues list
     
