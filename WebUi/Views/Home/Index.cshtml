@@ -4,8 +4,8 @@
 
 @{
     var client = new WebClient();
-    var json = client.DownloadString("http://localhost:8083/dimensions");
-    var dimensions = Json.Decode(json);
+    var json = client.DownloadString("http://localhost:8083/metadata");    
+    var metadata = Json.Decode(json);    
 }
 
 <!DOCTYPE html>
@@ -16,18 +16,26 @@
     <title></title>
 
     <script src="@Href("~/Scripts/jquery-1.10.2.min.js")" type="text/javascript"></script>
+    
     <script src="@Href("~/Scripts/jquery-ui-1.11.4/jquery-ui.min.js")" type="text/javascript"></script>
     <link href="@Href("~/Scripts/jquery-ui-1.11.4/jquery-ui.theme.min.css")" type="text/css" rel="stylesheet"/>
     <link href="@Href("~/Scripts/jquery-ui-1.11.4/jquery-ui.css")" type="text/css" rel="stylesheet"/>
 
-    <script type="text/javascript">
-        $(function() {
-            @foreach (var result in dimensions)
+    <link href="@Href("~/Content/datatables.min.css")" rel="stylesheet" type="text/css" />
+    <script src="@Href("~/Scripts/datatables.min.js")" type="text/javascript"></script>
+
+    <link href="@Href("~/Content/dashboard.css")" rel="stylesheet" type="text/css" />
+
+    <script type="text/javascript">        
+        $(function () {
+            $('#btnQuery').button({ icons: { primary: "ui-icon-search" } });
+
+            @foreach (var result in metadata)
             {
-                var addButton = "#btnAdd" + result.Dimension.Name;
+                @*var addButton = "#btnAdd" + result.Dimension.Name;
                 var clearButton = "#btnClear" + result.Dimension.Name;
                 @:$('@addButton').button({ icons: { primary: "ui-icon-plusthick" }, text: false });
-                @:$('@clearButton').button({ icons: { primary: "ui-icon-closethick" }, text: false });
+                @:$('@clearButton').button({ icons: { primary: "ui-icon-closethick" }, text: false });*@
 
                 var selectList = "#list" + result.Dimension.Name;
                 @:$('@selectList ul').append(
@@ -39,32 +47,115 @@
                 @:var values = [];
                 foreach (var value in result.Values)
                 {
-                    @:values.push('@value');
+                @:values.push('@value');
                 }
                 @:values.sort();
-                @:$('#@result.Dimension.Name').autocomplete({ source: values, minLength: 0 });                
+                @:$('#@result.Dimension.Name').autocomplete({ source: values, minLength: 0 });
             }
         });
+
+        $(document).ready(function () {
+
+            //$('#queryForm').submit(function () {
+            //    // Get all the forms elements and their values in one step
+            //    var values = $(this).serialize();
+            //    alert(values);
+            //});
+
+            $('#queryForm').bind('submit', function () {
+                var elements = this.elements;
+                alert("Elements: " + elements);
+            });
+
+            $('#btnQuery').click(
+                function () {
+                    var values = {};
+                    
+                    $.each($('#queryForm').serializeArray(), function (i, field) {
+                        if (field.value) {
+                            values[field.name] = field.value;
+                        }
+                    });
+
+                    $.post("http://localhost:8083/find", values, 
+                        function (data) {
+                            alert(data);
+                        }, "jsonp"
+                    );
+
+                    //jQuery.post();
+                }
+            );
+
+            $('#example').DataTable();
+        });
+
     </script>    
 </head>
 <body>
+    
+<div class="row">
 
-    @foreach (var result in dimensions)
-    {
-        var addButton = "btnAdd" + result.Dimension.Name;
-        var clearButton = "btnClear" + result.Dimension.Name;
-        var selectList = "list" + result.Dimension.Name;
-        <form method="post">            
-            <label for="@result.Dimension.Name">@result.Dimension.Name</label>
-            <button id="@addButton">Add</button>
-            <button id="@clearButton">Clear</button> 
-            <p>
-            <input type="text" id="@result.Dimension.Name" onfocus="javascript:$(this).autocomplete('search','');" />
-            <div id="selectList">
-                <ul></ul>
-            </div>
-        </form>
-    }
+    <div class="col-sm-3 col-md-2 sidebar">
+        <button id="btnQuery" padding="0 0 0 10" type="submit">Query</button>
+        <div>
+            <form id="queryForm">
+                @{
+                    foreach (var result in metadata)
+                    {                        
+                    @:<label for="@result.Dimension.Name">@result.Dimension.Name</label>
+                    @:<p>
+                    @:<input type="text" id="@result.Dimension.Name" name="@result.Dimension.Name" onfocus="javascript:$(this).autocomplete('search', '');" />
+                    @:<div id="selectList">
+                    @:    <ul></ul>
+                    @:</div>
+                    }
+                }
+            </form>
+        </div>
+
+    </div>
+
+    <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">        
+        <table id="example" class="display" cellspacing="0" width="100%">
+            <thead>
+            <tr>
+                <th>Name</th>
+                <th>Position</th>
+                <th>Office</th>
+                <th>Age</th>
+                <th>Start date</th>
+                <th>Salary</th>
+            </tr>
+            </thead>
+
+            <tfoot>
+            <tr>
+                <th>Name</th>
+                <th>Position</th>
+                <th>Office</th>
+                <th>Age</th>
+                <th>Start date</th>
+                <th>Salary</th>
+            </tr>
+            </tfoot>
+
+            <tbody>
+            <tr>
+                <td>Tiger Nixon</td>
+                <td>System Architect</td>
+                <td>Edinburgh</td>
+                <td>61</td>
+                <td>2011/04/25</td>
+                <td>$320,800</td>
+            </tr>
+            </tbody>
+        </table>
+
+    </div>
+
+</div>
+
 
 </body>
 </html>

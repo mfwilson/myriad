@@ -8,6 +8,8 @@ open Myriad
 
 type MockStore() =
 
+    let properties = [ "my.office.key"; "my.property.key" ]
+
     // Environment, Location, Application, Instance
     let dimensions =
         [ { Dimension.Id = 32L; Name = "Environment" };
@@ -83,3 +85,11 @@ type MockStore() =
         else
             let dimensions = dimensionValues.Value |> List.sort 
             JsonConvert.SerializeObject( dimensions )
+
+    member x.GetProperties() =
+        JsonConvert.SerializeObject( properties )
+
+    member x.GetMetadata() =
+        let property = { Name = "Property"; Id = 0L }
+        let metadata = List.append [ { Dimension = property; Values = properties } ] internalList
+        JsonConvert.SerializeObject(metadata)

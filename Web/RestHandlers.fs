@@ -10,8 +10,6 @@ open Suave.Http
 open Suave.Http.Successful 
 open Suave.Types
 
-open Newtonsoft.Json
-
 open Myriad
 open Myriad.Store
 
@@ -37,7 +35,14 @@ module RestHandlers =
     /// Provides a view over properties
     let Properties (cache : MyriadCache) (store : MockStore) (x : HttpContext) = 
         async {
-            let message = JsonConvert.SerializeObject(cache.Keys)
+            let message = store.GetProperties()
+            return! OK message x
+        }
+
+    /// Provides a view over both properties and dimensions
+    let Metadata (store : MockStore) (x : HttpContext) = 
+        async {
+            let message = store.GetMetadata()
             return! OK message x
         }
 
@@ -52,6 +57,8 @@ module RestHandlers =
         async {
             let kv = HttpUtility.ParseQueryString(x.request.rawQuery)
             
+            Console.WriteLine(x.request.rawQuery)
+
             let getMeasure(key) = 
                 let dimension = store.GetDimension(key)
                 if dimension.IsNone then None else Some( { Dimension = dimension.Value; Value = kv.[key] } )
