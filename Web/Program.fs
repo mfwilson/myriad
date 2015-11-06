@@ -34,6 +34,8 @@ let main argv =
             path "/properties" >>= RestHandlers.Properties cache store
             pathStarts "/dimensions" >>= RestHandlers.Dimensions store
             pathStarts "/metadata" >>= RestHandlers.Metadata store
+            
+            path "/api/1/dimensions/list" >>= RestHandlers.DimensionList store
             // pathStarts "/api/1" >>= merge 1..N cluster sets (POST)
         ])
     0 

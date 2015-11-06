@@ -41,6 +41,16 @@ type Cluster =
         let measures = String.Join(", ", x.Measures)
         String.Format("'{0}' [{1}] = '{2}', Measures: {3}", x.Key, x.Id, x.Value, measures)
 
+    static member ToMap(cluster : Cluster, dimensions : IDimension seq) =
+        let values = [ "Id", cluster.Id.ToString(); "Property", cluster.Key; "Value", cluster.Value ]
+        let measures = cluster.Measures |> Set.toList |> List.map (fun m -> m.Dimension.Name, m.Value)
+
+        let filterByDimension(dimension : IDimension) =
+            not(measures |> Seq.exists (fun m -> fst(m) = dimension.Name))
+
+        let defaults = dimensions |> Seq.filter filterByDimension |> Seq.map (fun d -> d.Name, "") |> Seq.toList
+        Map.ofList (List.concat [ values; measures; defaults ])
+
     static member CompareTo(x : Set<Measure>, y : Set<Measure>) = compare x y
 
 [<CustomEquality;CustomComparison>]

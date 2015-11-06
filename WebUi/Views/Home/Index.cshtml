@@ -4,8 +4,14 @@
 
 @{
     var client = new WebClient();
-    var json = client.DownloadString("http://localhost:8083/metadata");    
-    var metadata = Json.Decode(json);    
+    var json = client.DownloadString("http://localhost:8083/metadata");
+    var metadata = Json.Decode(json);
+
+    var dimensionsJson = client.DownloadString("http://localhost:8083/api/1/dimensions/list");
+    var dimensions = Json.Decode<List<string>>(dimensionsJson);
+
+    var columnList = new List<string>(dimensions);
+    columnList.AddRange( new string[] { "Property", "Value" } );
 }
 
 <!DOCTYPE html>
@@ -56,17 +62,6 @@
 
         $(document).ready(function () {
 
-            //$('#queryForm').submit(function () {
-            //    // Get all the forms elements and their values in one step
-            //    var values = $(this).serialize();
-            //    alert(values);
-            //});
-
-            $('#queryForm').bind('submit', function () {
-                var elements = this.elements;
-                alert("Elements: " + elements);
-            });
-
             $('#btnQuery').click(
                 function () {
                     var values = {};
@@ -76,18 +71,31 @@
                             values[field.name] = field.value;
                         }
                     });
-
-                    $.post("http://localhost:8083/find", values, 
+                    //values, 
+                    
+                    $.post("http://localhost:8083/query", values,
                         function (data) {
-                            alert(data);
+                            var localTable = $('#example').DataTable();
+                            localTable.data = data;
                         }, "jsonp"
                     );
-
-                    //jQuery.post();
                 }
             );
 
-            $('#example').DataTable();
+            //var dataSet = [
+            //    { Environment: 'PROD', Location: '123', Application: 'App', Instance: 'Instance', Property:'prop', Value: 'value', Id: 111 }
+            //];
+
+            var columns = [];
+            @foreach (var column in columnList)
+            {
+            @:columns.push({ title: '@column', data: '@column' });
+            }
+
+            $('#resultsTable').DataTable( {
+                //data: dataSet,    
+                columns: columns
+            } );
         });
 
     </script>    
@@ -117,45 +125,10 @@
     </div>
 
     <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">        
-        <table id="example" class="display" cellspacing="0" width="100%">
-            <thead>
-            <tr>
-                <th>Name</th>
-                <th>Position</th>
-                <th>Office</th>
-                <th>Age</th>
-                <th>Start date</th>
-                <th>Salary</th>
-            </tr>
-            </thead>
-
-            <tfoot>
-            <tr>
-                <th>Name</th>
-                <th>Position</th>
-                <th>Office</th>
-                <th>Age</th>
-                <th>Start date</th>
-                <th>Salary</th>
-            </tr>
-            </tfoot>
-
-            <tbody>
-            <tr>
-                <td>Tiger Nixon</td>
-                <td>System Architect</td>
-                <td>Edinburgh</td>
-                <td>61</td>
-                <td>2011/04/25</td>
-                <td>$320,800</td>
-            </tr>
-            </tbody>
-        </table>
-
+        <table id="resultsTable" class="display" cellspacing="0" width="100%"></table>
     </div>
 
 </div>
-
 
 </body>
 </html>

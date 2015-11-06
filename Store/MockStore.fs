@@ -73,10 +73,14 @@ type MockStore() =
 
     member x.SampleProperties with get() = sampleProperties
 
-    member x.GetDimension(key) = queryMap.TryFind key
+    member x.GetDimension(key : String) = queryMap.TryFind (key.ToLower())
 
     member x.GetDimensions() =
         JsonConvert.SerializeObject(internalList)
+
+    member x.GetDimensionList() =
+        let dimensionList = dimensions |> List.map (fun d -> d.Name)
+        JsonConvert.SerializeObject(dimensionList)
 
     member x.GetDimensionValues(dimension : String) =
         let dimensionValues = x.DimensionMap.TryFind(dimension.ToLower())

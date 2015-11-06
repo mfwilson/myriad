@@ -95,6 +95,16 @@ let scriptEntry(args) =
 
         let success, value = cache.TryFind("my.property.key", context)
 
+
+        let emptyContext = { AsOf = DateTimeOffset.UtcNow; Measures = Set.empty }
+        let resultsAny = cache.GetAny(emptyContext)
+
+        let filterContext = { AsOf = DateTimeOffset.UtcNow; Measures = mb { yield "Environment", "PROD" } }
+        let resultsFilter = cache.GetAny(filterContext) |> Seq.toList
+
+
+        let m = Cluster.ToMap(resultsFilter.[0], dimensions)
+
         //////
 
         let redis = new RedisConnection()

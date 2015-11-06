@@ -1,6 +1,7 @@
 ﻿namespace Myriad.Web
 
 open System
+open System.Collections.Specialized
 open System.Net
 open System.Text
 open System.Web
@@ -13,7 +14,15 @@ open Suave.Types
 open Myriad
 open Myriad.Store
 
-module RestHandlers =
+module RestHandlers =    
+
+    let private getContext (store : MockStore) (kv : NameValueCollection) =
+        let getMeasure(key) = 
+            let dimension = store.GetDimension(key)
+            if dimension.IsNone then None else Some( { Dimension = dimension.Value; Value = kv.[key] } )
+
+        let measures = kv.AllKeys |> Seq.choose getMeasure |> Set.ofSeq
+        { AsOf = DateTimeOffset.UtcNow; Measures = measures }        
 
     /// Provides a view over dimensions and their values
     let Dimensions (store : MockStore) (x : HttpContext) = 
@@ -29,6 +38,13 @@ module RestHandlers =
                           | "/dimensions" | "/dimensions/" -> store.GetDimensions()
                           | dimension -> getHtmlBody(dimension)
                                 
+            return! OK message x
+        }
+
+    /// Provides an ordered list of dimensions 
+    let DimensionList (store : MockStore) (x : HttpContext) = 
+        async {
+            let message = store.GetDimensionList()
             return! OK message x
         }
 
@@ -49,29 +65,49 @@ module RestHandlers =
     /// Query -> JSON w/ context
     let Query (cache : MyriadCache) (store : MockStore) (x : HttpContext) =
         async {
-            return! OK "Not implemented" x
+            Console.WriteLine(x.request.rawQuery)
+
+            let kv = HttpUtility.ParseQueryString(x.request.rawQuery)
+
+            let context = getContext store kv
+
+            let measuresAsString = context.Measures |> Seq.map (fun m -> m.ToString())
+            Console.WriteLine("Measures: " + String.Join(", ", measuresAsString))
+
+            let clusters = match kv.["property"] with
+                           | propertyKey when String.IsNullOrEmpty(propertyKey) -> cache.GetAny(context)
+                           | propertyKey -> cache.GetAny(propertyKey, context)
+            
+            let dimensions = store.Dimensions |> Seq.cast<IDimension>
+
+            let dataRows = clusters
+                           |> Seq.map (fun c -> Cluster.ToMap(c, dimensions))
+                            
+
+            let message = Newtonsoft.Json.JsonConvert.SerializeObject(dataRows)           
+            Console.WriteLine("Found {0} clusters\r\n{1}", Seq.length clusters, message)            
+
+            return! OK message x
         }
 
     /// Find -> URL properties with dimensions name=value
     let Find (cache : MyriadCache) (store : MockStore) (x : HttpContext) =
         async {
             let kv = HttpUtility.ParseQueryString(x.request.rawQuery)
-            
-            Console.WriteLine(x.request.rawQuery)
 
             let getMeasure(key) = 
                 let dimension = store.GetDimension(key)
                 if dimension.IsNone then None else Some( { Dimension = dimension.Value; Value = kv.[key] } )
 
             let measures = kv.AllKeys 
-                            |> Seq.choose getMeasure
-                            |> Set.ofSeq
+                           |> Seq.choose getMeasure
+                           |> Set.ofSeq
                          
             let context = { AsOf = DateTimeOffset.UtcNow; Measures = measures }
 
             let clusters = match kv.["property"] with
-                            | propertyKey when String.IsNullOrEmpty(propertyKey) -> cache.GetProperties(context)
-                            | propertyKey -> 
+                           | propertyKey when String.IsNullOrEmpty(propertyKey) -> cache.GetProperties(context)
+                           | propertyKey -> 
                                 let success, result = cache.TryFind(propertyKey, context)
                                 if result.IsNone then Seq.empty else [ result.Value ] |> Seq.ofList
 
