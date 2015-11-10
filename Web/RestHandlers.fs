@@ -106,7 +106,7 @@ module RestHandlers =
             let context = { AsOf = DateTimeOffset.UtcNow; Measures = measures }
 
             let clusters = match kv.["property"] with
-                           | propertyKey when String.IsNullOrEmpty(propertyKey) -> cache.GetProperties(context)
+                           | propertyKey when String.IsNullOrEmpty(propertyKey) -> cache.GetMatches(context)
                            | propertyKey -> 
                                 let success, result = cache.TryFind(propertyKey, context)
                                 if result.IsNone then Seq.empty else [ result.Value ] |> Seq.ofList

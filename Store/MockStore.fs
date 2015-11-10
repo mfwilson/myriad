@@ -97,3 +97,4 @@ type MockStore() =
         let property = { Name = "Property"; Id = 0L }
         let metadata = List.append [ { Dimension = property; Values = properties } ] internalList
         JsonConvert.SerializeObject(metadata)
+

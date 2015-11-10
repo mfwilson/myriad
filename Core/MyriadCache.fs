@@ -59,7 +59,7 @@ type MyriadCache() =
                      |> tryHead
             value.IsSome
 
-    member x.GetProperties(context : Context) = getMatch cache.Values context
+    member x.GetMatches(context : Context) = getMatch cache.Values context
 
     member x.GetAny(context : Context) = getAny cache.Values context
 
