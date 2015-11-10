@@ -11,7 +11,8 @@
     var dimensions = Json.Decode<List<string>>(dimensionsJson);
 
     var columnList = new List<string>(dimensions);
-    columnList.AddRange( new string[] { "Property", "Value" } );
+    columnList.Insert(0, "Ordinal");
+    columnList.AddRange( new [] { "Property", "Value" } );
 }
 
 <!DOCTYPE html>
@@ -93,6 +94,7 @@
                         ajax: {
                             url: "http://localhost:8083/query",
                             type: "GET",
+                            dataType: "json",
                             data: values
                         }
                     });

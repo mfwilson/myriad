@@ -103,7 +103,7 @@ let scriptEntry(args) =
         let resultsFilter = cache.GetAny(filterContext) |> Seq.toList
 
 
-        let m = Cluster.ToMap(resultsFilter.[0], dimensions)
+        let m = Cluster.ToMap(resultsFilter.[0], dimensions, 0)
 
         //////
 

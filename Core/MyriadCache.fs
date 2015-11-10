@@ -28,10 +28,11 @@ type MyriadCache() =
         |> Seq.choose (fun c -> getClusterByContext context c.Clusters)
 
     let getAny (clusterSets : LockFreeList<ClusterSet> seq) (context : Context) =
-        clusterSets
-        |> Seq.choose (fun c -> getClusterSetByTime context.AsOf.UtcTicks c.Value)
-        |> Seq.map (fun c -> getAnyClusterByContext context c.Clusters)
-        |> Seq.concat
+        let any = clusterSets
+                  |> Seq.choose (fun c -> getClusterSetByTime context.AsOf.UtcTicks c.Value)
+                  |> Seq.map (fun c -> getAnyClusterByContext context c.Clusters)
+                  |> Seq.concat
+        if Seq.isEmpty any then getMatch clusterSets context else any
         
     let tryHead (ls:seq<'a>) : option<'a>  = ls |> Seq.tryPick Some
 

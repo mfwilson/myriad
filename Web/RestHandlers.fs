@@ -85,7 +85,7 @@ module RestHandlers =
             let dimensions = store.Dimensions |> Seq.cast<IDimension>
 
             let dataRows = clusters
-                           |> Seq.map (fun c -> Cluster.ToMap(c, dimensions))
+                           |> Seq.mapi (fun i c -> Cluster.ToMap(c, dimensions, i))
             
             let response = { data = dataRows }
 

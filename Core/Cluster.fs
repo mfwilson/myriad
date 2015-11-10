@@ -41,8 +41,8 @@ type Cluster =
         let measures = String.Join(", ", x.Measures)
         String.Format("'{0}' [{1}] = '{2}', Measures: {3}", x.Key, x.Id, x.Value, measures)
 
-    static member ToMap(cluster : Cluster, dimensions : IDimension seq) =
-        let values = [ "Id", cluster.Id.ToString(); "Property", cluster.Key; "Value", cluster.Value ]
+    static member ToMap(cluster : Cluster, dimensions : IDimension seq, ordinal : int) =
+        let values = [ "Id", cluster.Id.ToString(); "Property", cluster.Key; "Value", cluster.Value; "Ordinal", ordinal.ToString() ]
         let measures = cluster.Measures |> Set.toList |> List.map (fun m -> m.Dimension.Name, m.Value)
 
         let filterByDimension(dimension : IDimension) =
