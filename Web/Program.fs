@@ -1,5 +1,4 @@
-﻿
-open System
+﻿open System
 open System.Net
 
 open Suave
@@ -17,33 +16,25 @@ let store = new MockStore()
 let cache = new MyriadCache()
 store.SampleProperties |> Seq.iter cache.Insert
 
-let port = Sockets.Port.Parse("8083")
+let port = Sockets.Port.Parse("7888")
 
 let serverConfig = 
     { defaultConfig with
        bindings = [ HttpBinding.mk HTTP IPAddress.Any port ]
     }
 
+let setAccessControl =
+    Writers.setHeader "Access-Control-Allow-Origin" "*" 
+    >>= Writers.setHeader "Access-Control-Allow-Headers" "Origin, X-Requested-With, Content-Type, Accept, Key"   
+
 [<EntryPoint>]
 let main argv =
     startWebServer 
         serverConfig 
         (choose [
-            path "/find" 
-                >>= RestHandlers.Find cache store
-                >>= Writers.setHeader "Access-Control-Allow-Origin" "*" 
-                >>= Writers.setHeader "Access-Control-Allow-Headers" "Origin, X-Requested-With, Content-Type, Accept, Key"
-
-            path "/query" 
-                >>= RestHandlers.Query cache store
-                >>= Writers.setHeader "Access-Control-Allow-Origin" "*" 
-                >>= Writers.setHeader "Access-Control-Allow-Headers" "Origin, X-Requested-With, Content-Type, Accept, Key"
-
-            path "/properties" >>= RestHandlers.Properties cache store
-            pathStarts "/dimensions" >>= RestHandlers.Dimensions store
-            pathStarts "/metadata" >>= RestHandlers.Metadata store
-            
+            path "/api/1/find" >>= setAccessControl  >>= RestHandlers.Find cache store
+            path "/api/1/query" >>= setAccessControl >>= RestHandlers.Query cache store
             path "/api/1/dimensions/list" >>= RestHandlers.DimensionList store
-            // pathStarts "/api/1" >>= merge 1..N cluster sets (POST)
+            path "/api/1/metadata" >>= RestHandlers.Metadata store
         ])
     0 

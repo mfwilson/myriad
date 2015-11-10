@@ -8,6 +8,7 @@ open System.Web
 
 open Suave
 open Suave.Http
+open Suave.Http.Applicatives
 open Suave.Http.Successful
 open Suave.Http.Writers
 open Suave.Types
@@ -26,7 +27,7 @@ module RestHandlers =
             if dimension.IsNone then None else Some( { Dimension = dimension.Value; Value = kv.[key] } )
 
         let measures = kv.AllKeys |> Seq.choose getMeasure |> Set.ofSeq
-        { AsOf = DateTimeOffset.UtcNow; Measures = measures }        
+        { AsOf = DateTimeOffset.UtcNow; Measures = measures }
 
     /// Provides a view over dimensions and their values
     let Dimensions (store : MockStore) (x : HttpContext) = 
@@ -79,13 +80,13 @@ module RestHandlers =
             Console.WriteLine("Measures: " + String.Join(", ", measuresAsString))
 
             let clusters = match kv.["property"] with
-                           | propertyKey when String.IsNullOrEmpty(propertyKey) -> cache.GetAny(context)
-                           | propertyKey -> cache.GetAny(propertyKey, context)
+                            | propertyKey when String.IsNullOrEmpty(propertyKey) -> cache.GetAny(context)
+                            | propertyKey -> cache.GetAny(propertyKey, context)
             
             let dimensions = store.Dimensions |> Seq.cast<IDimension>
 
             let dataRows = clusters
-                           |> Seq.mapi (fun i c -> Cluster.ToMap(c, dimensions, i))
+                            |> Seq.mapi (fun i c -> Cluster.ToMap(c, dimensions, i))
             
             let response = { data = dataRows }
 

@@ -4,10 +4,10 @@
 
 @{
     var client = new WebClient();
-    var json = client.DownloadString("http://localhost:8083/metadata");
+    var json = client.DownloadString("http://localhost:7888/api/1/metadata");
     var metadata = Json.Decode(json);
 
-    var dimensionsJson = client.DownloadString("http://localhost:8083/api/1/dimensions/list");
+    var dimensionsJson = client.DownloadString("http://localhost:7888/api/1/dimensions/list");
     var dimensions = Json.Decode<List<string>>(dimensionsJson);
 
     var columnList = new List<string>(dimensions);
@@ -92,7 +92,7 @@
                         destroy: true,
                         displayLength: 50,
                         ajax: {
-                            url: "http://localhost:8083/query",
+                            url: "http://localhost:7888/api/1/query",
                             type: "GET",
                             dataType: "json",
                             data: values
