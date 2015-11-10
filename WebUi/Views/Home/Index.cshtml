@@ -33,11 +33,10 @@
 
     <link href="@Href("~/Content/dashboard.css")" rel="stylesheet" type="text/css" />
 
-    <script type="text/javascript">        
+    <script type="text/javascript">
         $(function () {
             $('#btnQuery').button({ icons: { primary: "ui-icon-search" } });
 
-            $('#btnAddProperty').button({ icons: { primary: "ui-icon-plusthick" }, text: false });            $('#btnClearProperty').button({ icons: { primary: "ui-icon-closethick" }, text: false });
             @foreach (var result in metadata)
             {
                 @*var addButton = "#btnAdd" + result.Dimension.Name;
@@ -53,13 +52,13 @@
                 @:)));
 
                 @:var values = [];
-                foreach (var value in result.Values)
+                            foreach (var value in result.Values)
                 {
                 @:values.push('@value');
-                }
+                            }
                 @:values.sort();
-                @:$('#@result.Dimension.Name').autocomplete({ source: values, minLength: 0 });
-            }
+                            @:$('#@result.Dimension.Name').autocomplete({ source: values, minLength: 0 });
+                        }
         });
 
         $(document).ready(function () {
@@ -68,7 +67,7 @@
             @foreach (var column in columnList)
             {
             @:columns.push({ title: '@column', data: '@column', width: '35px' });
-            }
+                        }
 
             var resultsTable = $('#resultsTable').DataTable({
                 columns: columns,
@@ -79,19 +78,19 @@
             $('#btnQuery').click(
                 function () {
                     var values = {};
-                    
+
                     $.each($('#queryForm').serializeArray(), function (i, field) {
                         if (field.value) {
                             values[field.name] = field.value;
                         }
                     });
-                    
+
                     resultsTable.destroy();
 
                     resultsTable = $('#resultsTable').DataTable({
                         columns: columns,
                         destroy: true,
-                        displayLength: 50,                        
+                        displayLength: 50,
                         ajax: {
                             url: "http://localhost:7888/api/1/query",
                             type: "GET",
@@ -99,10 +98,16 @@
                             data: values
                         }
                     });
-                    
                 }
             );
 
+            @foreach (var result in metadata)
+            {
+                var addButton = "#btnAdd" + result.Dimension.Name;
+                var clearButton = "#btnClear" + result.Dimension.Name;
+                @:$('@addButton').click(function () { alert('add'); });
+                @:$('@clearButton').click(function () { alert('clear'); });
+            }
         });
 
     </script>    
