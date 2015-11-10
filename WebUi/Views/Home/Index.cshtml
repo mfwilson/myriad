@@ -68,65 +68,37 @@
                 @:columns.push({ title: '@column', data: '@column' });
             }
 
+            var resultsTable = $('#resultsTable').DataTable({
+                columns: columns,
+                destroy: true,
+                displayLength: 50
+            });
+
             $('#btnQuery').click(
                 function () {
-                    //var values = {};
+                    var values = {};
                     
-                    //$.each($('#queryForm').serializeArray(), function (i, field) {
-                    //    if (field.value) {
-                    //        values[field.name] = field.value;
-                    //    }
-                    //});
-                    
-                    //$.post("http://localhost:8083/query", values,
-                    //    function (data) {
-                    //        alert(data);
-                    //        var localTable = $('#resultsTable').DataTable();
-                    //        localTable.data = data;
-                    //    }, "jsonp"
-                    //);
-
-                    var table = $('#resultsTable').DataTable({
-                        columns: columns,
-                        "bProcessing": true,
-                        "bServerSide": true,
-                        "sAjaxSource": "http://localhost:8083/query",
-                        "fnServerData": function (sSource, aoData, fnCallback) {                            
-                            $.each($('#queryForm').serializeArray(), function (i, field) {
-                                if (field.value) {
-                                    aoData.push( field );
-                                }
-                            });
-
-                            $.ajax({
-                                "dataType": 'json',
-                                "contentType": "application/json; charset=UTF-8",
-                                "type": "GET",
-                                "url": sSource,
-                                "data": aoData,
-                                "success": function (msg) {
-                                    //var j = $.parseJSON(msg.data);
-                                    //var json = jQuery.parseJSON(msg);
-                                    fnCallback(msg);
-                                    $("#resultsTable").show();
-                                },
-                                error: function (xhr, textStatus, error) {
-                                    if (typeof console == "object") {
-                                        console.log(xhr.status + "," + xhr.responseText + "," + textStatus + "," + error);
-                                    }
-                                }
-                            });
+                    $.each($('#queryForm').serializeArray(), function (i, field) {
+                        if (field.value) {
+                            values[field.name] = field.value;
                         }
                     });
                     
+                    resultsTable.destroy();
+
+                    resultsTable = $('#resultsTable').DataTable({
+                        columns: columns,
+                        destroy: true,
+                        displayLength: 50,
+                        ajax: {
+                            url: "http://localhost:8083/query",
+                            type: "GET",
+                            data: values
+                        }
+                    });
                 }
             );
 
-
-            //$('#resultsTable').DataTable( {
-            //    //data: dataSet,                
-            //    columns: columns
-            //} );
         });
 
     </script>    

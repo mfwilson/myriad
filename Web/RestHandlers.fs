@@ -8,13 +8,17 @@ open System.Web
 
 open Suave
 open Suave.Http
-open Suave.Http.Successful 
+open Suave.Http.Successful
+open Suave.Http.Writers
 open Suave.Types
 
 open Myriad
 open Myriad.Store
 
-module RestHandlers =    
+type AjaxResponse =
+    { data : Map<String, String> seq }
+
+module RestHandlers =
 
     let private getContext (store : MockStore) (kv : NameValueCollection) =
         let getMeasure(key) = 
@@ -82,11 +86,11 @@ module RestHandlers =
 
             let dataRows = clusters
                            |> Seq.map (fun c -> Cluster.ToMap(c, dimensions))
-                            
+            
+            let response = { data = dataRows }
 
-            let message = Newtonsoft.Json.JsonConvert.SerializeObject(dataRows)           
-            Console.WriteLine("Found {0} clusters\r\n{1}", Seq.length clusters, message)            
-
+            let message = Newtonsoft.Json.JsonConvert.SerializeObject(response)
+            Console.WriteLine("Found {0} clusters\r\n{1}", Seq.length clusters, message)
             return! OK message x
         }
 

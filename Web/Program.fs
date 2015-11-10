@@ -30,7 +30,10 @@ let main argv =
         serverConfig 
         (choose [
             path "/find" >>= RestHandlers.Find cache store
-            path "/query" >>= RestHandlers.Query cache store
+            path "/query" 
+                >>= RestHandlers.Query cache store
+                >>= Writers.setHeader "Access-Control-Allow-Origin" "*" 
+                >>= Writers.setHeader "Access-Control-Allow-Headers" "Origin, X-Requested-With, Content-Type, Accept, Key"
             path "/properties" >>= RestHandlers.Properties cache store
             pathStarts "/dimensions" >>= RestHandlers.Dimensions store
             pathStarts "/metadata" >>= RestHandlers.Metadata store
