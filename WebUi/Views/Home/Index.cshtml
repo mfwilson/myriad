@@ -22,7 +22,7 @@
     <meta charset="utf-8" />
     <title></title>
 
-    <script src="@Href("~/Scripts/jquery-1.10.2.min.js")" type="text/javascript"></script>
+    @*<script src="@Href("~/Scripts/jquery-1.10.2.min.js")" type="text/javascript"></script>*@
     
     <script src="@Href("~/Scripts/jquery-ui-1.11.4/jquery-ui.min.js")" type="text/javascript"></script>
     <link href="@Href("~/Scripts/jquery-ui-1.11.4/jquery-ui.theme.min.css")" type="text/css" rel="stylesheet"/>
@@ -37,6 +37,7 @@
         $(function () {
             $('#btnQuery').button({ icons: { primary: "ui-icon-search" } });
 
+            $('#btnAddProperty').button({ icons: { primary: "ui-icon-plusthick" }, text: false });            $('#btnClearProperty').button({ icons: { primary: "ui-icon-closethick" }, text: false });
             @foreach (var result in metadata)
             {
                 @*var addButton = "#btnAdd" + result.Dimension.Name;
@@ -66,7 +67,7 @@
             var columns = [];
             @foreach (var column in columnList)
             {
-                @:columns.push({ title: '@column', data: '@column' });
+            @:columns.push({ title: '@column', data: '@column', width: '35px' });
             }
 
             var resultsTable = $('#resultsTable').DataTable({
@@ -90,7 +91,7 @@
                     resultsTable = $('#resultsTable').DataTable({
                         columns: columns,
                         destroy: true,
-                        displayLength: 50,
+                        displayLength: 50,                        
                         ajax: {
                             url: "http://localhost:7888/api/1/query",
                             type: "GET",
@@ -98,6 +99,7 @@
                             data: values
                         }
                     });
+                    
                 }
             );
 
@@ -110,13 +112,24 @@
 <div class="row">
 
     <div class="col-sm-3 col-md-2 sidebar">
-        <button id="btnQuery" padding="0 0 0 10" type="submit">Query</button>
+        <button id="btnQuery" padding="0 0 0 10" type="submit">Query</button>        
         <div>
             <form id="queryForm">
                 @{
                     foreach (var result in metadata)
-                    {                        
+                    {
+                        var addButton = "#btnAdd" + result.Dimension.Name;
+                        var clearButton = "#btnClear" + result.Dimension.Name;
+
                     @:<label for="@result.Dimension.Name">@result.Dimension.Name</label>
+                    @:<button id="@addButton" class="ui-button ui-widget ui-state-default ui-corner-all ui-button-icon-only" role="button" aria-disabled="false" title="Add @result.Dimension.Name">
+                    @:    <span class="ui-button-icon-primary ui-icon ui-icon-circle-plus"></span>
+                    @:    <span class="ui-button-text">Button with icon only</span>
+                    @:</button>
+                    @:<button id="@clearButton" class="ui-button ui-widget ui-state-default ui-corner-all ui-button-icon-only" role="button" aria-disabled="false" title="Clear @result.Dimension.Name">
+                    @:    <span class="ui-button-icon-primary ui-icon ui-icon-closethick"></span>
+                    @:    <span class="ui-button-text">Button with icon only</span>
+                    @:</button>
                     @:<p>
                     @:<input type="text" id="@result.Dimension.Name" name="@result.Dimension.Name" onfocus="javascript:$(this).autocomplete('search', '');" />
                     @:<div id="selectList">

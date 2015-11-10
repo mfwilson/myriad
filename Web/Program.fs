@@ -25,7 +25,7 @@ let serverConfig =
 
 let setAccessControl =
     Writers.setHeader "Access-Control-Allow-Origin" "*" 
-    >>= Writers.setHeader "Access-Control-Allow-Headers" "Origin, X-Requested-With, Content-Type, Accept, Key"   
+    >>= Writers.setHeader "Access-Control-Allow-Headers" "Origin, X-Requested-With, Content-Type, Accept, Key"
 
 [<EntryPoint>]
 let main argv =

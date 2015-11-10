@@ -8,7 +8,7 @@ open Myriad
 
 type MockStore() =
 
-    let properties = [ "my.office.key"; "my.property.key" ]
+    let properties = [ "my.office.key"; "my.property.key"; "nx.auditFile.filter" ]
 
     // Environment, Location, Application, Instance
     let dimensions =
@@ -24,9 +24,9 @@ type MockStore() =
     let internalList = 
         [
             { Dimension = dimensions.[0]; Values = [ "PROD"; "UAT"; "DEV" ] };
-            { Dimension = dimensions.[1]; Values = [ "Chicago"; "New York"; "London"; "Amsterdam" ] };
-            { Dimension = dimensions.[2]; Values = [ "Rook"; "Knight"; "Pawn"; "Bishop" ] };
-            { Dimension = dimensions.[3]; Values = [ "mary"; "jimmy"; "rex"; "paulie" ] };
+            { Dimension = dimensions.[1]; Values = [ "Chicago"; "New York"; "London"; "Amsterdam"; "Paris"; "Berlin"; "Tokyo" ] };
+            { Dimension = dimensions.[2]; Values = [ "Rook"; "Knight"; "Pawn"; "Bishop"; "King"; "Queen" ] };
+            { Dimension = dimensions.[3]; Values = [ "mary"; "jimmy"; "rex"; "paulie"; "tommy" ] };
         ]
 
     let dimensionMap =
@@ -59,13 +59,21 @@ type MockStore() =
                 Cluster(0L, key, "file", mb { yield "Location", "Chicago" } )
             ]
 
+    let getNxClusters (key : String) (mb : MeasureBuilder) =
+        Seq.ofList
+            [
+                Cluster(0L, key, "*.csv", mb { yield "Environment", "UAT"; yield "Location", "Tokyo";  } )
+                Cluster(0L, key, "*.txt", Set.empty )
+            ]
+
     let sampleProperties =
         let map = dimensions |> Seq.map (fun d -> d.Name, d :> IDimension) |> Map.ofSeq
         let mb = new MeasureBuilder(map)
         let setBuilder = new ClusterSetBuilder(dimensions |> Seq.cast<IDimension>)
 
         [ setBuilder.Create(getFruitClusters "my.property.key" mb)
-          setBuilder.Create(getOfficeClusters "my.office.key" mb) ]
+          setBuilder.Create(getOfficeClusters "my.office.key" mb) 
+          setBuilder.Create(getNxClusters "nx.auditFile.filter" mb) ]
 
     member x.Dimensions with get() = dimensions
 

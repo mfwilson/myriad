@@ -7,9 +7,7 @@ open System.Runtime.InteropServices
 type MyriadCache() =
     let cache = new ConcurrentDictionary<String, LockFreeList<ClusterSet>>()
 
-    let isSubset (first : Set<Measure>) (second : Set<Measure>) = 
-        let g = Set.isSubset first second
-        g
+    let isSubset (first : Set<Measure>) (second : Set<Measure>) = Set.isSubset first second
             
     let getClusterSetByTime (ticks) (clusterSets : ClusterSet list) =
         clusterSets |> List.tryFind (fun tlist -> tlist.Timestamp <= ticks)
