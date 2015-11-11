@@ -13,112 +13,73 @@ open Suave.Http.Successful
 open Suave.Http.Writers
 open Suave.Types
 
+open Newtonsoft.Json
+
 open Myriad
-open Myriad.Store
 
 type AjaxResponse =
     { data : Map<String, String> seq }
 
 module RestHandlers =
 
-    let private getContext (store : MockStore) (kv : NameValueCollection) =
+    let private getContext (getDimension : String -> IDimension option) (kv : NameValueCollection) =
         let getMeasure(key) = 
-            let dimension = store.GetDimension(key)
+            let dimension = getDimension(key)
             if dimension.IsNone then None else Some( { Dimension = dimension.Value; Value = kv.[key] } )
 
         let measures = kv.AllKeys |> Seq.choose getMeasure |> Set.ofSeq
         { AsOf = DateTimeOffset.UtcNow; Measures = measures }
 
-    /// Provides a view over dimensions and their values
-    let Dimensions (store : MockStore) (x : HttpContext) = 
-        async {
-            let getHtmlBody(absolutePath : String) =
-                let dimension = 
-                    match absolutePath.LastIndexOf("/") with
-                    | -1 -> ""
-                    | index -> absolutePath.Substring(index + 1)
-                store.GetDimensionValues(dimension)
-
-            let message = match x.request.url.AbsolutePath with
-                          | "/dimensions" | "/dimensions/" -> store.GetDimensions()
-                          | dimension -> getHtmlBody(dimension)
-                                
-            return! OK message x
-        }
-
     /// Provides an ordered list of dimensions 
-    let DimensionList (store : MockStore) (x : HttpContext) = 
+    let DimensionList (engine : MyriadEngine) (x : HttpContext) = 
         async {
-            let message = store.GetDimensionList()
-            return! OK message x
-        }
-
-    /// Provides a view over properties
-    let Properties (cache : MyriadCache) (store : MockStore) (x : HttpContext) = 
-        async {
-            let message = store.GetProperties()
+            let dimensionList = engine.GetDimensions() |> List.map (fun d -> d.Name)
+            let message = JsonConvert.SerializeObject(dimensionList)
             return! OK message x
         }
 
     /// Provides a view over both properties and dimensions
-    let Metadata (store : MockStore) (x : HttpContext) = 
+    let Metadata (engine : MyriadEngine) (x : HttpContext) = 
         async {
-            let message = store.GetMetadata()
+            let metadata = engine.GetMetadata()
+            let message = JsonConvert.SerializeObject(metadata)
             return! OK message x
         }
 
     /// Query -> JSON w/ context
-    let Query (cache : MyriadCache) (store : MockStore) (x : HttpContext) =
+    let Query (engine : MyriadEngine) (x : HttpContext) =
         async {
-            Console.WriteLine(x.request.rawQuery)
+            Console.WriteLine("REQ: " + x.request.rawQuery)
 
             let kv = HttpUtility.ParseQueryString(x.request.rawQuery)
 
-            let context = getContext store kv
+            let context = getContext (engine.GetDimension) kv
 
             let measuresAsString = context.Measures |> Seq.map (fun m -> m.ToString())
             Console.WriteLine("Measures: " + String.Join(", ", measuresAsString))
 
-            let clusters = match kv.["property"] with
-                            | propertyKey when String.IsNullOrEmpty(propertyKey) -> cache.GetAny(context)
-                            | propertyKey -> cache.GetAny(propertyKey, context)
-            
-            let dimensions = store.Dimensions |> Seq.cast<IDimension>
+            let clusters = engine.Query(kv.["property"], context)
+            let dimensions = engine.GetDimensions() 
+            let dataRows = clusters |> Seq.mapi (fun i c -> Cluster.ToMap(c, dimensions, i))
 
-            let dataRows = clusters
-                            |> Seq.mapi (fun i c -> Cluster.ToMap(c, dimensions, i))
-            
             let response = { data = dataRows }
-
             let message = Newtonsoft.Json.JsonConvert.SerializeObject(response)
             Console.WriteLine("Found {0} clusters\r\n{1}", Seq.length clusters, message)
             return! OK message x
         }
 
     /// Find -> URL properties with dimensions name=value
-    let Find (cache : MyriadCache) (store : MockStore) (x : HttpContext) =
+    let Find (engine : MyriadEngine) (x : HttpContext) =
         async {
             let kv = HttpUtility.ParseQueryString(x.request.rawQuery)
 
-            let getMeasure(key) = 
-                let dimension = store.GetDimension(key)
-                if dimension.IsNone then None else Some( { Dimension = dimension.Value; Value = kv.[key] } )
+            let context = getContext (engine.GetDimension) kv
 
-            let measures = kv.AllKeys 
-                           |> Seq.choose getMeasure
-                           |> Set.ofSeq
-                         
-            let context = { AsOf = DateTimeOffset.UtcNow; Measures = measures }
-
-            let clusters = match kv.["property"] with
-                           | propertyKey when String.IsNullOrEmpty(propertyKey) -> cache.GetMatches(context)
-                           | propertyKey -> 
-                                let success, result = cache.TryFind(propertyKey, context)
-                                if result.IsNone then Seq.empty else [ result.Value ] |> Seq.ofList
+            let clusters = engine.Find(kv.["property"], context)
 
             let builder = new StringBuilder("<body>")
 
-            let measuresAsString = measures |> Seq.map (fun m -> m.ToString())
+            let measuresAsString = context.Measures |> Seq.map (fun m -> m.ToString())
             builder.AppendFormat("Context AsOf: {0}, Measures: {1}<p>", context.AsOf, String.Join(", ", measuresAsString)) |> ignore
 
             clusters |> Seq.iter (fun c -> builder.AppendFormat("Property: [{0}] = [{1}]<p>", c.Key, c.Value) |> ignore)

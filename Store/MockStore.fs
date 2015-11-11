@@ -75,6 +75,17 @@ type MockStore() =
           setBuilder.Create(getOfficeClusters "my.office.key" mb) 
           setBuilder.Create(getNxClusters "nx.auditFile.filter" mb) ]
 
+    interface IMyriadStore with
+        member x.Initialize() = ignore()
+        member x.GetClusterSets(history) = x.GetClusterSets(history)
+        member x.GetDimensions() = dimensions |> Seq.cast<IDimension> |> Seq.toList
+        member x.GetDimension(key) = x.GetDimension(key)
+        member x.GetMetadata() = x.GetMetadata()
+
+    member x.GetClusterSets(history : MyriadHistory) = 
+        sampleProperties
+
+
     member x.Dimensions with get() = dimensions
 
     member x.DimensionMap with get() = dimensionMap
@@ -103,6 +114,6 @@ type MockStore() =
 
     member x.GetMetadata() =
         let property = { Name = "Property"; Id = 0L }
-        let metadata = List.append [ { Dimension = property; Values = properties } ] internalList
-        JsonConvert.SerializeObject(metadata)
+        List.append [ { Dimension = property; Values = properties } ] internalList
+        //JsonConvert.SerializeObject(metadata)
 
