@@ -59,6 +59,7 @@
     <Compile Include="Context.fs" />
     <Compile Include="LockFreeList.fs" />
     <Compile Include="Builders.fs" />
+    <Compile Include="MyriadResponse.fs" />
     <Compile Include="MyriadCache.fs" />
     <Compile Include="MyriadStore.fs" />
     <Compile Include="MyriadEngine.fs" />
@@ -72,5 +73,7 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Numerics" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Xml" />
   </ItemGroup>
 </Project>

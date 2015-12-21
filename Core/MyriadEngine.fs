@@ -23,8 +23,8 @@ type MyriadEngine(store : IMyriadStore) =
         | key when String.IsNullOrEmpty(key) -> cache.GetAny(context)
         | key -> cache.GetAny(key, context)
     
-    /// Find values that are the best match and not filtered by the context; if property key is empty, find over all keys
-    member x.Find(propertyKey : String, context : Context) =
+    /// Get values that are the best match and not filtered by the context; if property key is empty, find over all keys
+    member x.Get(propertyKey : String, context : Context) =
         match propertyKey with
         | key when String.IsNullOrEmpty(key) -> cache.GetMatches(context)
         | key -> 

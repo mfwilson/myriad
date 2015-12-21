@@ -1,6 +1,8 @@
 ﻿namespace Myriad
 
 open System
+open System.Xml
+open System.Xml.Serialization
 
 type IDimension =
     abstract Id : Int64 with get
@@ -21,6 +23,11 @@ type Dimension =
         member x.Id with get() = x.Id
         member x.Name with get() = x.Name
 
+    interface IXmlSerializable with
+        member x.GetSchema() = null
+        member x.ReadXml(reader) = ignore()
+        member x.WriteXml(writer) = x.WriteXml(writer)
+
     override x.ToString() = String.Concat("Dimension [", x.Name, "]")
 
     override x.Equals(obj) = 
@@ -29,6 +36,12 @@ type Dimension =
         | _ -> false
 
     override x.GetHashCode() = hash(x.Id)
+
+    member x.WriteXml(writer : XmlWriter) =
+        writer.WriteStartElement("Dimension")
+        writer.WriteAttributeString("Id", x.Id.ToString())
+        writer.WriteAttributeString("Name", x.Name)
+        writer.WriteEndElement()
     
     static member Create(id : Int64, name : String) = { Id = id; Name = name }
 

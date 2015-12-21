@@ -57,6 +57,7 @@
   <Import Project="$(FSharpTargetsPath)" />
   <ItemGroup>
     <Compile Include="AssemblyInfo.fs" />
+    <Compile Include="XmlConvert.fs" />
     <Compile Include="RestHandlers.fs" />
     <Compile Include="Program.fs" />
     <None Include="App.config" />
@@ -110,6 +111,7 @@
       <Project>{853c35e9-a3ba-48ff-a058-44e12441dceb}</Project>
       <Private>True</Private>
     </ProjectReference>
+    <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.Web" />
     <Reference Include="System.Xml" />
     <Reference Include="System.Xml.Linq" />

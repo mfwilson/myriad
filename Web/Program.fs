@@ -4,6 +4,7 @@ open System.Net
 open Suave
 open Suave.Http
 open Suave.Http.Applicatives
+open Suave.Http.RequestErrors
 open Suave.Types
 open Suave.Web
 
@@ -29,7 +30,7 @@ let main argv =
     startWebServer 
         serverConfig 
         (choose [
-            path "/api/1/find" >>= setAccessControl  >>= RestHandlers.Find engine
+            path "/api/1/get" >>= setAccessControl >>= Writers.setMimeType("text/json") >>= RestHandlers.Get engine 
             path "/api/1/query" >>= setAccessControl >>= RestHandlers.Query engine
             path "/api/1/dimensions/list" >>= RestHandlers.DimensionList engine
             path "/api/1/metadata" >>= RestHandlers.Metadata engine
