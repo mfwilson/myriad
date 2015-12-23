@@ -11,6 +11,6 @@ module XmlConvert =
     
     let SerializeObject(value : Object) =
         let builder = new StringBuilder()
-        let xmlSerializer = new DataContractSerializer(value.GetType()) 
-        xmlSerializer.WriteObject(new XmlTextWriter(new StringWriter(builder)), value)
+        let xmlSerializer = new XmlSerializer(value.GetType()) 
+        xmlSerializer.Serialize(new XmlTextWriter(new StringWriter(builder)), value)
         builder.ToString()

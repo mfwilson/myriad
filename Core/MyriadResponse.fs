@@ -20,6 +20,7 @@ type MyriadProperty =
         writer.WriteEndElement()
 
 /// Response data from a configuration query
+[<CLIMutable>]
 type MyriadResponse =
     { Requested : DateTimeOffset; Context : Context; Properties : MyriadProperty seq }
     
