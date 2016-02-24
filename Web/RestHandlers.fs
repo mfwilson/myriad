@@ -9,11 +9,8 @@ open System.Web
 
 open Suave
 open Suave.Http
-open Suave.Http.Applicatives
-open Suave.Http.RequestErrors
-open Suave.Http.Successful
-open Suave.Http.Writers
-open Suave.Types
+open Suave.RequestErrors
+open Suave.Successful
 
 open Newtonsoft.Json
 
