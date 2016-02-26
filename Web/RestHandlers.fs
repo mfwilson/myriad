@@ -110,3 +110,8 @@ module RestHandlers =
         }
         
         
+    /// Set -> URL properties with dimensions name=value
+    let Set (engine : MyriadEngine) (x : HttpContext) =
+        async {            
+            return! OK "Set called" x
+        }

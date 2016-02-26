@@ -15,6 +15,7 @@ open Myriad.Web
 let engine = new MyriadEngine(new MockStore())
 
 let port = Sockets.Port.Parse("7888")
+let prefix = "/api/1/myriad/"
 
 let serverConfig = 
     { defaultConfig with
@@ -28,10 +29,11 @@ let setAccessControl =
 let app : WebPart =
     choose [
         GET >=> choose [ 
-            path "/api/1/get" >=> setAccessControl >=> Writers.setMimeType("text/json") >=> RestHandlers.Get engine 
-            path "/api/1/query" >=> setAccessControl >=> RestHandlers.Query engine
-            path "/api/1/dimensions/list" >=> RestHandlers.DimensionList engine
-            path "/api/1/metadata" >=> RestHandlers.Metadata engine 
+            path (prefix + "get") >=> setAccessControl >=> Writers.setMimeType("text/json") >=> RestHandlers.Get engine 
+            path (prefix + "query") >=> setAccessControl >=> RestHandlers.Query engine
+            path (prefix + "dimensions/list") >=> RestHandlers.DimensionList engine
+            path (prefix + "metadata") >=> RestHandlers.Metadata engine 
+            path (prefix + "set") >=> RestHandlers.Set engine 
         ]
     ]
 
