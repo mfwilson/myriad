@@ -12,7 +12,7 @@ type MeasureBuilder(map : Map<String, IDimension>) =
     member x.Delay(f) = f()
 
 /// Orders a sequence of clusters by dimension
-type ClusterSetBuilder(dimensions : IDimension seq) =
+type PropertyBuilder(dimensions : IDimension seq) =
     // Dimension Id -> weight
     let weights = dimensions |> Seq.mapi (fun i d -> d.Id, int (2.0 ** float i)) |> Map.ofSeq
     
@@ -25,8 +25,8 @@ type ClusterSetBuilder(dimensions : IDimension seq) =
 //        //collection |> Seq.sortWith compareClusters |> Seq.iter addOrUpdate
 //        collection |> Seq.groupBy (fun c -> c.Key) |> Seq.iter addOrUpdate
     
-    member x.Create(clusters : Cluster seq) =
+    member x.Create(key : String, clusters : Cluster seq) =
         let clustersByWeight = clusters |> Seq.toList |> List.sortWith compareMeasures 
         let lastCluster = clusters |> Seq.maxBy (fun c -> c.Timestamp) 
-        ClusterSet(lastCluster.Key, lastCluster.Timestamp, clustersByWeight)
+        Property(key, lastCluster.Timestamp, clustersByWeight)
         

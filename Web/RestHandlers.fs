@@ -71,13 +71,13 @@ module RestHandlers =
             let measuresAsString = context.Measures |> Seq.map (fun m -> m.ToString())
             Console.WriteLine("Measures: " + String.Join(", ", measuresAsString))
 
-            let clusters = engine.Query(kv.["property"], context)
+            let properties = engine.Query(kv.["property"], context)
             let dimensions = engine.GetDimensions() 
-            let dataRows = clusters |> Seq.mapi (fun i c -> Cluster.ToMap(c, dimensions, i))
+            let dataRows = properties |> Seq.mapi (fun i p -> Cluster.ToMap(fst(p).Key, snd(p), dimensions, i))
 
             let response = { data = dataRows }
             let message = JsonConvert.SerializeObject(response)
-            Console.WriteLine("Found {0} clusters\r\n{1}", Seq.length clusters, message)
+            Console.WriteLine("Found {0} clusters\r\n{1}", Seq.length properties, message)
             return! OK message x
         }    
 
@@ -90,9 +90,7 @@ module RestHandlers =
                 let kv = HttpUtility.ParseQueryString(x.request.rawQuery)
                 let context = getContext (engine.GetDimension) kv
 
-                let clusters = engine.Get(kv.["property"], context)
-                let properties = clusters |> Seq.map (fun c -> { Name = c.Key; Value = c.Value } )
-
+                let properties = engine.Get(kv.["property"], context)
                 let response = { Requested = DateTimeOffset.UtcNow; Context = context; Properties = properties }            
                 let contentType, message = getResponseString kv.["format"] response       
                                 
@@ -110,8 +108,22 @@ module RestHandlers =
         }
         
         
-    /// Set -> URL properties with dimensions name=value
+    /// Set -> PUT w/ JSON data
     let Set (engine : MyriadEngine) (x : HttpContext) =
         async {            
-            return! OK "Set called" x
+            try
+                Console.WriteLine("REQ: set " + x.request.rawQuery)
+
+                
+
+                return! OK "Set called" x
+            with 
+            | :? ArgumentException as ex -> 
+                Console.WriteLine("UNPROCESSABLE_ENTITY: Get {0}\r\n{1}", x.request.rawQuery, ex.ToString())
+                let! ctx = Writers.setMimeType "text/plain" x
+                return! UNPROCESSABLE_ENTITY (ex.Message) ctx.Value
+            | ex -> 
+                Console.WriteLine("BAD_REQUEST: Get {0}\r\n{1}", x.request.rawQuery, ex.ToString())
+                let! ctx = Writers.setMimeType "text/plain" x
+                return! BAD_REQUEST (ex.Message) ctx.Value
         }

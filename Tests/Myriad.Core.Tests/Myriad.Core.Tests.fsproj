@@ -58,6 +58,7 @@
     <Content Include="app.config" />
     <Compile Include="FsCheckAddin.fs" />
     <Compile Include="MyriadCacheTests.fs" />
+    <Compile Include="MyriadEngineTests.fs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FSharp.Core, Version=$(TargetFSharpCoreVersion), Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">

@@ -35,56 +35,55 @@ type MockStore() =
     let queryMap =
         dimensions |> Seq.map (fun d -> d.Name.ToLower(), d :> IDimension) |> Map.ofSeq
 
-    let getFruitClusters (key : String) (mb : MeasureBuilder) =
+    let getFruitClusters (mb : MeasureBuilder) =
         Seq.ofList
             [
-                Cluster(0L, key, "apple", mb { yield "Environment", "PROD"; yield "Location", "London"; yield "Instance", "rex" } )
-                Cluster(0L, key, "pear", mb { yield "Environment", "PROD"; yield "Instance", "rex" } )
-                Cluster(0L, key, "pecan", mb { yield "Instance", "rex" } )
-                Cluster(0L, key, "peach", mb { yield "Application", "Rook" } )
-                Cluster(0L, key, "strawberry", mb { yield "Location", "Chicago" } )
-                Cluster(0L, key, "apricot", mb { yield "Environment", "DEV" } )
-                Cluster(0L, key, "pumpkin", Set.empty )
+                Cluster(0L, "apple", mb { yield "Environment", "PROD"; yield "Location", "London"; yield "Instance", "rex" } )
+                Cluster(0L, "pear", mb { yield "Environment", "PROD"; yield "Instance", "rex" } )
+                Cluster(0L, "pecan", mb { yield "Instance", "rex" } )
+                Cluster(0L, "peach", mb { yield "Application", "Rook" } )
+                Cluster(0L, "strawberry", mb { yield "Location", "Chicago" } )
+                Cluster(0L, "apricot", mb { yield "Environment", "DEV" } )
+                Cluster(0L, "pumpkin", Set.empty )
             ]
 
-    let getOfficeClusters (key : String) (mb : MeasureBuilder) =
+    let getOfficeClusters (mb : MeasureBuilder) =
         Seq.ofList
             [
-                Cluster(0L, key, "pencil", mb { yield "Environment", "PROD"; yield "Location", "London"; yield "Instance", "rex" } )
-                Cluster(0L, key, "desk", mb { yield "Environment", "PROD"; yield "Instance", "rex" } )
-                Cluster(0L, key, "blotter", mb { yield "Environment", "UAT" } )
-                Cluster(0L, key, "coffee", mb { yield "Environment", "DEV" } )
-                Cluster(0L, key, "chair", mb { yield "Instance", "jimmy" } )
-                Cluster(0L, key, "ruler", mb { yield "Application", "Bishop" } )
-                Cluster(0L, key, "file", mb { yield "Location", "Chicago" } )
+                Cluster(0L, "pencil", mb { yield "Environment", "PROD"; yield "Location", "London"; yield "Instance", "rex" } )
+                Cluster(0L, "desk", mb { yield "Environment", "PROD"; yield "Instance", "rex" } )
+                Cluster(0L, "blotter", mb { yield "Environment", "UAT" } )
+                Cluster(0L, "coffee", mb { yield "Environment", "DEV" } )
+                Cluster(0L, "chair", mb { yield "Instance", "jimmy" } )
+                Cluster(0L, "ruler", mb { yield "Application", "Bishop" } )
+                Cluster(0L, "file", mb { yield "Location", "Chicago" } )
             ]
 
-    let getNxClusters (key : String) (mb : MeasureBuilder) =
+    let getNxClusters (mb : MeasureBuilder) =
         Seq.ofList
             [
-                Cluster(0L, key, "*.csv", mb { yield "Environment", "UAT"; yield "Location", "Tokyo";  } )
-                Cluster(0L, key, "*.txt", Set.empty )
+                Cluster(0L, "*.csv", mb { yield "Environment", "UAT"; yield "Location", "Tokyo";  } )
+                Cluster(0L, "*.txt", Set.empty )
             ]
 
     let sampleProperties =
         let map = dimensions |> Seq.map (fun d -> d.Name, d :> IDimension) |> Map.ofSeq
         let mb = new MeasureBuilder(map)
-        let setBuilder = new ClusterSetBuilder(dimensions |> Seq.cast<IDimension>)
+        let setBuilder = new PropertyBuilder(dimensions |> Seq.cast<IDimension>)
 
-        [ setBuilder.Create(getFruitClusters "my.property.key" mb)
-          setBuilder.Create(getOfficeClusters "my.office.key" mb) 
-          setBuilder.Create(getNxClusters "nx.auditFile.filter" mb) ]
+        [ setBuilder.Create("my.property.key", getFruitClusters mb)
+          setBuilder.Create("my.office.key", getOfficeClusters  mb) 
+          setBuilder.Create("nx.auditFile.filter", getNxClusters  mb) ]
 
     interface IMyriadStore with
         member x.Initialize() = ignore()
-        member x.GetClusterSets(history) = x.GetClusterSets(history)
+        member x.GetProperties(history) = x.GetProperties(history)
         member x.GetDimensions() = dimensions |> Seq.cast<IDimension> |> Seq.toList
         member x.GetDimension(key) = x.GetDimension(key)
         member x.GetMetadata() = x.GetMetadata()
 
-    member x.GetClusterSets(history : MyriadHistory) = 
+    member x.GetProperties(history : MyriadHistory) = 
         sampleProperties
-
 
     member x.Dimensions with get() = dimensions
 

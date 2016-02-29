@@ -96,7 +96,7 @@ type RedisConnection(configuration : String) =
 
     member x.CreateCluster(key : String, value : String, measures : Set<Measure>) =
         let id = x.GetId()
-        let cluster = new Cluster(id, key, value, measures, getAudit())
+        let cluster = new Cluster(id, value, measures, getAudit())
         let clusterJson = JsonConvert.SerializeObject(cluster)
 
         let database = getDatabase()

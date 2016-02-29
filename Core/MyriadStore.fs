@@ -10,7 +10,7 @@ type MyriadHistory =
 type IMyriadStore =
     abstract Initialize : unit -> unit
 
-    abstract GetClusterSets : MyriadHistory -> ClusterSet list
+    abstract GetProperties : MyriadHistory -> Property list
 
     /// GetMetadata: return list of name+values where name is a dimension name and values contains the list of possible values
     ///   NOTE: this list should also contain "Property" and list of properties
@@ -30,12 +30,26 @@ type IMyriadStore =
     // RemoveValue: given dimension or property name and value, remove the value from the list of possible values
     // - If value used in current key set, do not remove (tricky)
 
-
-
-
-    // Cache
-
     // Query: given a set of name-value pairs corresponding to dimensions, return matching clusters
+
+type MemoryStore() =
+    
+    interface IMyriadStore with
+        member x.Initialize() = ignore()
+        member x.GetProperties(history) = x.GetProperties(history)
+        member x.GetMetadata() = x.GetMetadata()
+        member x.GetDimensions() = x.GetDimensions()    
+        member x.GetDimension(dimension) = x.GetDimension(dimension)
+
+    member x.GetProperties(history : MyriadHistory) =
+        []
+
+    member x.GetMetadata() = 
+        []
+
+    member x.GetDimensions() = []
+
+    member x.GetDimension(dimension) = None
 
 
 

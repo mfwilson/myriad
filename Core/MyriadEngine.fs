@@ -8,8 +8,7 @@ type MyriadEngine(store : IMyriadStore) =
 
     do
         store.Initialize()
-        store.GetClusterSets(MyriadHistory.All()) |> Seq.iter cache.Insert
-
+        store.GetProperties(MyriadHistory.All()) |> Seq.iter cache.Insert
 
     member x.GetDimension(key : String) = store.GetDimension(key)
 
@@ -25,8 +24,14 @@ type MyriadEngine(store : IMyriadStore) =
     
     /// Get values that are the best match and not filtered by the context; if property key is empty, find over all keys
     member x.Get(propertyKey : String, context : Context) =
-        match propertyKey with
-        | key when String.IsNullOrEmpty(key) -> cache.GetMatches(context)
-        | key -> 
-            let success, result = cache.TryFind(key, context)
-            if result.IsNone then Seq.empty else [ result.Value ] |> Seq.ofList
+        let properties = match propertyKey with
+                         | key when String.IsNullOrEmpty(key) -> cache.GetMatches(context)
+                         | key -> 
+                             let success, result = cache.TryFind(key, context)
+                             if result.IsNone then Seq.empty else [ result.Value ] |> Seq.ofList
+        properties |> Seq.map (fun pair -> { Name = fst(pair).Key; Value = snd(pair).Value}) |> Seq.toList
+
+    member x.Set(property : Property) = 
+        
+        // TODO: Write through to store then insert in to cache
+        cache.Insert(property)

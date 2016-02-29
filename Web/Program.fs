@@ -33,6 +33,8 @@ let app : WebPart =
             path (prefix + "query") >=> setAccessControl >=> RestHandlers.Query engine
             path (prefix + "dimensions/list") >=> RestHandlers.DimensionList engine
             path (prefix + "metadata") >=> RestHandlers.Metadata engine 
+        ]
+        PUT >=> choose [
             path (prefix + "set") >=> RestHandlers.Set engine 
         ]
     ]

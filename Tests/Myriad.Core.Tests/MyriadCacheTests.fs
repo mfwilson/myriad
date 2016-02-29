@@ -20,16 +20,15 @@ type MyriadCacheTests() =
         |> Seq.cast<IDimension>
 
     let getClusters(mb : MeasureBuilder) =
-        let key = "my.property.key"
         Seq.ofList
             [
-                Cluster(0L, key, "apple", mb { yield "Environment", "PROD"; yield "Location", "London"; yield "Instance", "rex" } )
-                Cluster(0L, key, "pear", mb { yield "Environment", "PROD"; yield "Instance", "rex" } )
-                Cluster(0L, key, "pecan", mb { yield "Instance", "rex" } )
-                Cluster(0L, key, "peach", mb { yield "Application", "Rook" } )
-                Cluster(0L, key, "strawberry", mb { yield "Location", "Chicago" } )
-                Cluster(0L, key, "apricot", mb { yield "Environment", "DEV" } )
-                Cluster(0L, key, "pumpkin", Set.empty )
+                Cluster(0L, "apple", mb { yield "Environment", "PROD"; yield "Location", "London"; yield "Instance", "rex" } )
+                Cluster(0L, "pear", mb { yield "Environment", "PROD"; yield "Instance", "rex" } )
+                Cluster(0L, "pecan", mb { yield "Instance", "rex" } )
+                Cluster(0L, "peach", mb { yield "Application", "Rook" } )
+                Cluster(0L, "strawberry", mb { yield "Location", "Chicago" } )
+                Cluster(0L, "apricot", mb { yield "Environment", "DEV" } )
+                Cluster(0L, "pumpkin", Set.empty )
             ]
 
     [<Test>]
@@ -38,9 +37,9 @@ type MyriadCacheTests() =
         let dimensionMap = dimensions |> Seq.map (fun d -> d.Name, d) |> Map.ofSeq
         let mb = new MeasureBuilder(dimensionMap)
 
-        let setBuilder = new ClusterSetBuilder(dimensions)
+        let setBuilder = new PropertyBuilder(dimensions)
 
-        let clusterSet = setBuilder.Create(getClusters(mb))
+        let clusterSet = setBuilder.Create("my.property.key", getClusters(mb))
 
         let cache = new MyriadCache()
         cache.Insert(clusterSet)

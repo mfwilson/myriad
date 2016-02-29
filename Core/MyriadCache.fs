@@ -5,47 +5,50 @@ open System.Collections.Concurrent
 open System.Runtime.InteropServices
 
 type MyriadCache() =
-    let cache = new ConcurrentDictionary<String, LockFreeList<ClusterSet>>()
+    let cache = new ConcurrentDictionary<String, LockFreeList<Property>>()
 
     let isSubset (first : Set<Measure>) (second : Set<Measure>) = Set.isSubset first second
             
-    let getClusterSetByTime (ticks) (clusterSets : ClusterSet list) =
-        clusterSets |> List.tryFind (fun tlist -> tlist.Timestamp <= ticks)
+    let getPropertyByTime (ticks) (properties : Property list) =
+        properties |> List.tryFind (fun tlist -> tlist.Timestamp <= ticks)
 
     /// If the cluster's measures are a subset of the context's measures, then it is a match
-    let getClusterByContext (context) (clusters : Cluster list) =
-        clusters |> List.tryFind (fun cluster -> isSubset (cluster.Measures) (context.Measures))
+    let getPropertyByContext (context) (property : Property) =
+        let result = property.Clusters |> List.tryFind (fun cluster -> isSubset (cluster.Measures) (context.Measures))
+        if result.IsNone then None else Some(property, result.Value)
 
     /// If the context's measures are a subset of the cluster's measures, then it is a match
-    let getAnyClusterByContext (context) (clusters : Cluster list) =
-        clusters |> List.filter (fun cluster -> isSubset (context.Measures) (cluster.Measures)) 
+    let getAnyPropertyByContext (context) (property : Property) =
+        property.Clusters 
+        |> List.filter (fun cluster -> isSubset (context.Measures) (cluster.Measures)) 
+        |> List.map (fun cluster -> property, cluster)
+        
+    let getMatch (properties : LockFreeList<Property> seq) (context : Context) =
+        properties
+        |> Seq.choose (fun p -> getPropertyByTime context.AsOf.UtcTicks p.Value)
+        |> Seq.choose (fun p -> getPropertyByContext context p)
 
-    let getMatch (clusterSets : LockFreeList<ClusterSet> seq) (context : Context) =
-        clusterSets
-        |> Seq.choose (fun c -> getClusterSetByTime context.AsOf.UtcTicks c.Value)
-        |> Seq.choose (fun c -> getClusterByContext context c.Clusters)
-
-    let getAny (clusterSets : LockFreeList<ClusterSet> seq) (context : Context) =
-        let any = clusterSets
-                  |> Seq.choose (fun c -> getClusterSetByTime context.AsOf.UtcTicks c.Value)
-                  |> Seq.map (fun c -> getAnyClusterByContext context c.Clusters)
+    let getAny (properties : LockFreeList<Property> seq) (context : Context) =
+        let any = properties
+                  |> Seq.choose (fun c -> getPropertyByTime context.AsOf.UtcTicks c.Value)
+                  |> Seq.map (fun c -> getAnyPropertyByContext context c)
                   |> Seq.concat
-        if Seq.isEmpty any then getMatch clusterSets context else any
+        if Seq.isEmpty any then getMatch properties context else any
         
     let tryHead (ls:seq<'a>) : option<'a>  = ls |> Seq.tryPick Some
 
     member x.Keys with get() = cache.Keys
 
     member x.TryGetValue(key : String, context : Context, [<Out>] value : byref<String>) =
-        let success, property = x.TryFind(key, context)
-        if not success || property.IsNone then 
+        let success, result = x.TryFind(key, context)
+        if not success || result.IsNone then 
             false 
         else 
-            value <- property.Value.Value
+            value <- snd(result.Value).Value
             true
 
     /// Find the cluster that best matches the property and context
-    member x.TryFind(key : String, context : Context, [<Out>] value : byref<Cluster option>) =
+    member x.TryFind(key : String, context : Context, [<Out>] value : byref<(Property * Cluster) option>) =
         let success, result = cache.TryGetValue key
         if not success then
             value <- None
@@ -53,8 +56,8 @@ type MyriadCache() =
         else
             // Find 1st item less then timestamp
             value <- [ result.Value ]
-                     |> Seq.choose (fun c -> getClusterSetByTime context.AsOf.UtcTicks c)
-                     |> Seq.choose (fun c -> getClusterByContext context c.Clusters)
+                     |> Seq.choose (fun c -> getPropertyByTime context.AsOf.UtcTicks c)
+                     |> Seq.choose (fun c -> getPropertyByContext context c)
                      |> tryHead
             value.IsSome
 
@@ -66,13 +69,13 @@ type MyriadCache() =
         let success, result = cache.TryGetValue key
         if not success then Seq.empty else getAny [ result ] context
 
-    member x.Insert(clusterSet : ClusterSet) =
+    member x.Insert(property : Property) =
         let add = 
-            new Func<string, LockFreeList<ClusterSet>>(
-                fun(key : string) -> new LockFreeList<ClusterSet>( [ clusterSet ] ) )
+            new Func<string, LockFreeList<Property>>(
+                fun(key : string) -> new LockFreeList<Property>( [ property ] ) )
 
         let update = 
-            new Func<string, LockFreeList<ClusterSet>, LockFreeList<ClusterSet>>(
-                fun(key : string) (current : LockFreeList<ClusterSet>) -> current.Add clusterSet )
+            new Func<string, LockFreeList<Property>, LockFreeList<Property>>(
+                fun(key : string) (current : LockFreeList<Property>) -> current.Add property )
 
-        cache.AddOrUpdate(clusterSet.Key, add, update) |> ignore
+        cache.AddOrUpdate(property.Key, add, update) |> ignore
