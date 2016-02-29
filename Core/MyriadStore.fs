@@ -1,6 +1,8 @@
 ﻿namespace Myriad
 
 open System
+open System.Collections.Concurrent
+open System.Collections.Generic
 
 type MyriadHistory =
     | All of unit
@@ -33,7 +35,21 @@ type IMyriadStore =
     // Query: given a set of name-value pairs corresponding to dimensions, return matching clusters
 
 type MemoryStore() =
-    
+
+    // Customer, Environment, Application, Instance
+    let dimensions =
+        [ { Dimension.Id = 1L; Name = "Customer" };
+          { Dimension.Id = 2L; Name = "Environment" };          
+          { Dimension.Id = 3L; Name = "Application" };
+          { Dimension.Id = 4L; Name = "Instance" } ]
+
+    let properties = new List<String>()
+
+    let dimensionMap = new ConcurrentDictionary<IDimension, List<String>>()
+
+    do
+        dimensions |> Seq.iter (fun d -> dimensionMap.[d] <- new List<String>())
+
     interface IMyriadStore with
         member x.Initialize() = ignore()
         member x.GetProperties(history) = x.GetProperties(history)
@@ -45,9 +61,11 @@ type MemoryStore() =
         []
 
     member x.GetMetadata() = 
-        []
+        let property = { Name = "Property"; Id = 0L }
+        let dimensionValues = dimensionMap |> Seq.map (fun kv -> { Dimension = kv.Key; Values = kv.Value |> Seq.toList } ) |> Seq.toList
+        List.append [ { Dimension = property; Values = properties |> Seq.toList } ] dimensionValues
 
-    member x.GetDimensions() = []
+    member x.GetDimensions() = dimensions |> Seq.cast<IDimension> |> List.ofSeq
 
     member x.GetDimension(dimension) = None
 
