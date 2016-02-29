@@ -116,5 +116,10 @@
       <Project>{78a04ed6-655d-44bd-b83e-6032495b8538}</Project>
       <Private>True</Private>
     </ProjectReference>
+    <ProjectReference Include="..\..\Store\Myriad.Store.fsproj">
+      <Name>Myriad.Store</Name>
+      <Project>{853c35e9-a3ba-48ff-a058-44e12441dceb}</Project>
+      <Private>True</Private>
+    </ProjectReference>
   </ItemGroup>
 </Project>

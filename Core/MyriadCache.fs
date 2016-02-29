@@ -69,6 +69,16 @@ type MyriadCache() =
         let success, result = cache.TryGetValue key
         if not success then Seq.empty else getAny [ result ] context
 
+    member x.GetProperty(key : String, asOf : DateTimeOffset) =
+        let success, result = cache.TryGetValue key
+        if not success then
+            None            
+        else
+            // Find 1st item less then timestamp
+            [ result.Value ]
+            |> Seq.choose (fun p -> getPropertyByTime asOf.UtcTicks p)
+            |> tryHead
+
     member x.Insert(property : Property) =
         let add = 
             new Func<string, LockFreeList<Property>>(

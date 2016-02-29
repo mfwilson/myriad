@@ -78,7 +78,7 @@ type MockStore() =
     interface IMyriadStore with
         member x.Initialize() = ignore()
         member x.GetProperties(history) = x.GetProperties(history)
-        member x.GetDimensions() = dimensions |> Seq.cast<IDimension> |> Seq.toList
+        member x.GetDimensions() = x.GetDimensions()
         member x.GetDimension(key) = x.GetDimension(key)
         member x.GetMetadata() = x.GetMetadata()
 
@@ -93,8 +93,10 @@ type MockStore() =
 
     member x.GetDimension(key : String) = queryMap.TryFind (key.ToLower())
 
-    member x.GetDimensions() =
-        JsonConvert.SerializeObject(internalList)
+    //member x.GetDimensions() =
+    //    JsonConvert.SerializeObject(internalList)
+
+    member x.GetDimensions() = dimensions |> Seq.cast<IDimension> |> Seq.toList
 
     member x.GetDimensionList() =
         let dimensionList = dimensions |> List.map (fun d -> d.Name)

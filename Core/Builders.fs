@@ -26,7 +26,7 @@ type PropertyBuilder(dimensions : IDimension seq) =
 //        collection |> Seq.groupBy (fun c -> c.Key) |> Seq.iter addOrUpdate
     
     member x.Create(key : String, clusters : Cluster seq) =
-        let clustersByWeight = clusters |> Seq.toList |> List.sortWith compareMeasures 
+        let clustersByWeight = clusters |> Set.ofSeq |> Seq.toList |> List.sortWith compareMeasures 
         let lastCluster = clusters |> Seq.maxBy (fun c -> c.Timestamp) 
         Property(key, lastCluster.Timestamp, clustersByWeight)
         

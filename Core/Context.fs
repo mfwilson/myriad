@@ -17,3 +17,5 @@ type Context =
         writer.WriteAttributeString("AsOf", x.AsOf.ToString("yyyy-MM-ddTHH:mm:ss.fff"))
         x.Measures |> Seq.iter (fun m -> m.WriteXml(writer))
         writer.WriteEndElement()
+
+    static member Latest with get() = { AsOf = DateTimeOffset.MaxValue; Measures = Set.empty }
