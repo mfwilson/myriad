@@ -2,11 +2,17 @@
 
 open System
 open System.Collections.Generic
+open System.Collections.Specialized
 open System.IO
+open System.Linq
 open System.Net
+open System.Web
 
 open Newtonsoft.Json
 open Myriad
+
+type RestResponse =
+    { data : Map<String, String> seq }
 
 type MyriadReader(baseUri : Uri) =
 
@@ -17,12 +23,13 @@ type MyriadReader(baseUri : Uri) =
             "get",        "get";
             "query",      "query";
             "metadata",   "metadata";
-            "dimensions", "dimension/list";
+            "dimensions", "dimensions/list";
         ] |> Map.ofList
 
-    let request(key : String) =
+    let request(key : String) (update : UriBuilder -> unit) =
         let builder = UriBuilder(baseUri)
         builder.Path <- Path.Combine(builder.Path, pathMap.[key])
+        update(builder)
         client.DownloadString(builder.Uri)
 
     interface IDisposable with
@@ -30,11 +37,30 @@ type MyriadReader(baseUri : Uri) =
 
     member x.Dispose() = client.Dispose()
 
+    member x.GetDimensionList() =
+        let json = request "dimensions" (fun u -> ())
+        JsonConvert.DeserializeObject<List<string>>(json)
 
     member x.GetMetadata() =
-        let json = request("metadata")    
+        let json = request "metadata" (fun u -> ())  
         JsonConvert.DeserializeObject<List<DimensionValues>>(json)
                         
+    member x.Query(dimensionValuesList : List<DimensionValues>) =
+        
+        let update(builder : UriBuilder) =            
+            let property = dimensionValuesList.Find( fun d -> d.Dimension.Name.Equals("Property", StringComparison.InvariantCultureIgnoreCase))
+            if property = Unchecked.defaultof<DimensionValues> || property.Values.Length = 0 then 
+                ignore()
+            else                
+                let query = HttpUtility.ParseQueryString("")
+                query.["property"] <- String.Join(",", property.Values)
+                builder.Query <- query.ToString()
+
+        let json = request "query" update
+        let response = JsonConvert.DeserializeObject<RestResponse>(json)
+        response.data |> Seq.map (fun m -> m.ToDictionary( (fun p -> p.Key), (fun (p : KeyValuePair<String, String>) -> p.Value) ))
+        
+
 
 (*
     var restServerUrl = "http://mattpc:7888";

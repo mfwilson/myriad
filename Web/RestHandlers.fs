@@ -43,6 +43,11 @@ module RestHandlers =
         | f when format.ToLower() = "xml" -> "text/xml", XmlConvert.SerializeObject(response)
         | _ -> raise(ArgumentException("Unknown format [" + format + "]"))
 
+    let private getPropertyKeys(kv : NameValueCollection) =
+        match kv.["property"] with
+        | p when not(String.IsNullOrEmpty(p)) -> p.Split([|','|]) 
+        | _ -> [| "" |]
+
     /// Provides an ordered list of dimensions 
     let DimensionList (engine : MyriadEngine) (x : HttpContext) = 
         async {
@@ -71,7 +76,10 @@ module RestHandlers =
             let measuresAsString = context.Measures |> Seq.map (fun m -> m.ToString())
             Console.WriteLine("Measures: " + String.Join(", ", measuresAsString))
 
-            let properties = engine.Query(kv.["property"], context)
+            let properties = getPropertyKeys(kv)
+                             |> Seq.map (fun p -> engine.Query(p, context))
+                             |> Seq.concat
+            
             let dimensions = engine.GetDimensions() 
             let dataRows = properties |> Seq.mapi (fun i p -> Cluster.ToMap(fst(p).Key, snd(p), dimensions, i))
 
@@ -90,7 +98,10 @@ module RestHandlers =
                 let kv = HttpUtility.ParseQueryString(x.request.rawQuery)
                 let context = getContext (engine.GetDimension) kv
 
-                let properties = engine.Get(kv.["property"], context)
+                let properties = getPropertyKeys(kv)
+                                 |> Seq.map (fun p -> engine.Get(p, context))
+                                 |> Seq.concat
+
                 let response = { Requested = DateTimeOffset.UtcNow; Context = context; Properties = properties }            
                 let contentType, message = getResponseString kv.["format"] response       
                                 
@@ -105,8 +116,7 @@ module RestHandlers =
                 Console.WriteLine("BAD_REQUEST: Get {0}\r\n{1}", x.request.rawQuery, ex.ToString())
                 let! ctx = Writers.setMimeType "text/plain" x
                 return! BAD_REQUEST (ex.Message) ctx.Value
-        }
-        
+        }        
         
     /// Set -> PUT w/ JSON data
     let Set (engine : MyriadEngine) (x : HttpContext) =

@@ -5,7 +5,7 @@ open System.Collections.Concurrent
 open System.Runtime.InteropServices
 
 type MyriadCache() =
-    let cache = new ConcurrentDictionary<String, LockFreeList<Property>>()
+    let cache = new ConcurrentDictionary<String, LockFreeList<Property>>(StringComparer.InvariantCultureIgnoreCase)
 
     let isSubset (first : Set<Measure>) (second : Set<Measure>) = Set.isSubset first second
             

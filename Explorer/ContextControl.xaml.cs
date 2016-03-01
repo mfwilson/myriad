@@ -1,17 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reactive.Subjects;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace Myriad.Explorer
 {
@@ -20,9 +14,17 @@ namespace Myriad.Explorer
     /// </summary>
     public partial class ContextControl : UserControl
     {
+        private readonly ISubject<List<DimensionValues>> _querySubject = new Subject<List<DimensionValues>>();
+
         public ContextControl()
         {
             InitializeComponent();
+
+        }
+
+        public IDisposable Subscribe(IObserver<List<DimensionValues>> observer)
+        {
+            return _querySubject.Subscribe(observer);
         }
 
         public void Reset(List<DimensionValues> dimensionValuesList)
@@ -31,20 +33,9 @@ namespace Myriad.Explorer
 
             foreach(var dimensionValues in dimensionValuesList)
             {
-                var control = CreateDimensionControl(dimensionValues);
+                var control = DimensionControl.Create(dimensionValues);
                 stackPanel.Children.Add(control);
-
             }
-        }
-
-        private DimensionControl CreateDimensionControl(DimensionValues dimensionValues)
-        {
-            return new DimensionControl
-            {
-                lblName = { Content = dimensionValues.Dimension.Name },
-                Name = string.Concat("dim", dimensionValues.Dimension.Name),
-                cmbItems = { ItemsSource = dimensionValues.Values.OrderBy(d => d).ToList() }                
-            };
         }
 
         private void RemoveDimensionControls()
@@ -53,5 +44,25 @@ namespace Myriad.Explorer
             stackPanel.Children.RemoveRange(1, count - 1);
         }
 
+        private List<DimensionValues> GetDimensionValuesList()
+        {
+            var request = new List<DimensionValues>();
+
+            foreach(var control in stackPanel.Children)
+            {
+                var dimensionControl = control as DimensionControl;
+                if (dimensionControl == null)
+                    continue;
+
+                request.Add(dimensionControl.GetDimensionValues());
+            }
+
+            return request;
+        }
+
+        private void OnClickQuery(object sender, RoutedEventArgs e)
+        {
+            _querySubject.OnNext( GetDimensionValuesList() );
+        }
     }
 }

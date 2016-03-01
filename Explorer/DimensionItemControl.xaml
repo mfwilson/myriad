@@ -1,0 +1,16 @@
+﻿<UserControl x:Class="Myriad.Explorer.DimensionItemControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:Myriad.Explorer"
+             mc:Ignorable="d" d:DesignWidth="300">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <Label Grid.Column="0" x:Name="lblName" Content="[Dimension]" Margin="3" HorizontalAlignment="Stretch" VerticalAlignment="Center" Width="115" FontWeight="SemiBold"/>
+        <ComboBox Grid.Column="1" x:Name="cmbItems" Margin="3" HorizontalAlignment="Stretch" VerticalAlignment="Center" IsEditable="True"/>
+    </Grid>
+</UserControl>

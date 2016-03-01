@@ -25,7 +25,8 @@
 
             <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Stretch"/>
 
-            <ListView Grid.Column="2" VerticalContentAlignment="Top" x:Name="ResultView" />
+            <DataGrid Grid.Column="2" VerticalContentAlignment="Top" x:Name="ResultView" ItemsSource="{Binding}" IsReadOnly="True" MouseDoubleClick="OnResultsDoubleClick" SelectionMode="Single" />
+            
         </Grid>
     </Grid>
 </Window>

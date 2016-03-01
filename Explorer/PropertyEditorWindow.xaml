@@ -1,0 +1,58 @@
+﻿<Window x:Class="Myriad.Explorer.PropertyEditorWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Myriad.Explorer"
+        mc:Ignorable="d" Height="380" Width="475" Loaded="OnLoaded" WindowStyle="ToolWindow" WindowStartupLocation="CenterOwner"
+        HorizontalAlignment="Stretch" VerticalAlignment="Top" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Top"
+        Title="Edit">
+    <Grid HorizontalAlignment="Stretch" VerticalAlignment="Top">
+        <Grid.Resources>
+            <Style TargetType="Button">
+                <Setter Property="Margin" Value="3"/>
+                <Setter Property="Width" Value="75"/>
+            </Style>
+            <Style TargetType="TextBox">
+                <Setter Property="AcceptsReturn" Value="True"/>
+                <Setter Property="AcceptsTab" Value="True"/>
+                <Setter Property="Height" Value="80"/>
+                <Setter Property="Margin" Value="3,0,3,3"/>
+            </Style>
+        </Grid.Resources>
+
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="95"/>        
+        </Grid.ColumnDefinitions>
+        
+        <Grid Grid.Column="0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <GroupBox Grid.Row="0" x:Name="groupProperties" Header="Property" HorizontalAlignment="Stretch" VerticalAlignment="Top" >
+                <StackPanel>
+                    <local:DimensionItemControl x:Name="controlProperty" DimensionName="Name" />
+
+                    <Label Content="Value" Margin="3,3,3,0" FontWeight="SemiBold"/>
+                    <TextBox x:Name="txtPropertyValue" />
+
+                    <Label Content="Description" Margin="3,3,3,0" FontWeight="SemiBold"/>
+                    <TextBox x:Name="txtPropertyDescription" />
+                </StackPanel>
+            </GroupBox>
+
+            <GroupBox Grid.Row="1" x:Name="groupDimensions" Header="Dimensions" HorizontalAlignment="Stretch" VerticalAlignment="Top">
+                <StackPanel x:Name="panelDimensions">
+                </StackPanel>
+            </GroupBox>
+        </Grid>
+
+        <StackPanel Grid.Column="1">
+            <Button Content="Apply" />
+            <Button Content="Cancel" Click="OnClickCancel" />
+        </StackPanel>
+    </Grid>
+</Window>

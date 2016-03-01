@@ -15,7 +15,7 @@
 
             <Label Grid.Column="0" Content="As Of:" Margin="3" HorizontalAlignment="Left" VerticalAlignment="Center"/>
             <DatePicker Grid.Column="1" Margin="3" HorizontalAlignment="Left" VerticalAlignment="Center"/>
-            <Button Grid.Column="2" Content="Query" Width="75" Margin="3" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+            <Button Grid.Column="2" Content="Query" Width="75" Margin="3" HorizontalAlignment="Right" VerticalAlignment="Center" Click="OnClickQuery"/>
         </Grid>
     </StackPanel>
 </UserControl>

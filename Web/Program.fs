@@ -30,12 +30,12 @@ let app : WebPart =
     choose [
         GET >=> choose [ 
             path (prefix + "get") >=> setAccessControl >=> Writers.setMimeType("text/json") >=> RestHandlers.Get engine 
-            path (prefix + "query") >=> setAccessControl >=> RestHandlers.Query engine
-            path (prefix + "dimensions/list") >=> RestHandlers.DimensionList engine
-            path (prefix + "metadata") >=> RestHandlers.Metadata engine 
+            path (prefix + "query") >=> setAccessControl >=> Writers.setMimeType("text/json") >=> RestHandlers.Query engine
+            path (prefix + "dimensions/list") >=> Writers.setMimeType("text/json") >=> RestHandlers.DimensionList engine
+            path (prefix + "metadata") >=> Writers.setMimeType("text/json") >=> RestHandlers.Metadata engine 
         ]
         PUT >=> choose [
-            path (prefix + "set") >=> RestHandlers.Set engine 
+            path (prefix + "set") >=> Writers.setMimeType("text/json") >=> RestHandlers.Set engine 
         ]
     ]
 

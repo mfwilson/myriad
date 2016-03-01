@@ -1,18 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Reactive;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using Myriad.Client;
 
 namespace Myriad.Explorer
@@ -23,13 +15,19 @@ namespace Myriad.Explorer
     public partial class MainWindow : Window
     {
         private MyriadReader _reader;
+        private readonly DataSet _dataSet = new DataSet("ResultsView");
+        private readonly List<DimensionValues> _dimensionValues = new List<DimensionValues>();
 
         public MainWindow()
         {
             InitializeComponent();
 
             NavigationControl.Subscribe( Observer.Create<Uri>(OnRefresh) );
+            ContextControl.Subscribe(Observer.Create<List<DimensionValues>>(OnQuery));
             ContextControl.IsEnabled = false;
+
+            _dataSet.Tables.Add(new DataTable("Results"));
+            DataContext = _dataSet.Tables[0].DefaultView;
         }
 
         private void OnRefresh(Uri uri)
@@ -37,18 +35,74 @@ namespace Myriad.Explorer
             ResetClient(uri);
         }
 
+        private void OnQuery(List<DimensionValues> dimensionValuesList)
+        {
+            var result = _reader.Query(dimensionValuesList);
+            
+            var table = _dataSet.Tables[0];
+            table.Clear();
+            
+            foreach (var map in result)
+            {
+                var row = table.NewRow();
+
+                foreach (var pair in map)
+                {
+                    if( table.Columns.Contains(pair.Key) )
+                        row[pair.Key] = pair.Value;                        
+                }
+                
+                table.Rows.Add(row);
+            }
+        }
+
+        private void ResetResults()
+        {
+            var table = new DataTable("Results");
+
+            var dimensions = _reader.GetDimensionList();
+            dimensions.Insert(0, "Ordinal");
+            dimensions.AddRange(new[] { "Property", "Value" });
+            dimensions.ForEach(d => table.Columns.Add(d, d == "Ordinal" ? typeof(int) : typeof(string)));
+
+            _dataSet.Reset();
+            _dataSet.Tables.Add(table);
+            DataContext = _dataSet.Tables[0].DefaultView;
+        }
+
         private void ResetClient(Uri uri)
         {
             _reader = new MyriadReader(uri);
 
-            var dimensionValues = _reader.GetMetadata();
-            ContextControl.Reset(dimensionValues);
+            ResetResults();
 
+            _dimensionValues.Clear();
+            _dimensionValues.AddRange(_reader.GetMetadata());            
+            ContextControl.Reset(_dimensionValues);
             ContextControl.IsEnabled = true;
-
-            // Clear result view
         }
 
+        private void OnResultsDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            if( ResultView.SelectedItems.Count == 0 )
+                return;
 
+            var view = ResultView.SelectedItems[0] as DataRowView;
+            if (view == null)
+                return;
+
+            var valueMap = _dimensionValues.ToDictionary(d => d.Dimension.Name, d => view[d.Dimension.Name].ToString());
+            valueMap["Value"] = view["Value"].ToString();
+
+            var editor = new PropertyEditorWindow
+            {
+                Owner = this,
+                ValueMap = valueMap,
+                Property = _dimensionValues.SingleOrDefault(d => d.Dimension.Name == "Property"),
+                Dimensions = _dimensionValues.Where(d => d.Dimension.Name != "Property").ToList()
+            };
+
+            editor.ShowDialog();
+        }
     }
 }

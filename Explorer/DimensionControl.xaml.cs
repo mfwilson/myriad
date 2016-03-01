@@ -1,6 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -45,6 +45,23 @@ namespace Myriad.Explorer
                     _selectedSet.Remove(item);
                 }
             }
+        }
+
+        public static DimensionControl Create(DimensionValues dimensionValues)
+        {
+            return new DimensionControl
+            {
+                Name = string.Concat("dim", dimensionValues.Dimension.Name),
+                Tag = dimensionValues.Dimension,
+                lblName = { Content = dimensionValues.Dimension.Name },
+                cmbItems = { ItemsSource = dimensionValues.Values.OrderBy(d => d).ToList() }
+            };
+        }
+
+        public DimensionValues GetDimensionValues()
+        {
+            var dimension = Tag as Dimension;
+            return new DimensionValues(dimension, _selectedSet.ToArray());
         }
     }
 }
