@@ -62,8 +62,8 @@ type MemoryStore() =
 
     member x.GetMetadata() = 
         let property = { Name = "Property"; Id = 0L }
-        let dimensionValues = dimensionMap |> Seq.map (fun kv -> { Dimension = kv.Key; Values = kv.Value |> Seq.toList } ) |> Seq.toList
-        List.append [ { Dimension = property; Values = properties |> Seq.toList } ] dimensionValues
+        let dimensionValues = dimensionMap |> Seq.map (fun kv -> { Dimension = Dimension.Create(kv.Key); Values = kv.Value |> Seq.toArray } ) |> Seq.toList
+        List.append [ { Dimension = property; Values = properties |> Seq.toArray } ] dimensionValues
 
     member x.GetDimensions() = dimensions |> Seq.cast<IDimension> |> List.ofSeq
 

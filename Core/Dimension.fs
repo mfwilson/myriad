@@ -45,12 +45,15 @@ type Dimension =
     
     static member Create(id : Int64, name : String) = { Id = id; Name = name }
 
+    static member Create(dimension : IDimension) = { Id = dimension.Id; Name = dimension.Name }
+
     static member CompareTo(x : Dimension, y : Dimension) = compare (x.Id) (y.Id)
 
 type DimensionAudit = Audit<Dimension>
 
 type DimensionValues = 
-    { Dimension : IDimension; Values : String list }
+    { Dimension : Dimension; Values : String[] }
+    override x.ToString() = String.Concat(x.Dimension.Name, " Values: ", x.Values.Length)
 
 type DimensionList = DimensionValues list
     

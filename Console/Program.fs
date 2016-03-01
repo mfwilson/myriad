@@ -8,6 +8,7 @@ open Newtonsoft.Json
 open Newtonsoft.Json.Serialization
 
 open Myriad
+open Myriad.Client
 open Myriad.Store
 
 let hasArguments args flags = 
@@ -76,6 +77,13 @@ let getClusters(mb : MeasureBuilder) =
 
 let scriptEntry(args) = 
     try
+        let reader = new MyriadReader(Uri("http://localhost:7888/api/1/myriad"))
+
+        let m = reader.GetMetadata()
+
+
+
+
         let engine = MyriadEngine(MockStore())
 
         

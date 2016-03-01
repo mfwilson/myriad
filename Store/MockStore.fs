@@ -8,7 +8,7 @@ open Myriad
 
 type MockStore() =
 
-    let properties = [ "my.office.key"; "my.property.key"; "nx.auditFile.filter" ]
+    let properties = [| "my.office.key"; "my.property.key"; "nx.auditFile.filter" |]
 
     // Environment, Location, Application, Instance
     let dimensions =
@@ -23,10 +23,10 @@ type MockStore() =
     // Instance -> mary, jimmy, rex, paulie
     let internalList = 
         [
-            { Dimension = dimensions.[0]; Values = [ "PROD"; "UAT"; "DEV" ] };
-            { Dimension = dimensions.[1]; Values = [ "Chicago"; "New York"; "London"; "Amsterdam"; "Paris"; "Berlin"; "Tokyo" ] };
-            { Dimension = dimensions.[2]; Values = [ "Rook"; "Knight"; "Pawn"; "Bishop"; "King"; "Queen" ] };
-            { Dimension = dimensions.[3]; Values = [ "mary"; "jimmy"; "rex"; "paulie"; "tommy" ] };
+            { Dimension = dimensions.[0]; Values = [| "PROD"; "UAT"; "DEV" |] };
+            { Dimension = dimensions.[1]; Values = [| "Chicago"; "New York"; "London"; "Amsterdam"; "Paris"; "Berlin"; "Tokyo" |] };
+            { Dimension = dimensions.[2]; Values = [| "Rook"; "Knight"; "Pawn"; "Bishop"; "King"; "Queen" |] };
+            { Dimension = dimensions.[3]; Values = [| "mary"; "jimmy"; "rex"; "paulie"; "tommy" |] };
         ]
 
     let dimensionMap =
@@ -107,7 +107,7 @@ type MockStore() =
         if dimensionValues.IsNone then
             JsonConvert.SerializeObject( [] : String list )
         else
-            let dimensions = dimensionValues.Value |> List.sort 
+            let dimensions = dimensionValues.Value |> Array.sort 
             JsonConvert.SerializeObject( dimensions )
 
     member x.GetProperties() =

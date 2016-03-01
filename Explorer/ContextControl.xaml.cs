@@ -13,7 +13,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
-namespace Explorer
+namespace Myriad.Explorer
 {
     /// <summary>
     /// Interaction logic for ContextControl.xaml
@@ -24,5 +24,34 @@ namespace Explorer
         {
             InitializeComponent();
         }
+
+        public void Reset(List<DimensionValues> dimensionValuesList)
+        {
+            RemoveDimensionControls();
+
+            foreach(var dimensionValues in dimensionValuesList)
+            {
+                var control = CreateDimensionControl(dimensionValues);
+                stackPanel.Children.Add(control);
+
+            }
+        }
+
+        private DimensionControl CreateDimensionControl(DimensionValues dimensionValues)
+        {
+            return new DimensionControl
+            {
+                lblName = { Content = dimensionValues.Dimension.Name },
+                Name = string.Concat("dim", dimensionValues.Dimension.Name),
+                cmbItems = { ItemsSource = dimensionValues.Values.OrderBy(d => d).ToList() }                
+            };
+        }
+
+        private void RemoveDimensionControls()
+        {
+            var count = stackPanel.Children.Count;
+            stackPanel.Children.RemoveRange(1, count - 1);
+        }
+
     }
 }

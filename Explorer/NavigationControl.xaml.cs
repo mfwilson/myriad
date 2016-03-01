@@ -1,28 +1,32 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Reactive.Subjects;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
-namespace Explorer
+namespace Myriad.Explorer
 {
     /// <summary>
     /// Interaction logic for NavigationControl.xaml
     /// </summary>
     public partial class NavigationControl : UserControl
     {
+        private readonly ISubject<Uri> _refreshSubject = new Subject<Uri>(); 
+
         public NavigationControl()
         {
             InitializeComponent();
+        }
+
+        public IDisposable Subscribe(IObserver<Uri> observer)
+        {
+            return _refreshSubject.Subscribe(observer);
+        }
+
+        private void OnClickRefresh(object sender, RoutedEventArgs e)
+        {
+            Uri address;
+            if( Uri.TryCreate(cmbServerUri.Text, UriKind.RelativeOrAbsolute, out address) )
+                _refreshSubject.OnNext(address);
         }
     }
 }
