@@ -42,18 +42,18 @@ let getDimensions() =
       { Dimension.Id = 21L; Name = "Location" };
       { Dimension.Id = 44L; Name = "Application" };
       { Dimension.Id = 98L; Name = "Instance" } ] 
-    |> Seq.cast<IDimension>
+    
 
 let getClusters(mb : MeasureBuilder) =
     Seq.ofList
         [
-            Cluster(0L, "apple", mb { yield "Environment", "PROD"; yield "Location", "London"; yield "Instance", "rex" } )
-            Cluster(0L, "pear", mb { yield "Environment", "PROD"; yield "Instance", "rex" } )
-            Cluster(0L, "pecan", mb { yield "Instance", "rex" } )
-            Cluster(0L, "peach", mb { yield "Application", "Rook" } )
-            Cluster(0L, "strawberry", mb { yield "Location", "Chicago" } )
-            Cluster(0L, "apricot", mb { yield "Environment", "DEV" } )
-            Cluster(0L, "pumpkin", Set.empty )
+            Cluster.Create("apple", mb { yield "Environment", "PROD"; yield "Location", "London"; yield "Instance", "rex" } )
+            Cluster.Create("pear", mb { yield "Environment", "PROD"; yield "Instance", "rex" } )
+            Cluster.Create("pecan", mb { yield "Instance", "rex" } )
+            Cluster.Create("peach", mb { yield "Application", "Rook" } )
+            Cluster.Create("strawberry", mb { yield "Location", "Chicago" } )
+            Cluster.Create("apricot", mb { yield "Environment", "DEV" } )
+            Cluster.Create("pumpkin", Set.empty )
         ]
 
 // Set initial dimensions
@@ -84,6 +84,7 @@ let scriptEntry(args) =
 
 
 
+
         let engine = MyriadEngine(MockStore())
 
         
@@ -93,9 +94,18 @@ let scriptEntry(args) =
         let dimensionMap = dimensions |> Seq.map (fun d -> d.Name, d) |> Map.ofSeq
         let mb = new MeasureBuilder(dimensionMap)
 
+        let cluster = Cluster.Create("apple", mb { yield "Environment", "PROD"; yield "Location", "London"; yield "Instance", "rex" } )
+        // { Value = cluster.Value; Measures = cluster.Measures; UserName = cluster.UserName }
+        let request = ClusterOperation.Add("mm.aa.bb", cluster )
+
+        let jsonRequest = JsonConvert.SerializeObject(request)
+
+        let roundtrip = JsonConvert.DeserializeObject<ClusterOperation>(jsonRequest)
+
+
         let setBuilder = new PropertyBuilder(dimensions)
 
-        let properties = setBuilder.Create("my.property.key", getClusters(mb))
+        let properties = setBuilder.Create "my.property.key" Epoch.UtcNow (getClusters mb)
 
         let cache = new MyriadCache()
         cache.Insert(properties)

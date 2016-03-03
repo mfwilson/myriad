@@ -2,7 +2,7 @@
 
 open System
 
-type MeasureBuilder(map : Map<String, IDimension>) =
+type MeasureBuilder(map : Map<String, Dimension>) =
     member x.Bind(m, f) =  m |> List.collect f |> Set.ofList
     member x.Zero() = Set.empty
     member x.Yield(m) = Set.ofList [ Measure.Create(map.[fst(m)], snd(m)) ]
@@ -12,7 +12,7 @@ type MeasureBuilder(map : Map<String, IDimension>) =
     member x.Delay(f) = f()
 
 /// Orders a sequence of clusters by dimension
-type PropertyBuilder(dimensions : IDimension seq) =
+type PropertyBuilder(dimensions : Dimension seq) =
     // Dimension Id -> weight
     let weights = dimensions |> Seq.mapi (fun i d -> d.Id, int (2.0 ** float i)) |> Map.ofSeq
     
@@ -21,8 +21,7 @@ type PropertyBuilder(dimensions : IDimension seq) =
         let yWeight = y.Measures |> Seq.sumBy (fun m -> weights.[m.Dimension.Id])
         yWeight.CompareTo(xWeight)
     
-    member x.Create(key : String, clusters : Cluster seq) =
+    member x.Create(key : String) (timestamp : Int64) (clusters : Cluster seq) =
         let clustersByWeight = clusters |> Set.ofSeq |> Seq.toList |> List.sortWith compareMeasures 
-        let lastCluster = clusters |> Seq.maxBy (fun c -> c.Timestamp) 
-        Property(key, lastCluster.Timestamp, clustersByWeight)
+        Property(key, timestamp, clustersByWeight)
         

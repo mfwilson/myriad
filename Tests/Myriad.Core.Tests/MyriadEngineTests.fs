@@ -18,12 +18,12 @@ type MyriadEngineTests() =
         let mb = engine.MeasureBuilder
 
         let clusters = [
-            Cluster(0L, "A", mb { yield "Environment", "London" } )
-            Cluster(0L, "B", mb { yield "Environment", "Berlin" } )
-            Cluster(0L, "C", mb { yield "Environment", "London" } )
+            Cluster.Create("A", mb { yield "Environment", "London" } )
+            Cluster.Create("B", mb { yield "Environment", "Berlin" } )
+            Cluster.Create("C", mb { yield "Environment", "London" } )
         ]
 
-        let property = engine.PropertyBuilder.Create("test", clusters)
+        let property = engine.PropertyBuilder.Create "test" Epoch.UtcNow clusters
 
         assert (property.Clusters.Length = 2)
 
@@ -37,8 +37,8 @@ type MyriadEngineTests() =
         let property = engine.Get("nx.auditFile.filter", DateTimeOffset.MaxValue).Value
 
         // Create new cluster value
-        let newCluster = Cluster(0L, "*.xls", mb { yield "Environment", "London" } )
-        let newProperty = engine.PropertyBuilder.Create(property.Key, newCluster :: property.Clusters)
+        let newCluster = Cluster.Create("*.xls", mb { yield "Environment", "London" } )
+        let newProperty = engine.PropertyBuilder.Create property.Key Epoch.UtcNow (newCluster :: property.Clusters)
         
         engine.Set(newProperty)
 

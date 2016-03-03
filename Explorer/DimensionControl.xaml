@@ -7,6 +7,15 @@
              HorizontalAlignment="Stretch" VerticalAlignment="Stretch" HorizontalContentAlignment="Stretch"  VerticalContentAlignment="Stretch"
              d:DesignHeight="100" d:DesignWidth="300">
     <Grid>
+        <Grid.Resources>
+            <Style TargetType="Button">
+                <Setter Property="HorizontalAlignment" Value="Right" />
+                <Setter Property="VerticalAlignment" Value="Center" />
+                <Setter Property="Margin" Value="3"/>
+                <Setter Property="Width" Value="75"/>
+            </Style>
+        </Grid.Resources>
+
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
@@ -17,10 +26,12 @@
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
 
             <Label Grid.Column="0" x:Name="lblName" Content="[Dimension]" Margin="3" HorizontalAlignment="Stretch" VerticalAlignment="Center" FontSize="14" FontWeight="SemiBold"/>
-            <Button Grid.Column="1" x:Name="btnClear" Content="Clear" Width="75" Margin="3" HorizontalAlignment="Right" VerticalAlignment="Center" Click="OnClickClear"/>
+            <Button Grid.Column="1" x:Name="btnNew" Content="New" Click="OnClickNew"/>
+            <Button Grid.Column="2" x:Name="btnClear" Content="Clear" Click="OnClickClear"/>
         </Grid>
 
         <ComboBox Grid.Row="1" x:Name="cmbItems" Margin="0,2,0,2" HorizontalAlignment="Stretch" VerticalAlignment="Top" IsEditable="True" SelectionChanged="OnSelectionChanged"/>

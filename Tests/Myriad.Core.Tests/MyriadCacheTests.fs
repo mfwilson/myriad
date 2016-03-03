@@ -16,19 +16,18 @@ type MyriadCacheTests() =
         [ { Dimension.Id = 32L; Name = "Environment" };
           { Dimension.Id = 21L; Name = "Location" };
           { Dimension.Id = 44L; Name = "Application" };
-          { Dimension.Id = 98L; Name = "Instance" } ] 
-        |> Seq.cast<IDimension>
+          { Dimension.Id = 98L; Name = "Instance" } ]         
 
     let getClusters(mb : MeasureBuilder) =
         Seq.ofList
             [
-                Cluster(0L, "apple", mb { yield "Environment", "PROD"; yield "Location", "London"; yield "Instance", "rex" } )
-                Cluster(0L, "pear", mb { yield "Environment", "PROD"; yield "Instance", "rex" } )
-                Cluster(0L, "pecan", mb { yield "Instance", "rex" } )
-                Cluster(0L, "peach", mb { yield "Application", "Rook" } )
-                Cluster(0L, "strawberry", mb { yield "Location", "Chicago" } )
-                Cluster(0L, "apricot", mb { yield "Environment", "DEV" } )
-                Cluster(0L, "pumpkin", Set.empty )
+                Cluster.Create("apple", mb { yield "Environment", "PROD"; yield "Location", "London"; yield "Instance", "rex" } )
+                Cluster.Create("pear", mb { yield "Environment", "PROD"; yield "Instance", "rex" } )
+                Cluster.Create("pecan", mb { yield "Instance", "rex" } )
+                Cluster.Create("peach", mb { yield "Application", "Rook" } )
+                Cluster.Create("strawberry", mb { yield "Location", "Chicago" } )
+                Cluster.Create("apricot", mb { yield "Environment", "DEV" } )
+                Cluster.Create("pumpkin", Set.empty )
             ]
 
     [<Test>]
@@ -39,7 +38,7 @@ type MyriadCacheTests() =
 
         let setBuilder = new PropertyBuilder(dimensions)
 
-        let clusterSet = setBuilder.Create("my.property.key", getClusters(mb))
+        let clusterSet = setBuilder.Create "my.property.key" Epoch.UtcNow (getClusters mb)
 
         let cache = new MyriadCache()
         cache.Insert(clusterSet)

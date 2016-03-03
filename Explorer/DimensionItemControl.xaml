@@ -4,13 +4,38 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:Myriad.Explorer"
-             mc:Ignorable="d" d:DesignWidth="300">
+             HorizontalAlignment="Stretch" VerticalAlignment="Stretch" HorizontalContentAlignment="Stretch"  VerticalContentAlignment="Stretch"
+             mc:Ignorable="d" d:DesignWidth="300" DataContext="{Binding}">
     <Grid>
+        <Grid.Resources>
+            <Style TargetType="Label">
+                <Setter Property="FontWeight" Value="SemiBold" />
+                <Setter Property="HorizontalAlignment" Value="Stretch" />
+                <Setter Property="VerticalAlignment" Value="Center" />
+                <Setter Property="Margin" Value="3"/>
+            </Style>
+            <Style TargetType="ComboBox">
+                <Setter Property="HorizontalAlignment" Value="Stretch" />
+                <Setter Property="VerticalAlignment" Value="Center" />
+                <Setter Property="IsEditable" Value="True"/>
+                <Setter Property="Margin" Value="3"/>
+            </Style>
+            <Style TargetType="TextBox">
+                <Setter Property="HorizontalAlignment" Value="Stretch" />
+                <Setter Property="VerticalAlignment" Value="Center" />
+                <Setter Property="Margin" Value="3"/>
+            </Style>
+        </Grid.Resources>
+
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
-        <Label Grid.Column="0" x:Name="lblName" Content="[Dimension]" Margin="3" HorizontalAlignment="Stretch" VerticalAlignment="Center" Width="115" FontWeight="SemiBold"/>
-        <ComboBox Grid.Column="1" x:Name="cmbItems" Margin="3" HorizontalAlignment="Stretch" VerticalAlignment="Center" IsEditable="True"/>
+
+        <Label Grid.Column="0" x:Name="lblName" Content="[Dimension]" Width="100" />
+        
+        <ComboBox Grid.Column="1" x:Name="cmbItems" Visibility="Hidden"/>
+
+        <TextBox Grid.Column="1" x:Name="txtDimension" Visibility="Hidden" />
     </Grid>
 </UserControl>

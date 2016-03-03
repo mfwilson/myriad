@@ -1,28 +1,21 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace Myriad.Explorer
 {
     /// <summary>
     /// Interaction logic for DimensionItemControl.xaml
     /// </summary>
-    public partial class DimensionItemControl : UserControl
+    public partial class DimensionItemControl : UserControl  
     {
+        private bool _isSingle;
+
         public DimensionItemControl()
         {
-            InitializeComponent();
+            InitializeComponent();            
+            cmbItems.Visibility = Visibility.Visible;
         }
 
         public static DimensionItemControl Create(DimensionValues dimensionValues)
@@ -36,10 +29,34 @@ namespace Myriad.Explorer
             };
         }
 
+        private void UpdateView()
+        {
+            cmbItems.Visibility = IsSingle ? Visibility.Hidden : Visibility.Visible;
+            txtDimension.Visibility = IsSingle ? Visibility.Visible : Visibility.Hidden;
+        }
+
         public object DimensionName
         {
             get { return lblName.Content; }
             set { lblName.Content = value; }
+        }
+
+        public string DimensionValue
+        {
+            get { return IsSingle ? txtDimension.Text : cmbItems.SelectedValue.ToString(); }
+            set
+            {
+                if (IsSingle)
+                    txtDimension.Text = value;
+                else
+                    cmbItems.SelectedValue = value;    
+            }
+        }
+
+        public bool IsSingle
+        {
+            get { return _isSingle; }
+            set { _isSingle = value; UpdateView(); }
         }
     }
 }

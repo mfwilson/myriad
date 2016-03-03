@@ -29,7 +29,7 @@ module RestHandlers =
         else
             DateTimeOffset.UtcNow
 
-    let private getContext (getDimension : String -> IDimension option) (kv : NameValueCollection) =
+    let private getContext (getDimension : String -> Dimension option) (kv : NameValueCollection) =
         let getMeasure(key) = 
             let dimension = getDimension(key)
             if dimension.IsNone then None else Some( { Dimension = dimension.Value; Value = kv.[key] } )

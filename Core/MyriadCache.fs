@@ -13,12 +13,12 @@ type MyriadCache() =
         properties |> List.tryFind (fun tlist -> tlist.Timestamp <= ticks)
 
     /// If the cluster's measures are a subset of the context's measures, then it is a match
-    let getPropertyByContext (context) (property : Property) =
+    let getPropertyByContext (context : Context) (property : Property) =
         let result = property.Clusters |> List.tryFind (fun cluster -> isSubset (cluster.Measures) (context.Measures))
         if result.IsNone then None else Some(property, result.Value)
 
     /// If the context's measures are a subset of the cluster's measures, then it is a match
-    let getAnyPropertyByContext (context) (property : Property) =
+    let getAnyPropertyByContext (context : Context) (property : Property) =
         property.Clusters 
         |> List.filter (fun cluster -> isSubset (context.Measures) (cluster.Measures)) 
         |> List.map (fun cluster -> property, cluster)
@@ -78,6 +78,9 @@ type MyriadCache() =
             [ result.Value ]
             |> Seq.choose (fun p -> getPropertyByTime asOf.UtcTicks p)
             |> tryHead
+
+    member x.GetProperties() =         
+        cache.Values |> Seq.choose (fun p -> if p.Value.IsEmpty then None else Some p.Value.Head)
 
     member x.Insert(property : Property) =
         let add = 

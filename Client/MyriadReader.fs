@@ -15,7 +15,6 @@ type RestResponse =
     { data : Map<String, String> seq }
 
 type MyriadReader(baseUri : Uri) =
-
     let client = new WebClient()
     
     let pathMap = 
@@ -32,6 +31,11 @@ type MyriadReader(baseUri : Uri) =
         update(builder)
         client.DownloadString(builder.Uri)
 
+    let query update = 
+        let json = request "query" update
+        let response = JsonConvert.DeserializeObject<RestResponse>(json)
+        response.data |> Seq.map (fun m -> m.ToDictionary( (fun p -> p.Key), (fun (p : KeyValuePair<String, String>) -> p.Value) ))
+
     interface IDisposable with
         member x.Dispose() = x.Dispose()
 
@@ -45,9 +49,16 @@ type MyriadReader(baseUri : Uri) =
         let json = request "metadata" (fun u -> ())  
         JsonConvert.DeserializeObject<List<DimensionValues>>(json)
                         
+    member x.QueryProperties(propertyKeys : String seq) =
+        let update(builder : UriBuilder) =
+            let query = HttpUtility.ParseQueryString("")
+            query.["property"] <- String.Join(",", propertyKeys)
+            builder.Query <- query.ToString()            
+        query update
+
     member x.Query(dimensionValuesList : List<DimensionValues>) =
         
-        let update(builder : UriBuilder) =            
+        let update(builder : UriBuilder) =
             let property = dimensionValuesList.Find( fun d -> d.Dimension.Name.Equals("Property", StringComparison.InvariantCultureIgnoreCase))
             if property = Unchecked.defaultof<DimensionValues> || property.Values.Length = 0 then 
                 ignore()
@@ -55,24 +66,9 @@ type MyriadReader(baseUri : Uri) =
                 let query = HttpUtility.ParseQueryString("")
                 query.["property"] <- String.Join(",", property.Values)
                 builder.Query <- query.ToString()
+        query update
 
-        let json = request "query" update
-        let response = JsonConvert.DeserializeObject<RestResponse>(json)
-        response.data |> Seq.map (fun m -> m.ToDictionary( (fun p -> p.Key), (fun (p : KeyValuePair<String, String>) -> p.Value) ))
+//        let json = request "query" update
+//        let response = JsonConvert.DeserializeObject<RestResponse>(json)
+//        response.data |> Seq.map (fun m -> m.ToDictionary( (fun p -> p.Key), (fun (p : KeyValuePair<String, String>) -> p.Value) ))
         
-
-
-(*
-    var restServerUrl = "http://mattpc:7888";
-    var client = new WebClient();
-    var json = client.DownloadString(restServerUrl + "/api/1/metadata");
-    var metadata = Json.Decode(json);
-
-    var dimensionsJson = client.DownloadString(restServerUrl + "/api/1/dimensions/list");
-    var dimensions = Json.Decode<List<string>>(dimensionsJson);
-
-    var columnList = new List<string>(dimensions);
-    columnList.Insert(0, "Ordinal");
-    columnList.AddRange( new [] { "Property", "Value" } );
-*)
-

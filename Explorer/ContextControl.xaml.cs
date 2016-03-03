@@ -15,16 +15,21 @@ namespace Myriad.Explorer
     public partial class ContextControl : UserControl
     {
         private readonly ISubject<List<DimensionValues>> _querySubject = new Subject<List<DimensionValues>>();
+        private readonly ISubject<Measure> _measureSubject = new Subject<Measure>();
 
         public ContextControl()
         {
             InitializeComponent();
-
         }
 
         public IDisposable Subscribe(IObserver<List<DimensionValues>> observer)
         {
             return _querySubject.Subscribe(observer);
+        }
+
+        public IDisposable Subscribe(IObserver<Measure> observer)
+        {
+            return _measureSubject.Subscribe(observer);
         }
 
         public void Reset(List<DimensionValues> dimensionValuesList)
@@ -34,6 +39,7 @@ namespace Myriad.Explorer
             foreach(var dimensionValues in dimensionValuesList)
             {
                 var control = DimensionControl.Create(dimensionValues);
+                control.Subscribe(_measureSubject);
                 stackPanel.Children.Add(control);
             }
         }

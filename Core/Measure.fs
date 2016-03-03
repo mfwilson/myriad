@@ -5,25 +5,17 @@ open System.Runtime.Serialization
 open System.Xml
 open System.Xml.Serialization
 
-type IMeasure =
-    abstract Dimension : IDimension with get
-    abstract Value : String with get
-
 /// Measures are equivalent over dimension id and value
 [<CustomEquality;CustomComparison>]
 [<KnownType(typeof<Dimension>)>]
 type Measure = 
-    { Dimension : IDimension; Value : String }
+    { Dimension : Dimension; Value : String }
     
     interface IComparable with
         member x.CompareTo other = 
             match other with 
             | :? Measure as y -> Measure.CompareTo(x, y)
             | _ -> invalidArg "other" "cannot compare value of different types" 
-
-    interface IMeasure with
-        member x.Dimension with get() = x.Dimension
-        member x.Value with get() = x.Value
 
     interface IXmlSerializable with
         member x.GetSchema() = null
@@ -34,7 +26,7 @@ type Measure =
 
     override x.Equals(obj) = 
         match obj with
-        | :? IMeasure as y -> Measure.CompareTo(x, y) = 0
+        | :? Measure as y -> Measure.CompareTo(x, y) = 0
         | _ -> false
 
     override x.GetHashCode() = hash(x.Dimension.Id, x.Value)
@@ -46,10 +38,10 @@ type Measure =
         writer.WriteAttributeString("Value", x.Value)
         writer.WriteEndElement()
 
-    static member CompareTo(x : IMeasure, y : IMeasure) = compare (x.Dimension.Id, x.Value) (y.Dimension.Id, y.Value)
+    static member CompareTo(x : Measure, y : Measure) = compare (x.Dimension.Id, x.Value) (y.Dimension.Id, y.Value)
 
     static member Create(dimensionId : Int64, dimensionName : String, value : String) =
         { Dimension = Dimension.Create(dimensionId, dimensionName); Value = value}
 
-    static member Create(dimension : IDimension, value : String) = 
+    static member Create(dimension : Dimension, value : String) = 
         { Dimension = dimension; Value = value}

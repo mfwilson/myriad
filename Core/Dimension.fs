@@ -4,10 +4,6 @@ open System
 open System.Xml
 open System.Xml.Serialization
 
-type IDimension =
-    abstract Id : Int64 with get
-    abstract Name : String with get
-
 /// Dimensions are equivalent over their ids
 [<CustomEquality;CustomComparison>]
 type Dimension =
@@ -18,10 +14,6 @@ type Dimension =
             match other with 
             | :? Dimension as y -> Dimension.CompareTo(x, y)
             | _ -> invalidArg "other" "cannot compare value of different types" 
-
-    interface IDimension with
-        member x.Id with get() = x.Id
-        member x.Name with get() = x.Name
 
     interface IXmlSerializable with
         member x.GetSchema() = null
@@ -45,7 +37,7 @@ type Dimension =
     
     static member Create(id : Int64, name : String) = { Id = id; Name = name }
 
-    static member Create(dimension : IDimension) = { Id = dimension.Id; Name = dimension.Name }
+    static member Create(dimension : Dimension) = { Id = dimension.Id; Name = dimension.Name }
 
     static member CompareTo(x : Dimension, y : Dimension) = compare (x.Id) (y.Id)
 

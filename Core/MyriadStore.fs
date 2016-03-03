@@ -3,6 +3,7 @@
 open System
 open System.Collections.Concurrent
 open System.Collections.Generic
+open System.Threading
 
 type MyriadHistory =
     | All of unit
@@ -12,67 +13,138 @@ type MyriadHistory =
 type IMyriadStore =
     abstract Initialize : unit -> unit
 
-    abstract GetProperties : MyriadHistory -> Property list
-
-    /// GetMetadata: return list of name+values where name is a dimension name and values contains the list of possible values
-    ///   NOTE: this list should also contain "Property" and list of properties
+    /// Return list of name+values where name is a dimension name and values contains the list of possible values
     abstract GetMetadata : unit -> DimensionValues list 
 
-    /// Get the list of dimensions (either dimension list or string list)
-    abstract GetDimensions : unit -> IDimension list
+    /// Get the list of dimensions 
+    abstract GetDimensions : unit -> Dimension list
+
+    /// Get a dimension by name
+    abstract GetDimension : String -> Dimension option
+
+    /// Create a new dimension and append to list of dimensions 
+    abstract AddDimension : String -> Dimension  
+    /// Remove a dimension from the list of dimensions
+    abstract RemoveDimension : Dimension -> bool
+
+    /// Add a value to list of possible values given a dimension and value.
+    /// Returns true if the value was added; otherwise false.
+    abstract AddMeasure : ``measure`` : Measure -> bool        
+    /// Remove a value from the list of possible values for a dimension given a dimension and value.
+    /// Returns true if the value was removed; otherwise false.
+    abstract RemoveMeasure : ``measure`` : Measure -> bool
+
+    // Querying
+    abstract GetProperties : MyriadHistory -> Property list
+    abstract GetAny : String * Context -> (Property * Cluster) seq
+    abstract GetMatches : String * Context -> (Property * Cluster) seq
+    abstract GetProperty : String * DateTimeOffset -> Property option
     
-    abstract GetDimension : string -> IDimension option
-
-    // CreateDimension: create a new dimension and append to list of dimensions 
-    // RemoveDimension: remove a dimension from the list of dimensions
-    // OrderDimensions: re-order the list of dimensions
-
-    // AddValue: given dimension or property name and value, add value to list of possible values
-    // - If value already exists, do not add
-    // RemoveValue: given dimension or property name and value, remove the value from the list of possible values
-    // - If value used in current key set, do not remove (tricky)
-
-    // Query: given a set of name-value pairs corresponding to dimensions, return matching clusters
 
 type MemoryStore() =
+    let cache = new MyriadCache()
+    
+    let criticalSection = new Object()
+    let dimensions = new List<Dimension>()
+    let dimensionMap = new Dictionary<String, Dimension>(StringComparer.InvariantCultureIgnoreCase)
+    let dimensionValues = new Dictionary<Dimension, SortedSet<String>>()
 
-    // Customer, Environment, Application, Instance
-    let dimensions =
-        [ { Dimension.Id = 1L; Name = "Customer" };
-          { Dimension.Id = 2L; Name = "Environment" };          
-          { Dimension.Id = 3L; Name = "Application" };
-          { Dimension.Id = 4L; Name = "Instance" } ]
+    let mutable currentId = 1L
 
-    let properties = new List<String>()
+    let getDimension (dimensionName : String) =
+        lock criticalSection (fun () ->
+            let success, value = dimensionMap.TryGetValue(dimensionName)
+            if success then Some value else None
+        )
 
-    let dimensionMap = new ConcurrentDictionary<IDimension, List<String>>()
+    let addDimension (dimensionName : String) =
+        lock criticalSection (fun () ->
+            let success, value = dimensionMap.TryGetValue(dimensionName)
+            if success then
+                value
+            else
+                let id = Interlocked.Increment(ref currentId)
+                let newDimension = { Id = id; Name = dimensionName }
+                dimensions.Add(newDimension)
+                dimensionValues.[newDimension] <- new SortedSet<String>()
+                newDimension                            
+        )
+
+    let removeDimension (dimension : Dimension) =
+        lock criticalSection (fun () ->
+            dimensions.Remove(dimension) && dimensionMap.Remove(dimension.Name) && dimensionValues.Remove(dimension)
+        )
+
+    let addMeasure (``measure`` : Measure) =
+        lock criticalSection (fun () ->
+            let success, value = dimensionValues.TryGetValue(``measure``.Dimension)
+            if not success then
+                false
+            else
+                value.Add(``measure``.Value)            
+        )
+        
+    let removeMeasure (``measure`` : Measure) =
+        lock criticalSection (fun () ->
+            let success, value = dimensionValues.TryGetValue(``measure``.Dimension)
+            if not success then
+                false
+            else
+                value.Remove(``measure``.Value)            
+        )
 
     do
-        dimensions |> Seq.iter (fun d -> dimensionMap.[d] <- new List<String>())
-
+        addDimension "Property" |> ignore
+       
     interface IMyriadStore with
-        member x.Initialize() = ignore()
-        member x.GetProperties(history) = x.GetProperties(history)
+        member x.Initialize() = x.Initialize()        
         member x.GetMetadata() = x.GetMetadata()
         member x.GetDimensions() = x.GetDimensions()    
-        member x.GetDimension(dimension) = x.GetDimension(dimension)
+        member x.GetDimension(dimensionName) = x.GetDimension(dimensionName)    
+        member x.AddDimension(dimensionName) = x.AddDimension(dimensionName)
+        member x.RemoveDimension(dimension) = x.RemoveDimension(dimension)
+        member x.AddMeasure(``measure``) = x.AddMeasure(``measure``)
+        member x.RemoveMeasure(``measure``) = x.RemoveMeasure(``measure``)
+        member x.GetProperties(history) = x.GetProperties(history)
+        member x.GetAny(propertyKey, context) = x.GetAny(propertyKey, context)
+        member x.GetMatches(propertyKey, context) = x.GetMatches(propertyKey, context)
+        member x.GetProperty(propertyKey, asOf) = x.GetProperty(propertyKey, asOf)
 
-    member x.GetProperties(history : MyriadHistory) =
-        []
+    member x.Initialize() =
+        ignore()
+        
+    member x.GetMetadata() =         
+        dimensionValues 
+        |> Seq.map (fun kv -> { Dimension = kv.Key; Values = kv.Value |> Seq.toArray } ) 
+        |> Seq.toList
 
-    member x.GetMetadata() = 
-        let property = { Name = "Property"; Id = 0L }
-        let dimensionValues = dimensionMap |> Seq.map (fun kv -> { Dimension = Dimension.Create(kv.Key); Values = kv.Value |> Seq.toArray } ) |> Seq.toList
-        List.append [ { Dimension = property; Values = properties |> Seq.toArray } ] dimensionValues
+    member x.GetDimensions() = dimensions |> Seq.toList
 
-    member x.GetDimensions() = dimensions |> Seq.cast<IDimension> |> List.ofSeq
+    member x.GetDimension(dimensionName : String) = getDimension dimensionName        
 
-    member x.GetDimension(dimension) = None
+    member x.AddDimension(dimensionName : String) = addDimension dimensionName
+        
+    member x.RemoveDimension(dimension : Dimension) = removeDimension dimension
 
+    member x.AddMeasure(``measure`` : Measure) = 
+        false
 
-
+    member x.RemoveMeasure(``measure`` : Measure) = 
+        false
     
+    member x.GetProperties(history : MyriadHistory) = cache.GetProperties() |> Seq.toList
 
+    member x.GetAny(propertyKey : String, context : Context) = 
+        match propertyKey with
+        | key when String.IsNullOrEmpty(key) -> cache.GetAny(context)
+        | key -> cache.GetAny(key, context)
     
-
+    member x.GetMatches(propertyKey : String, context : Context) = 
+        match propertyKey with
+        | key when String.IsNullOrEmpty(key) -> cache.GetMatches(context)
+        | key -> 
+            let success, result = cache.TryFind(key, context)
+            if result.IsNone then Seq.empty else [ result.Value ] |> Seq.ofList        
     
+    member x.GetProperty(propertyKey : String, asOf : DateTimeOffset) = 
+        cache.GetProperty(propertyKey, asOf)

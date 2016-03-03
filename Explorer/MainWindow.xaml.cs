@@ -15,6 +15,7 @@ namespace Myriad.Explorer
     public partial class MainWindow : Window
     {
         private MyriadReader _reader;
+        private MyriadReader _writer;
         private readonly DataSet _dataSet = new DataSet("ResultsView");
         private readonly List<DimensionValues> _dimensionValues = new List<DimensionValues>();
 
@@ -24,6 +25,7 @@ namespace Myriad.Explorer
 
             NavigationControl.Subscribe( Observer.Create<Uri>(OnRefresh) );
             ContextControl.Subscribe(Observer.Create<List<DimensionValues>>(OnQuery));
+            ContextControl.Subscribe(Observer.Create<Measure>(OnMeasure));
             ContextControl.IsEnabled = false;
 
             _dataSet.Tables.Add(new DataTable("Results"));
@@ -56,6 +58,11 @@ namespace Myriad.Explorer
             }
         }
 
+        private void OnMeasure(Measure measure)
+        {
+            //_reader.AddDimensionValue(measure.Dimension, measure.Value);
+        }
+
         private void ResetResults()
         {
             var table = new DataTable("Results");
@@ -73,6 +80,7 @@ namespace Myriad.Explorer
         private void ResetClient(Uri uri)
         {
             _reader = new MyriadReader(uri);
+            _writer = new MyriadReader(uri);
 
             ResetResults();
 
@@ -93,6 +101,10 @@ namespace Myriad.Explorer
 
             var valueMap = _dimensionValues.ToDictionary(d => d.Dimension.Name, d => view[d.Dimension.Name].ToString());
             valueMap["Value"] = view["Value"].ToString();
+
+
+            var propertySet = _reader.QueryProperties( new[] { valueMap["Property"] } );
+
 
             var editor = new PropertyEditorWindow
             {

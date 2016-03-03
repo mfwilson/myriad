@@ -9,6 +9,8 @@ type Epoch =
     /// Get the offset from the epoch in microseconds
     static member GetOffset(utcTicks) = (utcTicks - Epoch.Ticks) / 10L
 
+    static member UtcNow with get() = Epoch.GetOffset(DateTimeOffset.UtcNow.Ticks)
+
 type IAudit =
     abstract Timestamp : Int64 with get
     abstract UserName : String with get
