@@ -21,7 +21,12 @@ type PropertyBuilder(dimensions : Dimension seq) =
         let yWeight = y.Measures |> Seq.sumBy (fun m -> weights.[m.Dimension.Id])
         yWeight.CompareTo(xWeight)
     
+    member x.Compare (lhs : Cluster) (rhs : Cluster) = compareMeasures lhs rhs
+
+    member x.OrderClusters(clusters : Cluster seq) =
+        clusters |> Set.ofSeq |> Seq.toList |> List.sortWith compareMeasures 
+
     member x.Create(key : String) (timestamp : Int64) (clusters : Cluster seq) =
-        let clustersByWeight = clusters |> Set.ofSeq |> Seq.toList |> List.sortWith compareMeasures 
+        let clustersByWeight = x.OrderClusters clusters 
         Property.Create(key, timestamp, clustersByWeight)
         

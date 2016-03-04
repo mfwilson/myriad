@@ -81,18 +81,15 @@ type MyriadCache() =
 
     member x.GetProperties() =         
         cache.Values |> Seq.choose (fun p -> if p.Value.IsEmpty then None else Some p.Value.Head)
+               
+    member x.AddOrUpdate(propertyKey : String, add : string -> LockFreeList<Property>, update : string -> LockFreeList<Property> -> LockFreeList<Property>) = 
+        let addFn = new Func<string, LockFreeList<Property>>(add)
+        let updateFn = new Func<string, LockFreeList<Property>, LockFreeList<Property>>(update)
+        cache.AddOrUpdate(propertyKey, addFn, updateFn)        
 
-    member x.Insert(property : Property) =
-        let add = 
-            new Func<string, LockFreeList<Property>>(
-                fun(key : string) -> new LockFreeList<Property>( [ property ] ) )
-
-        let update = 
-            new Func<string, LockFreeList<Property>, LockFreeList<Property>>(
-                fun(key : string) (current : LockFreeList<Property>) -> 
-                    current.Add property 
-            )
-
-        let current = cache.AddOrUpdate(property.Key, add, update) 
+    /// Set the property; replaces the entire property
+    member x.SetProperty(property : Property) =
+        let add (key : string) = new LockFreeList<Property>( [ property ] ) 
+        let update (key : string) (current : LockFreeList<Property>) = current.Add property 
+        let current = x.AddOrUpdate(property.Key, add, update) 
         current.Value.Head
-        

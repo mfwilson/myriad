@@ -41,7 +41,7 @@ type MyriadCacheTests() =
         let clusterSet = setBuilder.Create "my.property.key" Epoch.UtcNow (getClusters mb)
 
         let cache = new MyriadCache()
-        cache.Insert(clusterSet) |> ignore
+        cache.SetProperty(clusterSet) |> ignore
 
         let context = { 
                 AsOf = DateTimeOffset.UtcNow; 

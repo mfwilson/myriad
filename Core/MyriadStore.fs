@@ -165,4 +165,28 @@ type MemoryStore() =
 
     member x.SetProperty(property : Property) =
         addMeasure { Dimension = propertyDimension; Value = property.Key } |> ignore
-        cache.Insert(property)
+        cache.SetProperty(property)
+
+    member x.MergeProperty(value : PropertyOperation) =
+        let pb = x.GetPropertyBuilder()
+
+        let add (key : string) = 
+            let property = value.ToProperty(pb.OrderClusters)
+            new LockFreeList<Property>( [ property ] ) 
+
+        let update (key : string) (current : LockFreeList<Property>) = 
+            let currentProperty = current.Value.Head
+            let applyOperations(current : Cluster list) (operation : ClusterOperation) =                
+                match operation with
+                | Add(cluster) -> cluster :: current
+                | Update(previous, updated) -> updated :: (current |> List.filter (fun c -> c = previous))
+                | Remove(cluster) -> current |> List.filter (fun c -> c = cluster)
+
+            let clusters = pb.OrderClusters (value.Operations |> List.fold applyOperations currentProperty.Clusters) 
+            let property = Property.Create(currentProperty.Key, value.Description, value.Deprecated, value.Timestamp, clusters)
+            current.Add property        
+
+        let current = cache.AddOrUpdate(value.Key, add, update)
+        current.Value.Head
+
+

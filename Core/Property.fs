@@ -49,3 +49,26 @@ type Property =
 
     static member Create(key : String, description : String, deprecated : bool, timestamp : Int64, clusters : Cluster list) = 
         { Key = key; Description = description; Deprecated = deprecated; Timestamp = timestamp; Clusters = clusters }
+
+
+type ClusterOperation = 
+| Add of Added : Cluster
+| Update of Previous : Cluster * Updated : Cluster
+| Remove of Removed : Cluster
+
+type PropertyOperation =
+    { Key : String; Description : String; Deprecated : bool; Timestamp : Int64; Operations : ClusterOperation list }
+
+    member x.ToProperty(sort : Cluster list -> Cluster list) =
+        PropertyOperation.ToProperty(x, sort)
+
+    static member ToProperty(value : PropertyOperation, sort : Cluster list -> Cluster list) =
+        let toCluster(clusterOperation) =
+            match clusterOperation with
+            | Add(cluster) -> Some(cluster)
+            | Update(previous, updated) -> Some(updated)
+            | Remove(cluster) -> None
+
+        let clusters = value.Operations |> List.choose toCluster 
+        Property.Create(value.Key, value.Description, value.Deprecated, value.Timestamp, sort clusters)
+

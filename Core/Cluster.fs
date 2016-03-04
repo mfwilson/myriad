@@ -59,9 +59,3 @@ type Cluster =
 
     static member Create(value : String, measures : Set<Measure>) =
         { Value = value; Measures = measures; UserName = Environment.UserName; Timestamp = Epoch.UtcNow }
-
-
-type ClusterOperation = 
-| Add of PropertyKey : String * Added : Cluster
-| Update of PropertyKey : String * Previous : Cluster * Updated : Cluster
-| Remove of PropertyKey : String * Removed : Cluster

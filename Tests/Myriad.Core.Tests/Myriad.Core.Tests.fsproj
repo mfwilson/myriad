@@ -58,6 +58,7 @@
     <Content Include="app.config" />
     <Compile Include="FsCheckAddin.fs" />
     <Compile Include="MyriadCacheTests.fs" />
+    <Compile Include="MyriadStoreTests.fs" />
     <Compile Include="MyriadEngineTests.fs" />
   </ItemGroup>
   <ItemGroup>

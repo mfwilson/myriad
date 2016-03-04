@@ -97,7 +97,7 @@ let scriptEntry(args) =
 
 
         // { Value = cluster.Value; Measures = cluster.Measures; UserName = cluster.UserName }
-        let request = ClusterOperation.Add("mm.aa.bb", cluster )
+        let request = ClusterOperation.Add(cluster)
 
         let jsonRequest = JsonConvert.SerializeObject(request)
 
@@ -109,7 +109,7 @@ let scriptEntry(args) =
         let properties = pb.Create "my.property.key" Epoch.UtcNow (getClusters mb)
 
         let cache = new MyriadCache()
-        cache.Insert(properties)
+        cache.SetProperty(properties) |> ignore
 
         let context = { 
                 AsOf = DateTimeOffset.UtcNow; 
