@@ -129,7 +129,7 @@ module RestHandlers =
     let PutProperty (engine : MyriadEngine) (x : HttpContext) =
         async {            
             try
-                Console.WriteLine("REQ: set " + x.request.rawQuery)                
+                Console.WriteLine("REQ: put property " + x.request.rawQuery)                
 
                 let kv = HttpUtility.ParseQueryString(x.request.rawQuery)                
                 let property = fromRequest<PropertyOperation>(x.request)
@@ -139,6 +139,31 @@ module RestHandlers =
                                 
                 let! ctx = Writers.setMimeType contentType x
                 return! OK message ctx.Value
+            with 
+            | :? ArgumentException as ex -> 
+                Console.WriteLine("UNPROCESSABLE_ENTITY: Get {0}\r\n{1}", x.request.rawQuery, ex.ToString())
+                let! ctx = Writers.setMimeType "text/plain" x
+                return! UNPROCESSABLE_ENTITY (ex.Message) ctx.Value
+            | ex -> 
+                Console.WriteLine("BAD_REQUEST: Get {0}\r\n{1}", x.request.rawQuery, ex.ToString())
+                let! ctx = Writers.setMimeType "text/plain" x
+                return! BAD_REQUEST (ex.Message) ctx.Value
+        }
+
+    /// PUT new dimension+value (measure) -> Dimension * string list
+    let PutMeasure (engine : MyriadEngine) (x : HttpContext) =
+        async {            
+            try
+                Console.WriteLine("REQ: put measure " + x.request.rawQuery)                
+
+//                let kv = HttpUtility.ParseQueryString(x.request.rawQuery)                
+//                let property = fromRequest<PropertyOperation>(x.request)
+//                let newProperty = engine.Put(property)
+//                let response = { Requested = DateTimeOffset.UtcNow; Property = newProperty }
+//                let contentType, message = getResponseString kv.["format"] response       
+                                
+                //let! ctx = Writers.setMimeType contentType x
+                return! OK "Not implemented" x
             with 
             | :? ArgumentException as ex -> 
                 Console.WriteLine("UNPROCESSABLE_ENTITY: Get {0}\r\n{1}", x.request.rawQuery, ex.ToString())

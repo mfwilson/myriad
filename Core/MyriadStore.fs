@@ -188,7 +188,7 @@ type MemoryStore() =
 
         let update (key : string) (current : LockFreeList<Property>) = 
             let currentProperty = current.Value.Head
-            let applyOperations(current : Cluster list) (operation : ClusterOperation) =                
+            let applyOperations(current : Cluster list) (operation : Operation<Cluster>) =                
                 match operation with
                 | Add(cluster) -> cluster :: current
                 | Update(previous, updated) -> updated :: (current |> List.filter (fun c -> c <> previous))

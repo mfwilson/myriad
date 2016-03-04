@@ -104,11 +104,11 @@ let scriptEntry(args) =
 
 
         // { Value = cluster.Value; Measures = cluster.Measures; UserName = cluster.UserName }
-        let request = ClusterOperation.Add(cluster)
+        let request = Operation<Cluster>.Add(cluster)
 
         let jsonRequest = JsonConvert.SerializeObject(request)
 
-        let roundtrip = JsonConvert.DeserializeObject<ClusterOperation>(jsonRequest)
+        let roundtrip = JsonConvert.DeserializeObject<Operation<Cluster>>(jsonRequest)
 
 
         //let setBuilder = new PropertyBuilder(dimensions)

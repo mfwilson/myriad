@@ -51,13 +51,13 @@ type Property =
         { Key = key; Description = description; Deprecated = deprecated; Timestamp = timestamp; Clusters = clusters }
 
 
-type ClusterOperation = 
-| Add of Added : Cluster
-| Update of Previous : Cluster * Updated : Cluster
-| Remove of Removed : Cluster
+type Operation<'T> = 
+| Add of Added : 'T
+| Update of Previous : 'T * Updated : 'T
+| Remove of Removed : 'T
 
 type PropertyOperation =
-    { Key : String; Description : String; Deprecated : bool; Timestamp : Int64; Operations : ClusterOperation list }
+    { Key : String; Description : String; Deprecated : bool; Timestamp : Int64; Operations : Operation<Cluster> list }
 
     member x.ToProperty(sort : Cluster list -> Cluster list) =
         PropertyOperation.ToProperty(x, sort)

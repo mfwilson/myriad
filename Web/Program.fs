@@ -36,6 +36,7 @@ let app : WebPart =
         ]
         PUT >=> choose [
             path (prefix + "put/property") >=> RestHandlers.PutProperty engine 
+            path (prefix + "put/measure") >=> RestHandlers.PutMeasure engine 
         ]
     ]
 
