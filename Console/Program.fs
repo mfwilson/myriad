@@ -96,6 +96,13 @@ let scriptEntry(args) =
         let propOb = JsonConvert.DeserializeObject<Property>(propJson)
 
 
+        let operation = { Key = "my.key"; Description = ""; Deprecated = false; Timestamp = Epoch.UtcNow; Operations = [ Add(cluster) ] }
+        let operationJson = JsonConvert.SerializeObject(operation)
+        let operationObject = JsonConvert.DeserializeObject<PropertyOperation>(operationJson)
+
+
+
+
         // { Value = cluster.Value; Measures = cluster.Measures; UserName = cluster.UserName }
         let request = ClusterOperation.Add(cluster)
 

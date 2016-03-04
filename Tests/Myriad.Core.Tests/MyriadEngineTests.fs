@@ -40,7 +40,7 @@ type MyriadEngineTests() =
         let newCluster = Cluster.Create("*.xls", mb { yield "Environment", "London" } )
         let newProperty = engine.PropertyBuilder.Create property.Key Epoch.UtcNow (newCluster :: property.Clusters)
         
-        engine.Set(newProperty) |> ignore
+        store.SetProperty(newProperty) |> ignore
 
         let property2 = engine.Get("nx.auditFile.filter", DateTimeOffset.MaxValue).Value
 

@@ -32,8 +32,12 @@ type IMyriadStore =
     /// Remove a value from the list of possible values for a dimension given a dimension and value.
     /// Returns true if the value was removed; otherwise false.
     abstract RemoveMeasure : ``measure`` : Measure -> bool
-
+    
+    /// Overwrites the current property with the passed property data 
     abstract SetProperty : Property -> Property
+
+    /// Merges the passed property data into the current property and returns the result
+    abstract PutProperty : PropertyOperation -> Property
 
     // Querying
     abstract GetProperties : MyriadHistory -> Property list
@@ -117,6 +121,7 @@ type MemoryStore() =
         member x.GetMeasureBuilder() = x.GetMeasureBuilder()
         member x.GetPropertyBuilder() = x.GetPropertyBuilder()
         member x.SetProperty(property) = x.SetProperty(property)
+        member x.PutProperty(property) = x.PutProperty(property)
 
     member x.Initialize() =
         ignore()
@@ -167,7 +172,7 @@ type MemoryStore() =
         addMeasure { Dimension = propertyDimension; Value = property.Key } |> ignore
         cache.SetProperty(property)
 
-    member x.MergeProperty(value : PropertyOperation) =
+    member x.PutProperty(value : PropertyOperation) =
         let pb = x.GetPropertyBuilder()
 
         let add (key : string) = 
@@ -179,8 +184,8 @@ type MemoryStore() =
             let applyOperations(current : Cluster list) (operation : ClusterOperation) =                
                 match operation with
                 | Add(cluster) -> cluster :: current
-                | Update(previous, updated) -> updated :: (current |> List.filter (fun c -> c = previous))
-                | Remove(cluster) -> current |> List.filter (fun c -> c = cluster)
+                | Update(previous, updated) -> updated :: (current |> List.filter (fun c -> c <> previous))
+                | Remove(cluster) -> current |> List.filter (fun c -> c <> cluster)
 
             let clusters = pb.OrderClusters (value.Operations |> List.fold applyOperations currentProperty.Clusters) 
             let property = Property.Create(currentProperty.Key, value.Description, value.Deprecated, value.Timestamp, clusters)
@@ -188,5 +193,4 @@ type MemoryStore() =
 
         let current = cache.AddOrUpdate(value.Key, add, update)
         current.Value.Head
-
 

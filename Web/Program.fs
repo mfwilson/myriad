@@ -35,7 +35,7 @@ let app : WebPart =
             path (prefix + "list/dimension") >=> Writers.setMimeType("text/json") >=> RestHandlers.DimensionList engine
         ]
         PUT >=> choose [
-            path (prefix + "set/property") >=> RestHandlers.Set engine 
+            path (prefix + "put/property") >=> RestHandlers.PutProperty engine 
         ]
     ]
 

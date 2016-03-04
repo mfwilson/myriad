@@ -96,7 +96,7 @@ module RestHandlers =
             return! OK message x
         }    
 
-    /// Get -> URL properties with dimensions name=value
+    /// GET -> URL properties with dimensions name=value
     let Get (engine : MyriadEngine) (x : HttpContext) =
         async {
             try
@@ -125,20 +125,16 @@ module RestHandlers =
                 return! BAD_REQUEST (ex.Message) ctx.Value
         }        
         
-    /// Set -> PUT w/ JSON data
-    let Set (engine : MyriadEngine) (x : HttpContext) =
+    /// PUT property operation (JSON data) -> property
+    let PutProperty (engine : MyriadEngine) (x : HttpContext) =
         async {            
             try
                 Console.WriteLine("REQ: set " + x.request.rawQuery)                
 
-                let kv = HttpUtility.ParseQueryString(x.request.rawQuery)
-                
-                let property = fromRequest<Property>(x.request)
-
-                let newProperty = engine.Set(property)
-
+                let kv = HttpUtility.ParseQueryString(x.request.rawQuery)                
+                let property = fromRequest<PropertyOperation>(x.request)
+                let newProperty = engine.Put(property)
                 let response = { Requested = DateTimeOffset.UtcNow; Property = newProperty }
-
                 let contentType, message = getResponseString kv.["format"] response       
                                 
                 let! ctx = Writers.setMimeType contentType x

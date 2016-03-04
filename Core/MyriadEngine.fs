@@ -3,7 +3,6 @@
 open System 
 
 type MyriadEngine(store : IMyriadStore) =
-
     do
         store.Initialize()
 
@@ -30,5 +29,5 @@ type MyriadEngine(store : IMyriadStore) =
     member x.Get(propertyKey : String, asOf : DateTimeOffset) =
         store.GetProperty(propertyKey, asOf)
 
-    member x.Set(property : Property) = 
-        store.SetProperty(property)        
+    member x.Put(operation : PropertyOperation) = 
+        store.PutProperty(operation)        

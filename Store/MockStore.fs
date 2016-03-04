@@ -74,6 +74,7 @@ type MockStore() =
         let pb = x.GetPropertyBuilder()
 
         let utcNow = Epoch.UtcNow
+
         [ pb.Create "my.property.key" utcNow (getFruitClusters mb);
           pb.Create "my.office.key" utcNow (getOfficeClusters  mb); 
           pb.Create "nx.auditFile.filter" utcNow (getNxClusters  mb) ]
