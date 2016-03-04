@@ -1,18 +1,15 @@
 ﻿namespace Myriad 
 
 open System
+open System.Runtime.Serialization
+open System.Xml
+open System.Xml.Serialization
 
 /// Clusters are equivalent over their measures set
 /// contain a value, set of measures, and a username
 [<CustomEquality;CustomComparison>]
 type Cluster = 
     { Value : String; Measures : Set<Measure>; UserName : String; Timestamp : Int64 }
-
-    interface IComparable with
-        member x.CompareTo other = 
-            match other with 
-            | :? Cluster as y -> Cluster.CompareTo(x.Measures, y.Measures)
-            | _ -> invalidArg "other" "cannot compare value of different types" 
 
     override x.Equals(obj) = 
         match obj with
@@ -24,6 +21,29 @@ type Cluster =
     override x.ToString() = 
         let measures = String.Join(", ", x.Measures)
         String.Format("[{0}], Measures: {1}", x.Value, measures)
+
+    interface IComparable with
+        member x.CompareTo other = 
+            match other with 
+            | :? Cluster as y -> Cluster.CompareTo(x.Measures, y.Measures)
+            | _ -> invalidArg "other" "cannot compare value of different types" 
+
+    interface IXmlSerializable with
+        member x.GetSchema() = null
+        member x.ReadXml(reader) = ignore()
+        member x.WriteXml(writer) = x.WriteXml(writer)
+                        
+    member x.WriteXml(writer : XmlWriter) =             
+        writer.WriteStartElement("Cluster")        
+        writer.WriteAttributeString("UserName", x.UserName)
+        writer.WriteAttributeString("Timestamp", x.Timestamp.ToString())        
+        
+        writer.WriteStartElement("Value")
+        writer.WriteCData(x.Value)
+        writer.WriteEndElement()
+        
+        x.Measures |> Seq.iter (fun m -> m.WriteXml(writer))
+        writer.WriteEndElement()
 
     static member ToMap(propertyKey : String, cluster : Cluster, dimensions : Dimension seq, ordinal : int) =
         let values = [ "Property", propertyKey; "Value", cluster.Value; "Ordinal", ordinal.ToString() ]

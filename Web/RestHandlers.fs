@@ -21,6 +21,13 @@ type AjaxResponse =
 
 module RestHandlers =
 
+    let private fromJson<'a> json =
+        JsonConvert.DeserializeObject(json, typeof<'a>) :?> 'a    
+
+    let private fromRequest<'a> (req : HttpRequest) = 
+        let getString rawForm = Encoding.UTF8.GetString(rawForm)
+        req.rawForm |> getString |> fromJson<'a>
+
     let private getAsOf (kv : NameValueCollection) =
         let value = kv.["asOf"]     // Compare is case-insensitive
         if value <> null then            
@@ -122,17 +129,20 @@ module RestHandlers =
     let Set (engine : MyriadEngine) (x : HttpContext) =
         async {            
             try
-                Console.WriteLine("REQ: set " + x.request.rawQuery)
+                Console.WriteLine("REQ: set " + x.request.rawQuery)                
 
-                let json = x.request.formData("Property")
+                let kv = HttpUtility.ParseQueryString(x.request.rawQuery)
                 
-                
+                let property = fromRequest<Property>(x.request)
 
-                //let json = x.request.form.[0].ToString()
-                //let property = JsonConvert.DeserializeObject<Property>(json)
-                //engine.Set(property)
+                let newProperty = engine.Set(property)
 
-                return! OK "Set called" x
+                let response = { Requested = DateTimeOffset.UtcNow; Property = newProperty }
+
+                let contentType, message = getResponseString kv.["format"] response       
+                                
+                let! ctx = Writers.setMimeType contentType x
+                return! OK message ctx.Value
             with 
             | :? ArgumentException as ex -> 
                 Console.WriteLine("UNPROCESSABLE_ENTITY: Get {0}\r\n{1}", x.request.rawQuery, ex.ToString())

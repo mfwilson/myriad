@@ -89,6 +89,10 @@ type MyriadCache() =
 
         let update = 
             new Func<string, LockFreeList<Property>, LockFreeList<Property>>(
-                fun(key : string) (current : LockFreeList<Property>) -> current.Add property )
+                fun(key : string) (current : LockFreeList<Property>) -> 
+                    current.Add property 
+            )
 
-        cache.AddOrUpdate(property.Key, add, update) |> ignore
+        let current = cache.AddOrUpdate(property.Key, add, update) 
+        current.Value.Head
+        

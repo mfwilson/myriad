@@ -77,5 +77,5 @@ type MockStore() =
         [ pb.Create "my.property.key" utcNow (getFruitClusters mb);
           pb.Create "my.office.key" utcNow (getOfficeClusters  mb); 
           pb.Create "nx.auditFile.filter" utcNow (getNxClusters  mb) ]
-        |> List.iter (fun p -> x.SetProperty p)
+        |> List.iter (fun p -> x.SetProperty p |> ignore)
 

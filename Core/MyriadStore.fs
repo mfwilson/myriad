@@ -33,7 +33,7 @@ type IMyriadStore =
     /// Returns true if the value was removed; otherwise false.
     abstract RemoveMeasure : ``measure`` : Measure -> bool
 
-    abstract SetProperty : Property -> unit
+    abstract SetProperty : Property -> Property
 
     // Querying
     abstract GetProperties : MyriadHistory -> Property list

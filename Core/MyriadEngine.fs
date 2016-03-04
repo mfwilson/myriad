@@ -23,7 +23,9 @@ type MyriadEngine(store : IMyriadStore) =
     /// Get values that are the best match and not filtered by the context; if property key is empty, find over all keys
     member x.Get(propertyKey : String, context : Context) =
         let properties = store.GetMatches(propertyKey, context)
-        properties |> Seq.map (fun pair -> { Name = fst(pair).Key; Value = snd(pair).Value}) |> Seq.toList
+        properties 
+        |> Seq.map (fun pair -> { Name = fst(pair).Key; Value = snd(pair).Value; Deprecated = fst(pair).Deprecated }) 
+        |> Seq.toList
 
     member x.Get(propertyKey : String, asOf : DateTimeOffset) =
         store.GetProperty(propertyKey, asOf)
