@@ -69,7 +69,7 @@ namespace Myriad.Explorer
 
             var dimensions = _reader.GetDimensionList();
             dimensions.Insert(0, "Ordinal");
-            dimensions.AddRange(new[] { "Property", "Value" });
+            dimensions.Insert(2, "Value");
             dimensions.ForEach(d => table.Columns.Add(d, d == "Ordinal" ? typeof(int) : typeof(string)));
 
             _dataSet.Reset();
@@ -103,7 +103,7 @@ namespace Myriad.Explorer
             valueMap["Value"] = view["Value"].ToString();
 
 
-            var propertySet = _reader.QueryProperties( new[] { valueMap["Property"] } );
+            //var propertySet = _reader.QueryProperties( new[] { valueMap["Property"] } );
 
 
             var editor = new PropertyEditorWindow

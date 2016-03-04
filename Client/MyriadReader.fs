@@ -22,7 +22,7 @@ type MyriadReader(baseUri : Uri) =
             "get",        "get";
             "query",      "query";
             "metadata",   "metadata";
-            "dimensions", "dimensions/list";
+            "dimensions", "list/dimension";
         ] |> Map.ofList
 
     let request(key : String) (update : UriBuilder -> unit) =

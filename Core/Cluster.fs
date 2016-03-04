@@ -53,7 +53,7 @@ type Cluster =
             not(measures |> Seq.exists (fun m -> fst(m) = dimension.Name))
 
         let defaults = dimensions |> Seq.filter filterByDimension |> Seq.map (fun d -> d.Name, "") |> Seq.toList
-        Map.ofList (List.concat [ values; measures; defaults ])
+        Map.ofList (List.concat [ defaults; measures; values ])
 
     static member CompareTo(x : Set<Measure>, y : Set<Measure>) = compare x y
 

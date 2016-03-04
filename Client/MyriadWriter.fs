@@ -17,7 +17,7 @@ type MyriadWriter(baseUri : Uri) =
     
     let pathMap = 
         [
-            "set",        "set";
+            "put",        "put/property";
         ] |> Map.ofList
     
 

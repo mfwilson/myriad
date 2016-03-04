@@ -105,6 +105,13 @@ type MemoryStore() =
 
     let propertyDimension = addDimension "Property" 
 
+    let updateMeasures (property : Property) =
+        lock criticalSection (fun () ->
+            addMeasure { Dimension = propertyDimension; Value = property.Key } |> ignore
+            let measures = property.Clusters |> List.map (fun c -> c.Measures) |> Set.unionMany 
+            measures |> Set.map addMeasure |> ignore
+        )
+
     interface IMyriadStore with
         member x.Initialize() = x.Initialize()        
         member x.GetMetadata() = x.GetMetadata()
@@ -169,8 +176,8 @@ type MemoryStore() =
         PropertyBuilder(x.GetDimensions())
 
     member x.SetProperty(property : Property) =
-        addMeasure { Dimension = propertyDimension; Value = property.Key } |> ignore
-        cache.SetProperty(property)
+        updateMeasures property
+        cache.SetProperty property
 
     member x.PutProperty(value : PropertyOperation) =
         let pb = x.GetPropertyBuilder()
@@ -192,5 +199,8 @@ type MemoryStore() =
             current.Add property        
 
         let current = cache.AddOrUpdate(value.Key, add, update)
-        current.Value.Head
+        let property = current.Value.Head
+        updateMeasures property
+        property
+
 

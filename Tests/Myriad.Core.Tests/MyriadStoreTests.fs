@@ -30,14 +30,41 @@ type MyriadStoreTests() =
     let assertNotExists collection item = Assert.False(collection |> Seq.exists (fun i -> i = item))
 
     [<Test>]
-    member x.SetProperty() =       
+    member x.``SetProperty returns same property``() =       
         let store, mb, pb = getStore()
         let property = pb.Create "test" Epoch.UtcNow [ testClusters(mb).[0] ]       
         let setProperty = store.SetProperty(property)        
         Assert.True(property.Equals(setProperty))
 
     [<Test>]
-    member x.MergeRemove() =
+    member x.``SetProperty populates measures``() =
+        let store, mb, pb = getStore()
+        let clusters = testClusters(mb)                        
+        let property = pb.Create "my.key" Epoch.UtcNow clusters
+        store.SetProperty(property) |> ignore
+
+        let metadata = store.GetMetadata() |> List.map (fun dv -> dv.Dimension.Name, dv.Values) |> Map.ofList 
+
+        Assert.AreEqual(1, metadata.["Property"].Length)
+        Assert.AreEqual(1, metadata.["Customer"].Length)    
+        Assert.AreEqual(3, metadata.["Instance"].Length)    
+        CollectionAssert.AreEquivalent( ["rex"; "sally"; "wally"], metadata.["Instance"])
+
+    [<Test>]
+    member x.``PutProperty populates measures``() =
+        let store, mb, pb = getStore()
+        let clusters = testClusters(mb) |> List.map (fun c -> Add(c))
+        let operation = { Key = "my.key"; Description = ""; Deprecated = false; Timestamp = Epoch.UtcNow; Operations = clusters }
+        let property = store.PutProperty(operation) 
+        let metadata = store.GetMetadata() |> List.map (fun dv -> dv.Dimension.Name, dv.Values) |> Map.ofList 
+
+        Assert.AreEqual(1, metadata.["Property"].Length)
+        Assert.AreEqual(1, metadata.["Customer"].Length)    
+        Assert.AreEqual(3, metadata.["Instance"].Length)    
+        CollectionAssert.AreEquivalent( ["rex"; "sally"; "wally"], metadata.["Instance"])
+
+    [<Test>]
+    member x.``PutProperty removes clusters``() =
         let store, mb, pb = getStore()
         let clusters = testClusters(mb)                        
         let property = pb.Create "my.key" Epoch.UtcNow clusters
@@ -56,7 +83,7 @@ type MyriadStoreTests() =
         assertNotExists merged.Clusters clusters.[4]
 
     [<Test>]
-    member x.MergeAdd() =
+    member x.``PutProperty adds clusters``() =
         let store, mb, pb = getStore()
         let clusters = testClusters(mb)
                 
@@ -74,7 +101,7 @@ type MyriadStoreTests() =
         assertExists merged.Clusters clusters.[2]
 
     [<Test>]
-    member x.MergeUpdate() =
+    member x.``PutProperty updates clusters``() =
         let store, mb, pb = getStore()
         let clusters = testClusters(mb)
         let property = pb.Create "my.key" Epoch.UtcNow clusters
