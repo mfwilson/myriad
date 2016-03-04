@@ -124,7 +124,13 @@ module RestHandlers =
             try
                 Console.WriteLine("REQ: set " + x.request.rawQuery)
 
+                let json = x.request.formData("Property")
                 
+                
+
+                //let json = x.request.form.[0].ToString()
+                //let property = JsonConvert.DeserializeObject<Property>(json)
+                //engine.Set(property)
 
                 return! OK "Set called" x
             with 

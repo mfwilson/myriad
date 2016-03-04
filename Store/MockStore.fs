@@ -10,34 +10,6 @@ type MockStore() =
 
     inherit MemoryStore()
 
-
-    let properties = [| "my.office.key"; "my.property.key"; "nx.auditFile.filter" |]
-
-    // Environment, Location, Application, Instance
-    let dimensions =
-        [ { Dimension.Id = 32L; Name = "Environment" };
-          { Dimension.Id = 21L; Name = "Location" };
-          { Dimension.Id = 44L; Name = "Application" };
-          { Dimension.Id = 98L; Name = "Instance" } ]
-
-    // Environment -> PROD, UAT, DEV
-    // Location -> Chicago, New York, London, Amsterdam
-    // Application -> Rook, Knight, Pawn, Bishop
-    // Instance -> mary, jimmy, rex, paulie
-    let internalList = 
-        [
-            { Dimension = dimensions.[0]; Values = [| "PROD"; "UAT"; "DEV" |] };
-            { Dimension = dimensions.[1]; Values = [| "Chicago"; "New York"; "London"; "Amsterdam"; "Paris"; "Berlin"; "Tokyo" |] };
-            { Dimension = dimensions.[2]; Values = [| "Rook"; "Knight"; "Pawn"; "Bishop"; "King"; "Queen" |] };
-            { Dimension = dimensions.[3]; Values = [| "mary"; "jimmy"; "rex"; "paulie"; "tommy" |] };
-        ]
-
-    let dimensionMap =
-        internalList |> List.map (fun item -> item.Dimension.Name.ToLower(), item.Values ) |> Map.ofSeq
-
-    let queryMap =
-        dimensions |> Seq.map (fun d -> d.Name.ToLower(), d) |> Map.ofSeq
-
     let getFruitClusters (mb : MeasureBuilder) =
         Seq.ofList
             [
@@ -69,15 +41,6 @@ type MockStore() =
                 Cluster.Create("*.txt", Set.empty )
             ]
 
-    let sampleProperties =
-        let map = dimensions |> Seq.map (fun d -> d.Name, d) |> Map.ofSeq
-        let mb = new MeasureBuilder(map)
-        let setBuilder = new PropertyBuilder(dimensions)
-        let utcNow = Epoch.UtcNow
-        [ setBuilder.Create "my.property.key" utcNow (getFruitClusters mb);
-          setBuilder.Create "my.office.key" utcNow (getOfficeClusters  mb); 
-          setBuilder.Create "nx.auditFile.filter" utcNow (getNxClusters  mb) ]
-
     interface IMyriadStore with
         member x.Initialize() = x.Initialize()
         member x.GetMetadata() = base.GetMetadata()
@@ -91,47 +54,28 @@ type MockStore() =
         member x.GetAny(propertyKey, context) = base.GetAny(propertyKey, context)
         member x.GetMatches(propertyKey, context) = base.GetMatches(propertyKey, context)
         member x.GetProperty(propertyKey, asOf) = base.GetProperty(propertyKey, asOf)
+        member x.GetMeasureBuilder() = base.GetMeasureBuilder()
+        member x.GetPropertyBuilder() = base.GetPropertyBuilder()
 
     member x.Initialize() =
         base.Initialize()
-        [ "Environment"; "Location"; "Application"; "Instance" ] |> List.iter (fun d -> x.AddDimension(d) |> ignore)
 
-        //internalList |> List.iter ()
+        let createDimension (dimensionValues : string * string list) =
+            let dimension = x.AddDimension(fst dimensionValues)
+            (snd dimensionValues) |> List.iter (fun v -> x.AddMeasure { Dimension = dimension; Value = v } |> ignore)
 
+        [ "Environment", [ "PROD"; "UAT"; "DEV" ];
+          "Location",    [ "Chicago"; "New York"; "London"; "Amsterdam"; "Paris"; "Berlin"; "Tokyo" ];
+          "Application", [ "Rook"; "Knight"; "Pawn"; "Bishop"; "King"; "Queen" ];
+          "Instance",    [ "mary"; "jimmy"; "rex"; "paulie"; "tommy" ] ]
+        |> List.iter (fun d -> createDimension d )
 
-//    member x.GetProperties(history : MyriadHistory) = 
-//        sampleProperties
-//
-//    member x.Dimensions with get() = dimensions
-//
-//    member x.DimensionMap with get() = dimensionMap
-//
-//    member x.SampleProperties with get() = sampleProperties
-//
-//    member x.GetDimension(key : String) = queryMap.TryFind (key.ToLower())
-//
-//    //member x.GetDimensions() =
-//    //    JsonConvert.SerializeObject(internalList)
-//
-//    member x.GetDimensions() = dimensions 
-//
-//    member x.GetDimensionList() =
-//        let dimensionList = dimensions |> List.map (fun d -> d.Name)
-//        JsonConvert.SerializeObject(dimensionList)
-//
-//    member x.GetDimensionValues(dimension : String) =
-//        let dimensionValues = x.DimensionMap.TryFind(dimension.ToLower())
-//        if dimensionValues.IsNone then
-//            JsonConvert.SerializeObject( [] : String list )
-//        else
-//            let dimensions = dimensionValues.Value |> Array.sort 
-//            JsonConvert.SerializeObject( dimensions )
-//
-//    member x.GetProperties() =
-//        JsonConvert.SerializeObject( properties )
-//
-//    member x.GetMetadata() =
-//        let property = { Name = "Property"; Id = 0L }
-//        List.append [ { Dimension = property; Values = properties } ] internalList
-//        //JsonConvert.SerializeObject(metadata)
-//
+        let mb = x.GetMeasureBuilder()
+        let pb = x.GetPropertyBuilder()
+
+        let utcNow = Epoch.UtcNow
+        [ pb.Create "my.property.key" utcNow (getFruitClusters mb);
+          pb.Create "my.office.key" utcNow (getOfficeClusters  mb); 
+          pb.Create "nx.auditFile.filter" utcNow (getNxClusters  mb) ]
+        |> List.iter (fun p -> x.SetProperty p)
+

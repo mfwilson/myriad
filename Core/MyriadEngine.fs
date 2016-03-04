@@ -4,23 +4,15 @@ open System
 
 type MyriadEngine(store : IMyriadStore) =
 
-    //let cache = new MyriadCache()
-
-    let dimensions = store.GetDimensions()
-    let dimensionMap = dimensions |> Seq.map (fun d -> d.Name, d) |> Map.ofSeq
-    let mb = MeasureBuilder(dimensionMap)
-    let pb = PropertyBuilder(dimensions)
-
     do
         store.Initialize()
-        //store.GetProperties(MyriadHistory.All()) |> Seq.iter cache.Insert
 
-    member x.MeasureBuilder with get() = mb
-    member x.PropertyBuilder with get() = pb
+    member x.MeasureBuilder with get() = store.GetMeasureBuilder()
+    member x.PropertyBuilder with get() = store.GetPropertyBuilder()
 
     member x.GetDimension(key : String) = store.GetDimension(key)
 
-    member x.GetDimensions() = dimensions
+    member x.GetDimensions() = store.GetDimensions()
 
     member x.GetMetadata() = store.GetMetadata()
 
@@ -30,11 +22,6 @@ type MyriadEngine(store : IMyriadStore) =
     
     /// Get values that are the best match and not filtered by the context; if property key is empty, find over all keys
     member x.Get(propertyKey : String, context : Context) =
-//        let properties = match propertyKey with
-//                         | key when String.IsNullOrEmpty(key) -> cache.GetMatches(context)
-//                         | key -> 
-//                             let success, result = cache.TryFind(key, context)
-//                             if result.IsNone then Seq.empty else [ result.Value ] |> Seq.ofList
         let properties = store.GetMatches(propertyKey, context)
         properties |> Seq.map (fun pair -> { Name = fst(pair).Key; Value = snd(pair).Value}) |> Seq.toList
 
@@ -42,7 +29,4 @@ type MyriadEngine(store : IMyriadStore) =
         store.GetProperty(propertyKey, asOf)
 
     member x.Set(property : Property) = 
-        
-        // TODO: Write through to store then insert in to cache
-        //cache.Insert(property)
-        ignore()
+        store.SetProperty(property)        

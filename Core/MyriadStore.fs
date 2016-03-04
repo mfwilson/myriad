@@ -3,7 +3,6 @@
 open System
 open System.Collections.Concurrent
 open System.Collections.Generic
-open System.Threading
 
 type MyriadHistory =
     | All of unit
@@ -34,12 +33,18 @@ type IMyriadStore =
     /// Returns true if the value was removed; otherwise false.
     abstract RemoveMeasure : ``measure`` : Measure -> bool
 
+    abstract SetProperty : Property -> unit
+
     // Querying
     abstract GetProperties : MyriadHistory -> Property list
     abstract GetAny : String * Context -> (Property * Cluster) seq
     abstract GetMatches : String * Context -> (Property * Cluster) seq
     abstract GetProperty : String * DateTimeOffset -> Property option
     
+    // Building
+    abstract GetMeasureBuilder : unit -> MeasureBuilder
+    abstract GetPropertyBuilder : unit -> PropertyBuilder
+
 
 type MemoryStore() =
     let cache = new MyriadCache()
@@ -63,9 +68,10 @@ type MemoryStore() =
             if success then
                 value
             else
-                let id = Interlocked.Increment(ref currentId)
-                let newDimension = { Id = id; Name = dimensionName }
+                currentId <- currentId + 1L
+                let newDimension = { Id = currentId; Name = dimensionName }
                 dimensions.Add(newDimension)
+                dimensionMap.[dimensionName] <- newDimension
                 dimensionValues.[newDimension] <- new SortedSet<String>()
                 newDimension                            
         )
@@ -93,9 +99,8 @@ type MemoryStore() =
                 value.Remove(``measure``.Value)            
         )
 
-    do
-        addDimension "Property" |> ignore
-       
+    let propertyDimension = addDimension "Property" 
+
     interface IMyriadStore with
         member x.Initialize() = x.Initialize()        
         member x.GetMetadata() = x.GetMetadata()
@@ -109,6 +114,9 @@ type MemoryStore() =
         member x.GetAny(propertyKey, context) = x.GetAny(propertyKey, context)
         member x.GetMatches(propertyKey, context) = x.GetMatches(propertyKey, context)
         member x.GetProperty(propertyKey, asOf) = x.GetProperty(propertyKey, asOf)
+        member x.GetMeasureBuilder() = x.GetMeasureBuilder()
+        member x.GetPropertyBuilder() = x.GetPropertyBuilder()
+        member x.SetProperty(property) = x.SetProperty(property)
 
     member x.Initialize() =
         ignore()
@@ -126,11 +134,9 @@ type MemoryStore() =
         
     member x.RemoveDimension(dimension : Dimension) = removeDimension dimension
 
-    member x.AddMeasure(``measure`` : Measure) = 
-        false
+    member x.AddMeasure(``measure`` : Measure) = addMeasure ``measure``
 
-    member x.RemoveMeasure(``measure`` : Measure) = 
-        false
+    member x.RemoveMeasure(``measure`` : Measure) = removeMeasure ``measure`` 
     
     member x.GetProperties(history : MyriadHistory) = cache.GetProperties() |> Seq.toList
 
@@ -148,3 +154,15 @@ type MemoryStore() =
     
     member x.GetProperty(propertyKey : String, asOf : DateTimeOffset) = 
         cache.GetProperty(propertyKey, asOf)
+
+    member x.GetMeasureBuilder() = 
+        let dimensions = x.GetDimensions()
+        let dimensionMap = dimensions |> Seq.map (fun d -> d.Name, d) |> Map.ofSeq
+        MeasureBuilder(dimensionMap)
+
+    member x.GetPropertyBuilder() = 
+        PropertyBuilder(x.GetDimensions())
+
+    member x.SetProperty(property : Property) =
+        addMeasure { Dimension = propertyDimension; Value = property.Key } |> ignore
+        cache.Insert(property)

@@ -77,24 +77,25 @@ let getClusters(mb : MeasureBuilder) =
 
 let scriptEntry(args) = 
     try
-        let reader = new MyriadReader(Uri("http://localhost:7888/api/1/myriad"))
+        //let reader = new MyriadReader(Uri("http://localhost:7888/api/1/myriad"))
 
-        let m = reader.GetMetadata()
-
-
-
-
-
-        let engine = MyriadEngine(MockStore())
+        //let m = reader.GetMetadata()
 
         
+        let engine = MyriadEngine(MockStore())
 
+        let mb = engine.MeasureBuilder
+        let pb = engine.PropertyBuilder
 
-        let dimensions = getDimensions()
-        let dimensionMap = dimensions |> Seq.map (fun d -> d.Name, d) |> Map.ofSeq
-        let mb = new MeasureBuilder(dimensionMap)
 
         let cluster = Cluster.Create("apple", mb { yield "Environment", "PROD"; yield "Location", "London"; yield "Instance", "rex" } )
+        
+        let prop = pb.Create "something" Epoch.UtcNow [ cluster ]
+        
+        let propJson = JsonConvert.SerializeObject(prop)
+        let propOb = JsonConvert.DeserializeObject<Property>(propJson)
+
+
         // { Value = cluster.Value; Measures = cluster.Measures; UserName = cluster.UserName }
         let request = ClusterOperation.Add("mm.aa.bb", cluster )
 
@@ -103,9 +104,9 @@ let scriptEntry(args) =
         let roundtrip = JsonConvert.DeserializeObject<ClusterOperation>(jsonRequest)
 
 
-        let setBuilder = new PropertyBuilder(dimensions)
+        //let setBuilder = new PropertyBuilder(dimensions)
 
-        let properties = setBuilder.Create "my.property.key" Epoch.UtcNow (getClusters mb)
+        let properties = pb.Create "my.property.key" Epoch.UtcNow (getClusters mb)
 
         let cache = new MyriadCache()
         cache.Insert(properties)
@@ -125,7 +126,7 @@ let scriptEntry(args) =
         let resultsFilter = cache.GetAny(filterContext) |> Seq.toList
 
 
-        let m = Cluster.ToMap("my.property.key", snd(resultsFilter.[0]), dimensions, 0)
+        //let m = Cluster.ToMap("my.property.key", snd(resultsFilter.[0]), dimensions, 0)
 
         //////
 
