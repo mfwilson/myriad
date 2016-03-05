@@ -11,8 +11,6 @@ open System.Web
 open Newtonsoft.Json
 open Myriad
 
-type RestResponse =
-    { data : Map<String, String> seq }
 
 type MyriadReader(baseUri : Uri) =
     let client = new WebClient()
@@ -33,7 +31,7 @@ type MyriadReader(baseUri : Uri) =
 
     let query update = 
         let json = request "query" update
-        let response = JsonConvert.DeserializeObject<RestResponse>(json)
+        let response = JsonConvert.DeserializeObject<RestQueryResponse>(json)
         response.data |> Seq.map (fun m -> m.ToDictionary( (fun p -> p.Key), (fun (p : KeyValuePair<String, String>) -> p.Value) ))
 
     interface IDisposable with

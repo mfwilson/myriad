@@ -15,7 +15,7 @@ namespace Myriad.Explorer
     public partial class MainWindow : Window
     {
         private MyriadReader _reader;
-        private MyriadReader _writer;
+        private MyriadWriter _writer;
         private readonly DataSet _dataSet = new DataSet("ResultsView");
         private readonly List<DimensionValues> _dimensionValues = new List<DimensionValues>();
 
@@ -80,7 +80,7 @@ namespace Myriad.Explorer
         private void ResetClient(Uri uri)
         {
             _reader = new MyriadReader(uri);
-            _writer = new MyriadReader(uri);
+            _writer = new MyriadWriter(uri);
 
             ResetResults();
 
@@ -114,7 +114,11 @@ namespace Myriad.Explorer
                 Dimensions = _dimensionValues.Where(d => d.Dimension.Name != "Property").ToList()
             };
 
-            editor.ShowDialog();
+            var result = editor.ShowDialog();
+            if (result.HasValue == false || result.Value == false)
+                return;
+
+            //_writer.PutProperty()
         }
     }
 }

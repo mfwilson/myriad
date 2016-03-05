@@ -27,6 +27,11 @@ type MyriadWriter(baseUri : Uri) =
     member x.Dispose() = 
         client.Dispose()
     
+    member x.PutProperty(property : PropertyOperation) =
+
+
+        ignore()
+
 
     member x.AddDimensionValue(dimension : Dimension, value : String) =
 

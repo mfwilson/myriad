@@ -42,8 +42,15 @@ namespace Myriad.Explorer
                 Height = height;
         }
 
+        private void OnClickApply(object sender, RoutedEventArgs e)
+        {
+            DialogResult = true;
+            Close();
+        }
+
         private void OnClickCancel(object sender, RoutedEventArgs e)
         {
+            DialogResult = false;
             Close();
         }
 
