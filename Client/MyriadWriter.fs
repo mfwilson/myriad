@@ -14,13 +14,7 @@ open Myriad
 type MyriadWriter(baseUri : Uri) =
 
     let client = new WebClient()
-    
-    let pathMap = 
-        [
-            "put",        "put/property";
-        ] |> Map.ofList
-    
-
+        
     interface IDisposable with
         member x.Dispose() = x.Dispose()
 
@@ -28,10 +22,9 @@ type MyriadWriter(baseUri : Uri) =
         client.Dispose()
     
     member x.PutProperty(property : PropertyOperation) =
-
-
-        ignore()
-
+        let uri = Rest.getPutUri baseUri (fun builder -> builder.Uri)        
+        let json = client.DownloadString(uri)
+        JsonConvert.DeserializeObject<Property>(json)
 
     member x.AddDimensionValue(dimension : Dimension, value : String) =
 

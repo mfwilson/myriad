@@ -5,6 +5,8 @@ using System.Linq;
 using System.Reactive;
 using System.Windows;
 using System.Windows.Input;
+
+using Myriad;
 using Myriad.Client;
 
 namespace Myriad.Explorer
@@ -102,21 +104,27 @@ namespace Myriad.Explorer
             var valueMap = _dimensionValues.ToDictionary(d => d.Dimension.Name, d => view[d.Dimension.Name].ToString());
             valueMap["Value"] = view["Value"].ToString();
 
+            var response = _reader.GetProperties(new[] {valueMap["Property"]});
 
+            var property = response.Properties.FirstOrDefault();
+            
             //var propertySet = _reader.QueryProperties( new[] { valueMap["Property"] } );
 
 
             var editor = new PropertyEditorWindow
             {
                 Owner = this,
+                Property = property,
                 ValueMap = valueMap,
-                Property = _dimensionValues.SingleOrDefault(d => d.Dimension.Name == "Property"),
+                //Property = _dimensionValues.SingleOrDefault(d => d.Dimension.Name == "Property"),
                 Dimensions = _dimensionValues.Where(d => d.Dimension.Name != "Property").ToList()
             };
 
             var result = editor.ShowDialog();
             if (result.HasValue == false || result.Value == false)
                 return;
+
+            var propertyOperation = new PropertyOperation(editor.Property.Key, "", false, Epoch.UtcNow, null);
 
             //_writer.PutProperty()
         }

@@ -22,13 +22,14 @@ module Rest =
             "query",      "query";
             "metadata",   "metadata";
             "dimensions", "list/dimension";
+
+            "put",        "put/property";
         ] |> Map.ofList
 
-
-//    let request (baseUri : Uri) (key : String) (update : UriBuilder -> Uri) =
-//        let builder = UriBuilder(baseUri)
-//        builder.Path <- Path.Combine(builder.Path, pathMap.[key])
-//        update(builder)
+    let getRestUri (baseUri : Uri) (key : String) (update : UriBuilder -> Uri) =
+        let builder = UriBuilder(baseUri)
+        builder.Path <- Path.Combine(builder.Path, pathMap.[key])
+        update(builder)
 ////        client.DownloadString(builder.Uri)
 //
 //    let query (baseUri : Uri) update = 
@@ -36,3 +37,8 @@ module Rest =
 //        let response = JsonConvert.DeserializeObject<RestQueryResponse>(json)
 //        response.data |> Seq.map (fun m -> m.ToDictionary( (fun p -> p.Key), (fun (p : KeyValuePair<String, String>) -> p.Value) ))
 
+    let getQueryUri (baseUri : Uri) update = 
+        getRestUri baseUri "query" update
+
+    let getPutUri (baseUri : Uri) update =
+        getRestUri baseUri "put" update

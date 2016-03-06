@@ -22,11 +22,14 @@ namespace Myriad.Explorer
 
         private void OnLoaded(object sender, RoutedEventArgs routedEventArgs)
         {
-            Title = "Edit [" + ValueMap["Property"] + "]";
+            var propertyName = Property.Key;
 
-            controlProperty.cmbItems.ItemsSource = Property.Values.OrderBy(p => p);
-            controlProperty.cmbItems.SelectedValue = ValueMap["Property"];
+            Title = "Edit [" + propertyName + "]";
+            lblPropertyName.Content = propertyName;
             txtPropertyValue.Text = ValueMap["Value"];
+
+            chkDeprecated.IsChecked = Property.Deprecated;
+            txtPropertyDescription.Text = Property.Description;
 
             foreach (var dimension in Dimensions)
             {
@@ -42,7 +45,7 @@ namespace Myriad.Explorer
                 Height = height;
         }
 
-        private void OnClickApply(object sender, RoutedEventArgs e)
+        private void OnClickOk(object sender, RoutedEventArgs e)
         {
             DialogResult = true;
             Close();
@@ -54,7 +57,7 @@ namespace Myriad.Explorer
             Close();
         }
 
-        public DimensionValues Property { get; set; }
+        public Property Property { get; set; }
 
         public Dictionary<string, string> ValueMap { get; set; }
 

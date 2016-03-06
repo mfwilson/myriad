@@ -18,6 +18,7 @@ type MyriadReader(baseUri : Uri) =
     let pathMap = 
         [
             "get",        "get";
+            "getp",       "get/property";
             "query",      "query";
             "metadata",   "metadata";
             "dimensions", "list/dimension";
@@ -47,6 +48,18 @@ type MyriadReader(baseUri : Uri) =
         let json = request "metadata" (fun u -> ())  
         JsonConvert.DeserializeObject<List<DimensionValues>>(json)
                         
+    member x.GetProperties(propertyNames : String seq) =   
+        let update(builder : UriBuilder) =
+            if Seq.isEmpty propertyNames then
+                ignore()
+            else
+                let query = HttpUtility.ParseQueryString("")
+                query.["property"] <- String.Join(",", propertyNames)
+                builder.Query <- query.ToString()
+
+        let json = request "getp" update  
+        JsonConvert.DeserializeObject<MyriadGetPropertyResponse>(json)
+
     member x.QueryProperties(propertyKeys : String seq) =
         let update(builder : UriBuilder) =
             let query = HttpUtility.ParseQueryString("")

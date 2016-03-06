@@ -37,6 +37,22 @@ type MyriadQueryResponse =
         x.Properties |> Seq.iter (fun p -> p.WriteXml(writer))
         writer.WriteEndElement()
 
+/// Response data from a query
+[<CLIMutable>]
+type MyriadGetPropertyResponse =
+    { Requested : DateTimeOffset; Properties : Property seq }
+
+    interface IXmlSerializable with
+        member x.GetSchema() = null
+        member x.ReadXml(reader) = ignore()
+        member x.WriteXml(writer) = x.WriteXml(writer)
+                        
+    member x.WriteXml(writer : XmlWriter) =             
+        writer.WriteAttributeString("Requested", x.Requested.ToString("yyyy-MM-ddTHH:mm:ss.fff"))
+        writer.WriteStartElement("Properties")
+        x.Properties |> Seq.iter (fun p -> p.WriteXml(writer))
+        writer.WriteEndElement()
+
 /// Response data from a property set
 [<CLIMutable>]
 type MyriadSetPropertyResponse =

@@ -30,6 +30,7 @@ let app : WebPart =
     choose [
         GET >=> choose [ 
             path (prefix + "get") >=> setAccessControl >=> RestHandlers.Get engine 
+            path (prefix + "get/property") >=> setAccessControl >=> RestHandlers.GetProperty engine 
             path (prefix + "query") >=> setAccessControl >=> Writers.setMimeType("text/json") >=> RestHandlers.Query engine
             path (prefix + "metadata") >=> Writers.setMimeType("text/json") >=> RestHandlers.Metadata engine 
             path (prefix + "list/dimension") >=> Writers.setMimeType("text/json") >=> RestHandlers.DimensionList engine

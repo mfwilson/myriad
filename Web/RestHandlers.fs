@@ -39,7 +39,10 @@ module RestHandlers =
     let private getContext (getDimension : String -> Dimension option) (kv : NameValueCollection) =
         let getMeasure(key) = 
             let dimension = getDimension(key)
-            if dimension.IsNone then None else Some( { Dimension = dimension.Value; Value = kv.[key] } )
+            match dimension with
+            | None -> None
+            | Some(d) when d.Name = "Property" -> None
+            | Some(d) -> Some( { Dimension = dimension.Value; Value = kv.[key] } )
 
         let measures = kv.AllKeys |> Seq.choose getMeasure |> Set.ofSeq
         { AsOf = getAsOf kv; Measures = measures }
@@ -109,9 +112,37 @@ module RestHandlers =
                                  |> Seq.map (fun p -> engine.Get(p, context))
                                  |> Seq.concat
 
-                let response = { Requested = DateTimeOffset.UtcNow; Context = context; Properties = properties }            
+                let response = { MyriadQueryResponse.Requested = DateTimeOffset.UtcNow; Context = context; Properties = properties }            
                 let contentType, message = getResponseString kv.["format"] response       
                                 
+                let! ctx = Writers.setMimeType contentType x
+                return! OK message ctx.Value 
+            with 
+            | :? ArgumentException as ex -> 
+                Console.WriteLine("UNPROCESSABLE_ENTITY: Get {0}\r\n{1}", x.request.rawQuery, ex.ToString())
+                let! ctx = Writers.setMimeType "text/plain" x
+                return! UNPROCESSABLE_ENTITY (ex.Message) ctx.Value
+            | ex -> 
+                Console.WriteLine("BAD_REQUEST: Get {0}\r\n{1}", x.request.rawQuery, ex.ToString())
+                let! ctx = Writers.setMimeType "text/plain" x
+                return! BAD_REQUEST (ex.Message) ctx.Value
+        }        
+
+    let GetProperty (engine : MyriadEngine) (x : HttpContext) =
+        async {
+            try
+                Console.WriteLine("REQ: GetProperty " + x.request.rawQuery)
+
+                let kv = HttpUtility.ParseQueryString(x.request.rawQuery)
+
+                let asOf = getAsOf kv
+
+                let properties = getPropertyKeys(kv)
+                                 |> Seq.choose (fun p -> engine.Get(p, asOf))
+
+                let response = { Requested = DateTimeOffset.UtcNow; Properties = properties }
+                let contentType, message = getResponseString kv.["format"] response       
+
                 let! ctx = Writers.setMimeType contentType x
                 return! OK message ctx.Value 
             with 
