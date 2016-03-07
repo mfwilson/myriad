@@ -25,7 +25,7 @@ namespace Myriad.Explorer
         {
             InitializeComponent();
 
-            NavigationControl.Subscribe( Observer.Create<Uri>(OnRefresh) );
+            NavigationControl.Subscribe(Observer.Create<Uri>(OnRefresh));
             ContextControl.Subscribe(Observer.Create<List<DimensionValues>>(OnQuery));
             ContextControl.Subscribe(Observer.Create<Measure>(OnMeasure));
             ContextControl.IsEnabled = false;
@@ -42,20 +42,30 @@ namespace Myriad.Explorer
         private void OnQuery(List<DimensionValues> dimensionValuesList)
         {
             var result = _reader.Query(dimensionValuesList);
-            
+
             var table = _dataSet.Tables[0];
             table.Clear();
-            
+
             foreach (var map in result)
             {
                 var row = table.NewRow();
 
                 foreach (var pair in map)
                 {
-                    if( table.Columns.Contains(pair.Key) )
-                        row[pair.Key] = pair.Value;                        
+                    if (table.Columns.Contains(pair.Key) == false)
+                        continue;
+
+                    var column = table.Columns[pair.Key];
+
+                    if (column.DataType == typeof(DateTimeOffset))
+                    {
+                        var timestamp = Int64.Parse(pair.Value);
+                        row[pair.Key] = Epoch.ToDateTimeOffset(timestamp);
+                    }
+                    else
+                        row[pair.Key] = pair.Value;
                 }
-                
+
                 table.Rows.Add(row);
             }
         }
@@ -72,7 +82,25 @@ namespace Myriad.Explorer
             var dimensions = _reader.GetDimensionList();
             dimensions.Insert(0, "Ordinal");
             dimensions.Insert(2, "Value");
-            dimensions.ForEach(d => table.Columns.Add(d, d == "Ordinal" ? typeof(int) : typeof(string)));
+            dimensions.Add("UserName");
+            dimensions.Add("Timestamp");
+
+            Func<string, Type> getColumnType =
+                d =>
+                {
+                    switch (d)
+                    {
+                        case "Ordinal":
+                            return typeof(int);
+                        case "Timestamp":
+                            return typeof(DateTimeOffset);
+                        default:
+                            return typeof(string);
+                    }
+                };
+
+            dimensions.ForEach(d => table.Columns.Add(d, getColumnType(d)));
+
 
             _dataSet.Reset();
             _dataSet.Tables.Add(table);
@@ -87,9 +115,22 @@ namespace Myriad.Explorer
             ResetResults();
 
             _dimensionValues.Clear();
-            _dimensionValues.AddRange(_reader.GetMetadata());            
+            _dimensionValues.AddRange(_reader.GetMetadata());
             ContextControl.Reset(_dimensionValues);
             ContextControl.IsEnabled = true;
+        }
+
+        /// <summary>Convert a data row view to a cluster</summary>
+        private static Cluster ToCluster(DataRowView view, List<DimensionValues> dimensionValues)
+        {
+            var measures = new HashSet<Measure>(
+                dimensionValues
+                    .Where(d => d.Dimension.Name != "Property" && string.IsNullOrEmpty(view[d.Dimension.Name].ToString()) == false)
+                    .Select(d => new Measure(d.Dimension, view[d.Dimension.Name].ToString()))
+            );
+
+            var timestamp = Epoch.GetOffset(((DateTimeOffset)view["Timestamp"]).Ticks);
+            return Cluster.Create(view["Value"].ToString(), measures, view["UserName"].ToString(), timestamp);
         }
 
         private void OnResultsDoubleClick(object sender, MouseButtonEventArgs e)
@@ -102,31 +143,25 @@ namespace Myriad.Explorer
                 return;
 
             var valueMap = _dimensionValues.ToDictionary(d => d.Dimension.Name, d => view[d.Dimension.Name].ToString());
-            valueMap["Value"] = view["Value"].ToString();
 
+            // Get Property
             var response = _reader.GetProperties(new[] {valueMap["Property"]});
-
             var property = response.Properties.FirstOrDefault();
-            
-            //var propertySet = _reader.QueryProperties( new[] { valueMap["Property"] } );
-
 
             var editor = new PropertyEditorWindow
             {
                 Owner = this,
                 Property = property,
+                Cluster = ToCluster(view, _dimensionValues),
                 ValueMap = valueMap,
-                //Property = _dimensionValues.SingleOrDefault(d => d.Dimension.Name == "Property"),
-                Dimensions = _dimensionValues.Where(d => d.Dimension.Name != "Property").ToList()
+                Dimensions = _dimensionValues
             };
 
             var result = editor.ShowDialog();
             if (result.HasValue == false || result.Value == false)
                 return;
 
-            var propertyOperation = new PropertyOperation(editor.Property.Key, "", false, Epoch.UtcNow, null);
-
-            //_writer.PutProperty()
+            var newProperty = _writer.PutProperty(editor.GetPropertyOperation());
         }
     }
 }

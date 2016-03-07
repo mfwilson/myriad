@@ -1,6 +1,7 @@
 ﻿namespace Myriad 
 
 open System
+open System.Collections.Generic
 open System.Runtime.Serialization
 open System.Xml
 open System.Xml.Serialization
@@ -46,7 +47,14 @@ type Cluster =
         writer.WriteEndElement()
 
     static member ToMap(propertyKey : String, cluster : Cluster, dimensions : Dimension seq, ordinal : int) =
-        let values = [ "Property", propertyKey; "Value", cluster.Value; "Ordinal", ordinal.ToString() ]
+        let values = [ 
+            "Property", propertyKey; 
+            "Value", cluster.Value; 
+            "Ordinal", ordinal.ToString();
+            "UserName", cluster.UserName;
+            "Timestamp", cluster.Timestamp.ToString()
+        ]
+
         let measures = cluster.Measures |> Set.toList |> List.map (fun m -> m.Dimension.Name, m.Value)
 
         let filterByDimension(dimension : Dimension) =
@@ -57,5 +65,14 @@ type Cluster =
 
     static member CompareTo(x : Set<Measure>, y : Set<Measure>) = compare x y
 
+    static member Create(value : String, measures : Set<Measure>, userName : String, timestamp : Int64) =
+        { Value = value; Measures = measures; UserName = userName; Timestamp = timestamp }
+
     static member Create(value : String, measures : Set<Measure>) =
-        { Value = value; Measures = measures; UserName = Environment.UserName; Timestamp = Epoch.UtcNow }
+        Cluster.Create(value, measures, Environment.UserName, Epoch.UtcNow)
+
+    static member Create(value : String, measures : HashSet<Measure>) =
+        Cluster.Create(value, measures |> Set.ofSeq)
+
+    static member Create(value : String, measures : HashSet<Measure>, userName : String, timestamp : Int64) =
+        Cluster.Create(value, measures |> Set.ofSeq, userName, timestamp)

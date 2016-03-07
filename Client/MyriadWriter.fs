@@ -21,10 +21,11 @@ type MyriadWriter(baseUri : Uri) =
     member x.Dispose() = 
         client.Dispose()
     
-    member x.PutProperty(property : PropertyOperation) =
+    member x.PutProperty(propertyOperation : PropertyOperation) =
         let uri = Rest.getPutUri baseUri (fun builder -> builder.Uri)        
-        let json = client.DownloadString(uri)
-        JsonConvert.DeserializeObject<Property>(json)
+        let request = JsonConvert.SerializeObject(propertyOperation)        
+        let response = client.UploadString(uri, "PUT", request)
+        JsonConvert.DeserializeObject<Property>(response)
 
     member x.AddDimensionValue(dimension : Dimension, value : String) =
 

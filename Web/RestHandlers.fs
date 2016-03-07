@@ -22,7 +22,9 @@ type AjaxResponse =
 module RestHandlers =
 
     let private fromJson<'a> json =
-        JsonConvert.DeserializeObject(json, typeof<'a>) :?> 'a    
+        match json with
+        | json when String.IsNullOrEmpty(json) -> None
+        | _ -> Some(JsonConvert.DeserializeObject(json, typeof<'a>) :?> 'a)
 
     let private fromRequest<'a> (req : HttpRequest) = 
         let getString rawForm = Encoding.UTF8.GetString(rawForm)
@@ -164,12 +166,15 @@ module RestHandlers =
 
                 let kv = HttpUtility.ParseQueryString(x.request.rawQuery)                
                 let property = fromRequest<PropertyOperation>(x.request)
-                let newProperty = engine.Put(property)
-                let response = { Requested = DateTimeOffset.UtcNow; Property = newProperty }
-                let contentType, message = getResponseString kv.["format"] response       
+                if property.IsNone then
+                    return! BAD_REQUEST "PropertyOperation could not be read." x
+                else
+                    let newProperty = engine.Put(property.Value)
+                    let response = { Requested = DateTimeOffset.UtcNow; Property = newProperty }
+                    let contentType, message = getResponseString kv.["format"] response       
                                 
-                let! ctx = Writers.setMimeType contentType x
-                return! OK message ctx.Value
+                    let! ctx = Writers.setMimeType contentType x
+                    return! OK message ctx.Value
             with 
             | :? ArgumentException as ex -> 
                 Console.WriteLine("UNPROCESSABLE_ENTITY: Get {0}\r\n{1}", x.request.rawQuery, ex.ToString())

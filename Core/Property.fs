@@ -1,6 +1,7 @@
 ﻿namespace Myriad
 
 open System
+open System.Collections.Generic
 open System.Runtime.Serialization
 open System.Xml
 open System.Xml.Serialization
@@ -72,3 +73,5 @@ type PropertyOperation =
         let clusters = value.Operations |> List.choose toCluster 
         Property.Create(value.Key, value.Description, value.Deprecated, value.Timestamp, sort clusters)
 
+    static member Create(key : String, description : String, deprecated : bool, timestamp : Int64, operations : List<Operation<Cluster>>) =
+        { Key = key; Description = description; Deprecated = deprecated; Timestamp = timestamp; Operations = operations |> Seq.toList }

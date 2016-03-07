@@ -4,12 +4,17 @@ open System
 
 type Epoch =
     static member Value = DateTimeOffset(1970, 1, 1, 0, 0, 0, TimeSpan.Zero)
-    static member Ticks = Epoch.Value.Ticks
+
+    /// Microseconds since the epoch 
+    static member EpochMicroseconds = Epoch.Value.Ticks / 10L
     
     /// Get the offset from the epoch in microseconds
-    static member GetOffset(utcTicks) = (utcTicks - Epoch.Ticks) / 10L
+    static member GetOffset(utcTicks) = (utcTicks / 10L - Epoch.EpochMicroseconds) 
 
     static member UtcNow with get() = Epoch.GetOffset(DateTimeOffset.UtcNow.Ticks)
+
+    static member ToDateTimeOffset(epochOffsetMicroseconds : Int64) = 
+        DateTimeOffset( (epochOffsetMicroseconds + Epoch.EpochMicroseconds) * 10L, TimeSpan.Zero )
 
 type IAudit =
     abstract Timestamp : Int64 with get

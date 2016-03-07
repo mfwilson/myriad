@@ -29,6 +29,14 @@ namespace Myriad.Explorer
             };
         }
 
+        public Measure GetMeasure()
+        {
+            var value = (cmbItems.SelectedValue != null) ? cmbItems.SelectedValue.ToString() : cmbItems.Text;
+            if (string.IsNullOrEmpty(value))
+                return null;
+            return new Measure(Tag as Dimension, value);
+        }
+
         private void UpdateView()
         {
             cmbItems.Visibility = IsSingle ? Visibility.Hidden : Visibility.Visible;
