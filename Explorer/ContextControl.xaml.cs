@@ -15,6 +15,7 @@ namespace Myriad.Explorer
     public partial class ContextControl : UserControl
     {
         private readonly ISubject<List<DimensionValues>> _querySubject = new Subject<List<DimensionValues>>();
+        private readonly ISubject<List<DimensionValues>> _getSubject = new Subject<List<DimensionValues>>();
         private readonly ISubject<Measure> _measureSubject = new Subject<Measure>();
 
         public ContextControl()
@@ -69,6 +70,10 @@ namespace Myriad.Explorer
         private void OnClickQuery(object sender, RoutedEventArgs e)
         {
             _querySubject.OnNext( GetDimensionValuesList() );
+        }
+        private void OnClickGet(object sender, RoutedEventArgs e)
+        {
+        //    _querySubject.OnNext(GetDimensionValuesList());
         }
     }
 }

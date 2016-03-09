@@ -79,7 +79,10 @@ type MyriadReader(baseUri : Uri) =
                 builder.Query <- query.ToString()
         query update
 
-//        let json = request "query" update
-//        let response = JsonConvert.DeserializeObject<RestResponse>(json)
-//        response.data |> Seq.map (fun m -> m.ToDictionary( (fun p -> p.Key), (fun (p : KeyValuePair<String, String>) -> p.Value) ))
+    member x.Get(measures : Set<Measure>) =
+
+        // Single measures (query handles returning all possible sets)        
+
+        ignore()
+
         

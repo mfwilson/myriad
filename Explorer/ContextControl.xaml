@@ -11,11 +11,13 @@
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
 
             <Label Grid.Column="0" Content="As Of:" Margin="3" HorizontalAlignment="Left" VerticalAlignment="Center"/>
             <DatePicker Grid.Column="1" Margin="3" HorizontalAlignment="Left" VerticalAlignment="Center"/>
             <Button Grid.Column="2" Content="Query" Width="75" Margin="3" HorizontalAlignment="Right" VerticalAlignment="Center" Click="OnClickQuery"/>
+            <Button Grid.Column="3" Content="Get" Width="75" Margin="3" HorizontalAlignment="Right" VerticalAlignment="Center" Click="OnClickGet"/>
         </Grid>
     </StackPanel>
 </UserControl>
