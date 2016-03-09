@@ -20,6 +20,7 @@ let prefix = "/api/1/myriad/"
 let serverConfig = 
     { defaultConfig with
        bindings = [ HttpBinding.mk HTTP IPAddress.Any port ]
+       logger = LoggingAdapter()
     }
 
 let setAccessControl =

@@ -7,6 +7,8 @@ open System.Net
 open System.Text
 open System.Web
 
+open NLog 
+
 open Suave
 open Suave.Http
 open Suave.RequestErrors
@@ -20,6 +22,7 @@ type AjaxResponse =
     { data : Map<String, String> seq }
 
 module RestHandlers =
+    let logger = LogManager.GetCurrentClassLogger()
 
     let private fromJson<'a> json =
         match json with
@@ -79,14 +82,14 @@ module RestHandlers =
     /// Query -> JSON w/ context
     let Query (engine : MyriadEngine) (x : HttpContext) =
         async {
-            Console.WriteLine("REQ: Query " + x.request.rawQuery)
+            logger.Info("REQ: Query " + x.request.rawQuery)
 
             let kv = HttpUtility.ParseQueryString(x.request.rawQuery)
 
             let context = getContext (engine.GetDimension) kv
 
             let measuresAsString = context.Measures |> Seq.map (fun m -> m.ToString())
-            Console.WriteLine("Measures: " + String.Join(", ", measuresAsString))
+            logger.Info("Measures: " + String.Join(", ", measuresAsString))
 
             let properties = getPropertyKeys(kv)
                              |> Seq.map (fun p -> engine.Query(p, context))
@@ -97,7 +100,7 @@ module RestHandlers =
 
             let response = { data = dataRows }
             let message = JsonConvert.SerializeObject(response)
-            Console.WriteLine("Found {0} clusters\r\n{1}", Seq.length properties, message)
+            logger.Info("Found {0} clusters\r\n{1}", Seq.length properties, message)
             return! OK message x
         }    
 
@@ -105,7 +108,7 @@ module RestHandlers =
     let Get (engine : MyriadEngine) (x : HttpContext) =
         async {
             try
-                Console.WriteLine("REQ: Get " + x.request.rawQuery)
+                logger.Info("REQ: Get " + x.request.rawQuery)
 
                 let kv = HttpUtility.ParseQueryString(x.request.rawQuery)
                 let context = getContext (engine.GetDimension) kv
@@ -121,11 +124,11 @@ module RestHandlers =
                 return! OK message ctx.Value 
             with 
             | :? ArgumentException as ex -> 
-                Console.WriteLine("UNPROCESSABLE_ENTITY: Get {0}\r\n{1}", x.request.rawQuery, ex.ToString())
+                logger.Error("UNPROCESSABLE_ENTITY: Get {0}\r\n{1}", x.request.rawQuery, ex.ToString())
                 let! ctx = Writers.setMimeType "text/plain" x
                 return! UNPROCESSABLE_ENTITY (ex.Message) ctx.Value
             | ex -> 
-                Console.WriteLine("BAD_REQUEST: Get {0}\r\n{1}", x.request.rawQuery, ex.ToString())
+                logger.Error("BAD_REQUEST: Get {0}\r\n{1}", x.request.rawQuery, ex.ToString())
                 let! ctx = Writers.setMimeType "text/plain" x
                 return! BAD_REQUEST (ex.Message) ctx.Value
         }        
@@ -133,7 +136,7 @@ module RestHandlers =
     let GetProperty (engine : MyriadEngine) (x : HttpContext) =
         async {
             try
-                Console.WriteLine("REQ: GetProperty " + x.request.rawQuery)
+                logger.Info("REQ: GetProperty " + x.request.rawQuery)
 
                 let kv = HttpUtility.ParseQueryString(x.request.rawQuery)
 
@@ -149,11 +152,11 @@ module RestHandlers =
                 return! OK message ctx.Value 
             with 
             | :? ArgumentException as ex -> 
-                Console.WriteLine("UNPROCESSABLE_ENTITY: Get {0}\r\n{1}", x.request.rawQuery, ex.ToString())
+                logger.Error("UNPROCESSABLE_ENTITY: Get {0}\r\n{1}", x.request.rawQuery, ex.ToString())
                 let! ctx = Writers.setMimeType "text/plain" x
                 return! UNPROCESSABLE_ENTITY (ex.Message) ctx.Value
             | ex -> 
-                Console.WriteLine("BAD_REQUEST: Get {0}\r\n{1}", x.request.rawQuery, ex.ToString())
+                logger.Error("BAD_REQUEST: Get {0}\r\n{1}", x.request.rawQuery, ex.ToString())
                 let! ctx = Writers.setMimeType "text/plain" x
                 return! BAD_REQUEST (ex.Message) ctx.Value
         }        
@@ -162,7 +165,7 @@ module RestHandlers =
     let PutProperty (engine : MyriadEngine) (x : HttpContext) =
         async {            
             try
-                Console.WriteLine("REQ: put property " + x.request.rawQuery)                
+                logger.Info("REQ: put property " + x.request.rawQuery)                
 
                 let kv = HttpUtility.ParseQueryString(x.request.rawQuery)                
                 let property = fromRequest<PropertyOperation>(x.request)
@@ -177,11 +180,11 @@ module RestHandlers =
                     return! OK message ctx.Value
             with 
             | :? ArgumentException as ex -> 
-                Console.WriteLine("UNPROCESSABLE_ENTITY: Get {0}\r\n{1}", x.request.rawQuery, ex.ToString())
+                logger.Error("UNPROCESSABLE_ENTITY: Get {0}\r\n{1}", x.request.rawQuery, ex.ToString())
                 let! ctx = Writers.setMimeType "text/plain" x
                 return! UNPROCESSABLE_ENTITY (ex.Message) ctx.Value
             | ex -> 
-                Console.WriteLine("BAD_REQUEST: Get {0}\r\n{1}", x.request.rawQuery, ex.ToString())
+                logger.Error("BAD_REQUEST: Get {0}\r\n{1}", x.request.rawQuery, ex.ToString())
                 let! ctx = Writers.setMimeType "text/plain" x
                 return! BAD_REQUEST (ex.Message) ctx.Value
         }
@@ -190,7 +193,7 @@ module RestHandlers =
     let PutMeasure (engine : MyriadEngine) (x : HttpContext) =
         async {            
             try
-                Console.WriteLine("REQ: put measure " + x.request.rawQuery)                
+                logger.Info("REQ: put measure " + x.request.rawQuery)                
 
 //                let kv = HttpUtility.ParseQueryString(x.request.rawQuery)                
 //                let property = fromRequest<PropertyOperation>(x.request)
@@ -202,11 +205,11 @@ module RestHandlers =
                 return! OK "Not implemented" x
             with 
             | :? ArgumentException as ex -> 
-                Console.WriteLine("UNPROCESSABLE_ENTITY: Get {0}\r\n{1}", x.request.rawQuery, ex.ToString())
+                logger.Error("UNPROCESSABLE_ENTITY: Get {0}\r\n{1}", x.request.rawQuery, ex.ToString())
                 let! ctx = Writers.setMimeType "text/plain" x
                 return! UNPROCESSABLE_ENTITY (ex.Message) ctx.Value
             | ex -> 
-                Console.WriteLine("BAD_REQUEST: Get {0}\r\n{1}", x.request.rawQuery, ex.ToString())
+                logger.Error("BAD_REQUEST: Get {0}\r\n{1}", x.request.rawQuery, ex.ToString())
                 let! ctx = Writers.setMimeType "text/plain" x
                 return! BAD_REQUEST (ex.Message) ctx.Value
         }
