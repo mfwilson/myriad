@@ -36,7 +36,7 @@
 
         <ComboBox Grid.Row="1" x:Name="cmbItems" Margin="0,2,0,2" HorizontalAlignment="Stretch" VerticalAlignment="Top" IsEditable="True" SelectionChanged="OnSelectionChanged"/>
 
-        <ListBox Grid.Row="2" x:Name="listItems" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" KeyUp="OnListKeyUp"/>
+        <ListBox Grid.Row="2" x:Name="listItems" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" KeyUp="OnListKeyUp" Visibility="Collapsed"/>
 
     </Grid>
 </UserControl>

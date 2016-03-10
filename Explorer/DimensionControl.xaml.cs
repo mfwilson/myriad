@@ -19,7 +19,7 @@ namespace Myriad.Explorer
         public DimensionControl()
         {
             InitializeComponent();
-            listItems.ItemsSource = _selectedSet;            
+            listItems.ItemsSource = _selectedSet;                        
         }
 
         public IDisposable Subscribe(IObserver<Measure> observer)
@@ -55,7 +55,11 @@ namespace Myriad.Explorer
 
         private void OnSelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            foreach(var item in e.AddedItems)
+            var dimension = Tag as Dimension;
+            if (dimension == null || dimension.Name != "Property")
+                return;
+
+            foreach (var item in e.AddedItems)
             {
                 var selectedItem = item.ToString();
                 if( _selectedSet.Contains(selectedItem) == false )
@@ -77,12 +81,15 @@ namespace Myriad.Explorer
 
         public static DimensionControl Create(DimensionValues dimensionValues)
         {
+            var visibility = dimensionValues.Dimension.Name == "Property" ? Visibility.Visible : Visibility.Collapsed;
+
             return new DimensionControl
             {
                 Name = string.Concat("dim", dimensionValues.Dimension.Name),
                 Tag = dimensionValues.Dimension,
                 lblName = { Content = dimensionValues.Dimension.Name },
-                cmbItems = { ItemsSource = dimensionValues.Values.OrderBy(d => d).ToList() }
+                cmbItems = { ItemsSource = dimensionValues.Values.OrderBy(d => d).ToList() },
+                listItems = { Visibility = visibility }
             };
         }
 
@@ -90,6 +97,16 @@ namespace Myriad.Explorer
         {
             var dimension = Tag as Dimension;
             return new DimensionValues(dimension, _selectedSet.ToArray());
+        }
+
+        public Measure GetMeasure()
+        {
+            var value = cmbItems.SelectedValue;
+            if (value == null)
+                return null;
+
+            var dimension = Tag as Dimension;
+            return new Measure(dimension, value.ToString());
         }
     }
 }

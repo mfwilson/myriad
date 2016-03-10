@@ -10,10 +10,6 @@ open System.Web
 
 open Newtonsoft.Json
 
-type RestQueryResponse =
-    { data : Map<String, String> seq }
-
-
 module Rest =
 
     let pathMap = 

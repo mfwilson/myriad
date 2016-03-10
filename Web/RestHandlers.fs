@@ -18,9 +18,6 @@ open Newtonsoft.Json
 
 open Myriad
 
-type AjaxResponse =
-    { data : Map<String, String> seq }
-
 module RestHandlers =
     let logger = LogManager.GetCurrentClassLogger()
 
@@ -117,7 +114,7 @@ module RestHandlers =
                                  |> Seq.map (fun p -> engine.Get(p, context))
                                  |> Seq.concat
 
-                let response = { MyriadQueryResponse.Requested = DateTimeOffset.UtcNow; Context = context; Properties = properties }            
+                let response = { MyriadGetResponse.Requested = DateTimeOffset.UtcNow; Context = context; Properties = properties }            
                 let contentType, message = getResponseString kv.["format"] response       
                                 
                 let! ctx = Writers.setMimeType contentType x

@@ -24,16 +24,20 @@ type MyriadReader(baseUri : Uri) =
             "dimensions", "list/dimension";
         ] |> Map.ofList
 
-    let request(key : String) (update : UriBuilder -> unit) =
+    let request(key : String) (uriUpdater : UriBuilder -> unit) =
         let builder = UriBuilder(baseUri)
         builder.Path <- Path.Combine(builder.Path, pathMap.[key])
-        update(builder)
+        uriUpdater(builder)
         client.DownloadString(builder.Uri)
 
-    let query update = 
-        let json = request "query" update
-        let response = JsonConvert.DeserializeObject<RestQueryResponse>(json)
+    let query uriUpdater = 
+        let json = request "query" uriUpdater
+        let response = JsonConvert.DeserializeObject<MyriadQueryResponse>(json)
         response.data |> Seq.map (fun m -> m.ToDictionary( (fun p -> p.Key), (fun (p : KeyValuePair<String, String>) -> p.Value) ))
+
+    let get uriUpdater = 
+        let json = request "get" uriUpdater
+        JsonConvert.DeserializeObject<MyriadGetResponse>(json)        
 
     interface IDisposable with
         member x.Dispose() = x.Dispose()
@@ -67,9 +71,8 @@ type MyriadReader(baseUri : Uri) =
             builder.Query <- query.ToString()            
         query update
 
-    member x.Query(dimensionValuesList : List<DimensionValues>) =
-        
-        let update(builder : UriBuilder) =
+    member x.Query(dimensionValuesList : List<DimensionValues>) =        
+        let uriUpdater(builder : UriBuilder) =
             let property = dimensionValuesList.Find( fun d -> d.Dimension.Name.Equals("Property", StringComparison.InvariantCultureIgnoreCase))
             if property = Unchecked.defaultof<DimensionValues> || property.Values.Length = 0 then 
                 ignore()
@@ -77,12 +80,16 @@ type MyriadReader(baseUri : Uri) =
                 let query = HttpUtility.ParseQueryString("")
                 query.["property"] <- String.Join(",", property.Values)
                 builder.Query <- query.ToString()
-        query update
+        query uriUpdater
 
+    /// Get values based on a set of measures (query handles returning all possible sets)
     member x.Get(measures : Set<Measure>) =
-
-        // Single measures (query handles returning all possible sets)        
-
-        ignore()
-
-        
+        let uriUpdater(builder : UriBuilder) =            
+            let query = HttpUtility.ParseQueryString("")
+            measures |> Set.iter (fun m -> query.[m.Dimension.Name] <- m.Value) 
+            builder.Query <- query.ToString()
+        get uriUpdater
+    
+    /// Get values based on a set of measures (query handles returning all possible sets)
+    member x.Get(measures : HashSet<Measure>) =                
+        x.Get (measures |> Set.ofSeq)

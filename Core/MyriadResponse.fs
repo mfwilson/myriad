@@ -13,6 +13,10 @@ type MyriadProperty =
         member x.ReadXml(reader) = ignore()
         member x.WriteXml(writer) = x.WriteXml(writer)
 
+    override x.ToString() = 
+        let deprecated = if x.Deprecated then "(Deprecated)" else ""
+        String.Format("[{0}] = [{1}] {2}", x.Name, x.Value, deprecated)
+
     member x.WriteXml(writer : XmlWriter) =         
         writer.WriteStartElement("Property")
         writer.WriteAttributeString("Name", x.Name)
@@ -20,9 +24,9 @@ type MyriadProperty =
         writer.WriteCData(x.Value)
         writer.WriteEndElement()
 
-/// Response data from a query
+/// Response data from a get
 [<CLIMutable>]
-type MyriadQueryResponse =
+type MyriadGetResponse =
     { Requested : DateTimeOffset; Context : Context; Properties : MyriadProperty seq }
     
     interface IXmlSerializable with
@@ -36,6 +40,10 @@ type MyriadQueryResponse =
         writer.WriteStartElement("Properties")
         x.Properties |> Seq.iter (fun p -> p.WriteXml(writer))
         writer.WriteEndElement()
+
+/// Response data from a query
+type MyriadQueryResponse =
+    { data : Map<String, String> seq }
 
 /// Response data from a query
 [<CLIMutable>]

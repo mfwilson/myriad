@@ -15,7 +15,7 @@ namespace Myriad.Explorer
     public partial class ContextControl : UserControl
     {
         private readonly ISubject<List<DimensionValues>> _querySubject = new Subject<List<DimensionValues>>();
-        private readonly ISubject<List<DimensionValues>> _getSubject = new Subject<List<DimensionValues>>();
+        private readonly ISubject<HashSet<Measure>> _getSubject = new Subject<HashSet<Measure>>();
         private readonly ISubject<Measure> _measureSubject = new Subject<Measure>();
 
         public ContextControl()
@@ -26,6 +26,11 @@ namespace Myriad.Explorer
         public IDisposable Subscribe(IObserver<List<DimensionValues>> observer)
         {
             return _querySubject.Subscribe(observer);
+        }
+
+        public IDisposable Subscribe(IObserver<HashSet<Measure>> observer)
+        {
+            return _getSubject.Subscribe(observer);
         }
 
         public IDisposable Subscribe(IObserver<Measure> observer)
@@ -53,15 +58,23 @@ namespace Myriad.Explorer
 
         private List<DimensionValues> GetDimensionValuesList()
         {
-            var request = new List<DimensionValues>();
+            return stackPanel
+                .Children
+                .OfType<DimensionControl>()
+                .Select(dimensionControl => dimensionControl.GetDimensionValues())
+                .ToList();
+        }
 
-            foreach(var control in stackPanel.Children)
+        private HashSet<Measure> GetMeasures()
+        {
+            var request = new HashSet<Measure>();
+
+            foreach (var control in stackPanel.Children)
             {
                 var dimensionControl = control as DimensionControl;
-                if (dimensionControl == null)
-                    continue;
-
-                request.Add(dimensionControl.GetDimensionValues());
+                var measure = dimensionControl?.GetMeasure();
+                if( measure != null )
+                    request.Add(measure);
             }
 
             return request;
@@ -73,7 +86,7 @@ namespace Myriad.Explorer
         }
         private void OnClickGet(object sender, RoutedEventArgs e)
         {
-        //    _querySubject.OnNext(GetDimensionValuesList());
+            _getSubject.OnNext(GetMeasures());
         }
     }
 }

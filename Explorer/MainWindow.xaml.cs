@@ -27,6 +27,7 @@ namespace Myriad.Explorer
 
             NavigationControl.Subscribe(Observer.Create<Uri>(OnRefresh));
             ContextControl.Subscribe(Observer.Create<List<DimensionValues>>(OnQuery));
+            ContextControl.Subscribe(Observer.Create<HashSet<Measure>>(OnGet));
             ContextControl.Subscribe(Observer.Create<Measure>(OnMeasure));
             ContextControl.IsEnabled = false;
 
@@ -70,9 +71,33 @@ namespace Myriad.Explorer
             }
         }
 
+        private void OnGet(HashSet<Measure> measures)
+        {
+            var result = _reader.Get(measures);
+
+            var table = _dataSet.Tables[0];
+            table.Clear();
+
+            foreach (var property in result.Properties)
+            {
+                var row = table.NewRow();
+                row["Property"] = property.Name;
+                row["Value"] = property.Value;
+
+                foreach(var measure in result.Context.Measures)
+                {
+                    if (table.Columns.Contains(measure.Dimension.Name) == false)
+                        continue;
+                    row[measure.Dimension.Name] = measure.Value;
+                }
+
+                table.Rows.Add(row);
+            }
+        }
+
         private void OnMeasure(Measure measure)
         {
-            //_reader.AddDimensionValue(measure.Dimension, measure.Value);
+            _writer.AddDimensionValue(measure.Dimension, measure.Value);
         }
 
         private void ResetResults()
@@ -120,6 +145,16 @@ namespace Myriad.Explorer
             ContextControl.IsEnabled = true;
         }
 
+        private static Int64 GetTimestamp(DataRowView view)
+        {
+            object value;            
+            if( view == null || (value = view["Timestamp"]) == DBNull.Value )
+                return Int64.MinValue;
+
+            var ticks = ((DateTimeOffset) value).Ticks;
+            return Epoch.GetOffset(ticks);
+        }
+
         /// <summary>Convert a data row view to a cluster</summary>
         private static Cluster ToCluster(DataRowView view, List<DimensionValues> dimensionValues)
         {
@@ -129,7 +164,7 @@ namespace Myriad.Explorer
                     .Select(d => new Measure(d.Dimension, view[d.Dimension.Name].ToString()))
             );
 
-            var timestamp = Epoch.GetOffset(((DateTimeOffset)view["Timestamp"]).Ticks);
+            var timestamp = GetTimestamp(view);
             return Cluster.Create(view["Value"].ToString(), measures, view["UserName"].ToString(), timestamp);
         }
 
@@ -140,6 +175,10 @@ namespace Myriad.Explorer
 
             var view = ResultView.SelectedItems[0] as DataRowView;
             if (view == null)
+                return;
+
+            // Hack, we don't currently support edits on rows returned via "Get"
+            if (GetTimestamp(view) == Int64.MinValue)
                 return;
 
             var valueMap = _dimensionValues.ToDictionary(d => d.Dimension.Name, d => view[d.Dimension.Name].ToString());
