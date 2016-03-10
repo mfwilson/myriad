@@ -191,15 +191,20 @@ module RestHandlers =
         async {            
             try
                 logger.Info("REQ: put measure " + x.request.rawQuery)                
+                
+                let ``measure`` = fromRequest<Measure>(x.request)
 
-//                let kv = HttpUtility.ParseQueryString(x.request.rawQuery)                
-//                let property = fromRequest<PropertyOperation>(x.request)
-//                let newProperty = engine.Put(property)
-//                let response = { Requested = DateTimeOffset.UtcNow; Property = newProperty }
-//                let contentType, message = getResponseString kv.["format"] response       
-                                
-                //let! ctx = Writers.setMimeType contentType x
-                return! OK "Not implemented" x
+                if ``measure``.IsNone then
+                    return! BAD_REQUEST "Measure could not be read." x    
+                else
+                    logger.Info("Adding measure [{0}]", ``measure``.Value.ToString())
+                    let response = engine.AddMeasure(``measure``.Value)
+                    if response.IsNone then
+                        return! BAD_REQUEST "Measure could not be added." x    
+                    else
+                        let contentType, message = getResponseString "json" response.Value
+                        let! ctx = Writers.setMimeType contentType x
+                        return! OK message ctx.Value
             with 
             | :? ArgumentException as ex -> 
                 logger.Error("UNPROCESSABLE_ENTITY: Get {0}\r\n{1}", x.request.rawQuery, ex.ToString())

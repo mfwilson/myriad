@@ -69,8 +69,8 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="NewDimensionWindow.xaml.cs">
-      <DependentUpon>NewDimensionWindow.xaml</DependentUpon>
+    <Compile Include="NewMeasureWindow.xaml.cs">
+      <DependentUpon>NewMeasureWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="PropertyEditorWindow.xaml.cs">
       <DependentUpon>PropertyEditorWindow.xaml</DependentUpon>
@@ -112,7 +112,7 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="NewDimensionWindow.xaml">
+    <Page Include="NewMeasureWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

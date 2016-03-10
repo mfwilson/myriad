@@ -97,7 +97,8 @@ namespace Myriad.Explorer
 
         private void OnMeasure(Measure measure)
         {
-            _writer.AddDimensionValue(measure.Dimension, measure.Value);
+            var dimensionValues = _writer.AddMeasure(measure);
+            ContextControl.Update(dimensionValues);
         }
 
         private void ResetResults()

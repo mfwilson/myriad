@@ -15,11 +15,11 @@ using System.Windows.Shapes;
 namespace Myriad.Explorer
 {
     /// <summary>
-    /// Interaction logic for NewDimensionWindow.xaml
+    /// Interaction logic for NewMeasureWindow.xaml
     /// </summary>
-    public partial class NewDimensionWindow : Window
+    public partial class NewMeasureWindow : Window
     {
-        public NewDimensionWindow()
+        public NewMeasureWindow()
         {
             InitializeComponent();
         }
@@ -33,6 +33,12 @@ namespace Myriad.Explorer
         {
             get { return dimensionItemControl.DimensionValue; }
             set { dimensionItemControl.DimensionValue = value; }
+        }
+
+        private void OnClickOk(object sender, RoutedEventArgs e)
+        {
+            DialogResult = true;
+            Close();
         }
     }
 }

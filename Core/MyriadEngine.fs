@@ -31,3 +31,6 @@ type MyriadEngine(store : IMyriadStore) =
 
     member x.Put(operation : PropertyOperation) = 
         store.PutProperty(operation)        
+
+    member x.AddMeasure(``measure`` : Measure) =        
+        store.AddMeasure(``measure``) 

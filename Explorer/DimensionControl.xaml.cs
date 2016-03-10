@@ -33,17 +33,17 @@ namespace Myriad.Explorer
             if (dimension == null)
                 return;
 
-            var dialog = new NewDimensionWindow
+            var dialog = new NewMeasureWindow
             {
                 Owner = Application.Current.MainWindow,
                 Title = string.Concat("New ", dimension.Name, "...")
             };
 
             var result = dialog.ShowDialog();
-            if ( result.HasValue && result.Value )
+            if ( result.HasValue && result.Value && string.IsNullOrEmpty(dialog.DimensionValue) == false )
             {
                 // raise new dimension value
-                var measure = new Measure(dimension, dialog.dimensionItemControl.txtDimension.Text);
+                var measure = new Measure(dimension, dialog.DimensionValue);
                 _measureSubject.OnNext(measure);
             }
         }
@@ -91,6 +91,17 @@ namespace Myriad.Explorer
                 cmbItems = { ItemsSource = dimensionValues.Values.OrderBy(d => d).ToList() },
                 listItems = { Visibility = visibility }
             };
+        }
+
+        public void Update(DimensionValues dimensionValues)
+        {
+            if (dimensionValues == null || 
+                dimensionValues.Dimension == null ||
+                dimensionValues.Values == null || 
+                dimensionValues.Dimension.Equals(Tag as Dimension) == false )
+                return;
+
+            cmbItems.ItemsSource = dimensionValues.Values.OrderBy(d => d).ToList();
         }
 
         public DimensionValues GetDimensionValues()

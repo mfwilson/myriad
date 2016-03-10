@@ -28,11 +28,11 @@ type IMyriadStore =
 
     /// Add a value to list of possible values given a dimension and value.
     /// Returns true if the value was added; otherwise false.
-    abstract AddMeasure : ``measure`` : Measure -> bool        
+    abstract AddMeasure : ``measure`` : Measure -> DimensionValues option       
     /// Remove a value from the list of possible values for a dimension given a dimension and value.
     /// Returns true if the value was removed; otherwise false.
-    abstract RemoveMeasure : ``measure`` : Measure -> bool
-    
+    abstract RemoveMeasure : ``measure`` : Measure -> bool       
+
     /// Overwrites the current property with the passed property data 
     abstract SetProperty : Property -> Property
 
@@ -89,9 +89,10 @@ type MemoryStore() =
         lock criticalSection (fun () ->
             let success, value = dimensionValues.TryGetValue(``measure``.Dimension)
             if not success then
-                false
+                None
             else
-                value.Add(``measure``.Value)            
+                let result = value.Add(``measure``.Value)            
+                if not result then None else Some({ Dimension = ``measure``.Dimension; Values = value |> Seq.toArray })
         )
         
     let removeMeasure (``measure`` : Measure) =

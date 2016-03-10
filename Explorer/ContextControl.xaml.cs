@@ -50,6 +50,15 @@ namespace Myriad.Explorer
             }
         }
 
+        public void Update(DimensionValues dimensionValues)
+        {
+            foreach (var control in stackPanel.Children)
+            {
+                var dimensionControl = control as DimensionControl;
+                dimensionControl?.Update(dimensionValues);
+            }
+        }
+
         private void RemoveDimensionControls()
         {
             var count = stackPanel.Children.Count;

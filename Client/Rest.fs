@@ -12,29 +12,16 @@ open Newtonsoft.Json
 
 module Rest =
 
-    let pathMap = 
-        [
-            "get",        "get";
-            "query",      "query";
-            "metadata",   "metadata";
-            "dimensions", "list/dimension";
-
-            "put",        "put/property";
-        ] |> Map.ofList
-
-    let getRestUri (baseUri : Uri) (key : String) (update : UriBuilder -> Uri) =
+    let getRestUri (baseUri : Uri) (path : String) (uriUpdater : UriBuilder -> Uri) =
         let builder = UriBuilder(baseUri)
-        builder.Path <- Path.Combine(builder.Path, pathMap.[key])
-        update(builder)
-////        client.DownloadString(builder.Uri)
-//
-//    let query (baseUri : Uri) update = 
-//        let json = request baseUri "query" update
-//        let response = JsonConvert.DeserializeObject<RestQueryResponse>(json)
-//        response.data |> Seq.map (fun m -> m.ToDictionary( (fun p -> p.Key), (fun (p : KeyValuePair<String, String>) -> p.Value) ))
+        builder.Path <- Path.Combine(builder.Path, path)
+        uriUpdater(builder)
 
-    let getQueryUri (baseUri : Uri) update = 
-        getRestUri baseUri "query" update
+//    let getQueryUri (baseUri : Uri) update = 
+//        getRestUri baseUri "query" update
 
-    let getPutUri (baseUri : Uri) update =
-        getRestUri baseUri "put" update
+    let getPutPropertyUri (baseUri : Uri) update =
+        getRestUri baseUri "put/property" update
+
+    let getPutMeasureUri (baseUri : Uri) update =
+        getRestUri baseUri "put/measure" update
