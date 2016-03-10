@@ -20,7 +20,7 @@ type MyriadReader(baseUri : Uri) =
             "get",        "get";
             "getp",       "get/property";
             "query",      "query";
-            "metadata",   "metadata";
+            "metadata",   "get/metadata";
             "dimensions", "list/dimension";
         ] |> Map.ofList
 

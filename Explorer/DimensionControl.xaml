@@ -30,8 +30,8 @@
             </Grid.ColumnDefinitions>
 
             <Label Grid.Column="0" x:Name="lblName" Content="[Dimension]" Margin="3" HorizontalAlignment="Stretch" VerticalAlignment="Center" FontSize="14" FontWeight="SemiBold"/>
-            <Button Grid.Column="1" x:Name="btnNew" Content="New" Click="OnClickNew"/>
-            <Button Grid.Column="2" x:Name="btnClear" Content="Clear" Click="OnClickClear"/>
+            <Button Grid.Column="2" x:Name="btnNew" Content="New" Click="OnClickNew"/>
+            <!--<Button Grid.Column="2" x:Name="btnClear" Content="Clear" Click="OnClickClear"/>-->
         </Grid>
 
         <ComboBox Grid.Row="1" x:Name="cmbItems" Margin="0,2,0,2" HorizontalAlignment="Stretch" VerticalAlignment="Top" IsEditable="True" SelectionChanged="OnSelectionChanged"/>

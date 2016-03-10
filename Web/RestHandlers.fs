@@ -53,6 +53,7 @@ module RestHandlers =
         match format with
         | f when String.IsNullOrEmpty(format) || format.ToLower() = "json" -> "text/json", JsonConvert.SerializeObject(response)
         | f when format.ToLower() = "xml" -> "text/xml", XmlConvert.SerializeObject(response)
+        | f when format.ToLower() = "text" -> "text/raw", response.ToString()
         | _ -> raise(ArgumentException("Unknown format [" + format + "]"))
 
     let private getPropertyKeys(kv : NameValueCollection) =
@@ -60,158 +61,109 @@ module RestHandlers =
         | p when not(String.IsNullOrEmpty(p)) -> p.Split([|','|]) 
         | _ -> [| "" |]
 
-    /// Provides an ordered list of dimensions 
-    let DimensionList (engine : MyriadEngine) (x : HttpContext) = 
-        async {
-            let dimensionList = engine.GetDimensions() |> List.map (fun d -> d.Name)
-            let message = JsonConvert.SerializeObject(dimensionList)
-            return! OK message x
-        }
-
-    /// Provides a view over both properties and dimensions
-    let Metadata (engine : MyriadEngine) (x : HttpContext) = 
-        async {
-            let metadata = engine.GetMetadata()
-            let message = JsonConvert.SerializeObject(metadata)
-            return! OK message x
-        }
-
-    /// Query -> JSON w/ context
-    let Query (engine : MyriadEngine) (x : HttpContext) =
-        async {
-            logger.Info("REQ: Query " + x.request.rawQuery)
-
-            let kv = HttpUtility.ParseQueryString(x.request.rawQuery)
-
-            let context = getContext (engine.GetDimension) kv
-
-            let measuresAsString = context.Measures |> Seq.map (fun m -> m.ToString())
-            logger.Info("Measures: " + String.Join(", ", measuresAsString))
-
-            let properties = getPropertyKeys(kv)
-                             |> Seq.map (fun p -> engine.Query(p, context))
-                             |> Seq.concat
-            
-            let dimensions = engine.GetDimensions() 
-            let dataRows = properties |> Seq.mapi (fun i p -> Cluster.ToMap(fst(p).Key, snd(p), dimensions, i))
-
-            let response = { data = dataRows }
-            let message = JsonConvert.SerializeObject(response)
-            logger.Info("Found {0} clusters\r\n{1}", Seq.length properties, message)
-            return! OK message x
-        }    
-
-    /// GET -> URL properties with dimensions name=value
-    let Get (engine : MyriadEngine) (x : HttpContext) =
-        async {
+    let handleRequest (engine : MyriadEngine) (x : HttpContext) (handler : NameValueCollection -> (String -> WebPart) * String * String) =
+        async { 
+            let requestId = Guid.NewGuid()
             try
-                logger.Info("REQ: Get " + x.request.rawQuery)
-
+                logger.Info("RECV: [{0}] [{1}]", requestId, x.request.url)
                 let kv = HttpUtility.ParseQueryString(x.request.rawQuery)
-                let context = getContext (engine.GetDimension) kv
-
-                let properties = getPropertyKeys(kv)
-                                 |> Seq.map (fun p -> engine.Get(p, context))
-                                 |> Seq.concat
-
-                let response = { MyriadGetResponse.Requested = DateTimeOffset.UtcNow; Context = context; Properties = properties }            
-                let contentType, message = getResponseString kv.["format"] response       
-                                
-                let! ctx = Writers.setMimeType contentType x
-                return! OK message ctx.Value 
+                let webResponse, contentType, message = handler(kv)
+                let! ctx = Writers.setMimeType contentType x                                
+                logger.Info("SEND: [{0}] [{1}] {2} Length: {3}", requestId, x.request.url, contentType, message.Length)
+                logger.Debug("SEND: [{0}] [{1}]", requestId, message)                                
+                return! webResponse message ctx.Value
             with 
             | :? ArgumentException as ex -> 
-                logger.Error("UNPROCESSABLE_ENTITY: Get {0}\r\n{1}", x.request.rawQuery, ex.ToString())
+                logger.Error("UNPROCESSABLE_ENTITY: [{0}] [{1}] {2}\r\n{3}", requestId, x.request.url, x.request.rawQuery, ex.ToString())
                 let! ctx = Writers.setMimeType "text/plain" x
                 return! UNPROCESSABLE_ENTITY (ex.Message) ctx.Value
             | ex -> 
-                logger.Error("BAD_REQUEST: Get {0}\r\n{1}", x.request.rawQuery, ex.ToString())
-                let! ctx = Writers.setMimeType "text/plain" x
-                return! BAD_REQUEST (ex.Message) ctx.Value
-        }        
-
-    let GetProperty (engine : MyriadEngine) (x : HttpContext) =
-        async {
-            try
-                logger.Info("REQ: GetProperty " + x.request.rawQuery)
-
-                let kv = HttpUtility.ParseQueryString(x.request.rawQuery)
-
-                let asOf = getAsOf kv
-
-                let properties = getPropertyKeys(kv)
-                                 |> Seq.choose (fun p -> engine.Get(p, asOf))
-
-                let response = { Requested = DateTimeOffset.UtcNow; Properties = properties }
-                let contentType, message = getResponseString kv.["format"] response       
-
-                let! ctx = Writers.setMimeType contentType x
-                return! OK message ctx.Value 
-            with 
-            | :? ArgumentException as ex -> 
-                logger.Error("UNPROCESSABLE_ENTITY: Get {0}\r\n{1}", x.request.rawQuery, ex.ToString())
-                let! ctx = Writers.setMimeType "text/plain" x
-                return! UNPROCESSABLE_ENTITY (ex.Message) ctx.Value
-            | ex -> 
-                logger.Error("BAD_REQUEST: Get {0}\r\n{1}", x.request.rawQuery, ex.ToString())
+                logger.Error("BAD_REQUEST: [{0}] [{1}] {2}\r\n{3}", requestId, x.request.url, x.request.rawQuery, ex.ToString())
                 let! ctx = Writers.setMimeType "text/plain" x
                 return! BAD_REQUEST (ex.Message) ctx.Value
         }        
         
+    /// Provides an ordered list of dimensions 
+    let GetDimensions (engine : MyriadEngine) (x : HttpContext) = 
+        let getDimensions (kv : NameValueCollection) =            
+            let response = engine.GetDimensions() |> List.map (fun d -> d.Name)
+            let contentType, message = getResponseString kv.["format"] response
+            OK, contentType, message
+        handleRequest engine x getDimensions
+
+    /// Provides a view over both properties and dimensions
+    let GetMetadata (engine : MyriadEngine) (x : HttpContext) = 
+        let getMetadata (kv : NameValueCollection) =            
+            let response = engine.GetMetadata()
+            let contentType, message = getResponseString kv.["format"] response
+            OK, contentType, message
+        handleRequest engine x getMetadata
+
+    /// Query -> JSON w/ context
+    let Query (engine : MyriadEngine) (x : HttpContext) =
+        let query (kv : NameValueCollection) =
+            let context = getContext (engine.GetDimension) kv
+            let properties = getPropertyKeys(kv)
+                             |> Seq.map (fun p -> engine.Query(p, context))
+                             |> Seq.concat            
+            let dimensions = engine.GetDimensions() 
+            let dataRows = properties |> Seq.mapi (fun i p -> Cluster.ToMap(fst(p).Key, snd(p), dimensions, i))
+
+            let response = { data = dataRows }            
+            let contentType, message = getResponseString kv.["format"] response
+            OK, contentType, message
+        handleRequest engine x query
+
+    /// GET -> URL properties with dimensions name=value
+    let Get (engine : MyriadEngine) (x : HttpContext) =
+        let get (kv : NameValueCollection) =
+            let kv = HttpUtility.ParseQueryString(x.request.rawQuery)
+            let context = getContext (engine.GetDimension) kv
+
+            let properties = getPropertyKeys(kv)
+                             |> Seq.map (fun p -> engine.Get(p, context))
+                             |> Seq.concat
+
+            let response = { MyriadGetResponse.Requested = DateTimeOffset.UtcNow; Context = context; Properties = properties }            
+            let contentType, message = getResponseString kv.["format"] response
+            OK, contentType, message
+        handleRequest engine x get
+
+    let GetProperty (engine : MyriadEngine) (x : HttpContext) =
+        let getProperty (kv : NameValueCollection) =
+            let asOf = getAsOf kv
+            let properties = getPropertyKeys(kv) |> Seq.choose (fun p -> engine.Get(p, asOf))
+            let response = { Requested = DateTimeOffset.UtcNow; Properties = properties }
+            let contentType, message = getResponseString kv.["format"] response       
+            OK, contentType, message
+        handleRequest engine x getProperty
+        
     /// PUT property operation (JSON data) -> property
     let PutProperty (engine : MyriadEngine) (x : HttpContext) =
-        async {            
-            try
-                logger.Info("REQ: put property " + x.request.rawQuery)                
-
-                let kv = HttpUtility.ParseQueryString(x.request.rawQuery)                
-                let property = fromRequest<PropertyOperation>(x.request)
-                if property.IsNone then
-                    return! BAD_REQUEST "PropertyOperation could not be read." x
-                else
-                    let newProperty = engine.Put(property.Value)
-                    let response = { Requested = DateTimeOffset.UtcNow; Property = newProperty }
-                    let contentType, message = getResponseString kv.["format"] response       
-                                
-                    let! ctx = Writers.setMimeType contentType x
-                    return! OK message ctx.Value
-            with 
-            | :? ArgumentException as ex -> 
-                logger.Error("UNPROCESSABLE_ENTITY: Get {0}\r\n{1}", x.request.rawQuery, ex.ToString())
-                let! ctx = Writers.setMimeType "text/plain" x
-                return! UNPROCESSABLE_ENTITY (ex.Message) ctx.Value
-            | ex -> 
-                logger.Error("BAD_REQUEST: Get {0}\r\n{1}", x.request.rawQuery, ex.ToString())
-                let! ctx = Writers.setMimeType "text/plain" x
-                return! BAD_REQUEST (ex.Message) ctx.Value
-        }
+        let putProperty (kv : NameValueCollection) =
+            let property = fromRequest<PropertyOperation>(x.request)
+            if property.IsNone then
+                let contentType, message = getResponseString "text" "PropertyOperation could not be read."
+                BAD_REQUEST, contentType, message
+            else
+                let newProperty = engine.Put(property.Value)
+                let response = { Requested = DateTimeOffset.UtcNow; Property = newProperty }
+                let contentType, message = getResponseString kv.["format"] response       
+                OK, contentType, message
+        handleRequest engine x putProperty                                
 
     /// PUT new dimension+value (measure) -> Dimension * string list
     let PutMeasure (engine : MyriadEngine) (x : HttpContext) =
-        async {            
-            try
-                logger.Info("REQ: put measure " + x.request.rawQuery)                
-                
-                let ``measure`` = fromRequest<Measure>(x.request)
-
-                if ``measure``.IsNone then
-                    return! BAD_REQUEST "Measure could not be read." x    
+        let putMeasure (kv : NameValueCollection) =
+            let ``measure`` = fromRequest<Measure>(x.request)
+            if ``measure``.IsNone then
+                BAD_REQUEST, "text", "Measure could not be read."
+            else
+                logger.Info("Adding measure [{0}]", ``measure``.Value.ToString())
+                let response = engine.AddMeasure(``measure``.Value)
+                if response.IsNone then
+                    BAD_REQUEST, "text", "Measure could not be added."
                 else
-                    logger.Info("Adding measure [{0}]", ``measure``.Value.ToString())
-                    let response = engine.AddMeasure(``measure``.Value)
-                    if response.IsNone then
-                        return! BAD_REQUEST "Measure could not be added." x    
-                    else
-                        let contentType, message = getResponseString "json" response.Value
-                        let! ctx = Writers.setMimeType contentType x
-                        return! OK message ctx.Value
-            with 
-            | :? ArgumentException as ex -> 
-                logger.Error("UNPROCESSABLE_ENTITY: Get {0}\r\n{1}", x.request.rawQuery, ex.ToString())
-                let! ctx = Writers.setMimeType "text/plain" x
-                return! UNPROCESSABLE_ENTITY (ex.Message) ctx.Value
-            | ex -> 
-                logger.Error("BAD_REQUEST: Get {0}\r\n{1}", x.request.rawQuery, ex.ToString())
-                let! ctx = Writers.setMimeType "text/plain" x
-                return! BAD_REQUEST (ex.Message) ctx.Value
-        }
+                    let contentType, message = getResponseString kv.["format"] response.Value                    
+                    OK, contentType, message         
+        handleRequest engine x putMeasure

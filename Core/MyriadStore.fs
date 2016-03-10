@@ -91,8 +91,8 @@ type MemoryStore() =
             if not success then
                 None
             else
-                let result = value.Add(``measure``.Value)            
-                if not result then None else Some({ Dimension = ``measure``.Dimension; Values = value |> Seq.toArray })
+                value.Add(``measure``.Value) |> ignore
+                Some({ Dimension = ``measure``.Dimension; Values = value |> Seq.toArray })
         )
         
     let removeMeasure (``measure`` : Measure) =

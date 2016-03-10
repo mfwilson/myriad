@@ -29,8 +29,8 @@
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
-            <Button Grid.Column="0" Content="OK" Click="OnClickOk"/>
-            <Button Grid.Column="1" Content="Cancel" IsCancel="True" IsDefault="True"/>
+            <Button Grid.Column="0" Content="OK" IsDefault="True" Click="OnClickOk"/>
+            <Button Grid.Column="1" Content="Cancel" IsCancel="True" />
         </Grid>
 
     </Grid>
