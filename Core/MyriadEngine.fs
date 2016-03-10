@@ -26,11 +26,12 @@ type MyriadEngine(store : IMyriadStore) =
         |> Seq.map (fun pair -> { Name = fst(pair).Key; Value = snd(pair).Value; Deprecated = fst(pair).Deprecated }) 
         |> Seq.toList
 
-    member x.Get(propertyKey : String, asOf : DateTimeOffset) =
-        store.GetProperty(propertyKey, asOf)
+    member x.Get(propertyKey : String, asOf : DateTimeOffset) = store.GetProperty(propertyKey, asOf)
 
-    member x.Put(operation : PropertyOperation) = 
-        store.PutProperty(operation)        
+    member x.Put(operation : PropertyOperation) = store.PutProperty(operation)        
 
-    member x.AddMeasure(``measure`` : Measure) =        
-        store.AddMeasure(``measure``) 
+    member x.AddMeasure(``measure`` : Measure) = store.AddMeasure(``measure``) 
+
+    member x.AddDimension(dimensionName : String) = store.AddDimension(dimensionName) 
+
+    member x.SetDimensionOrder(dimensions : Dimension list) = store.SetDimensionOrder(dimensions)

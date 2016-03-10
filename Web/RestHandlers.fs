@@ -56,10 +56,12 @@ module RestHandlers =
         | f when format.ToLower() = "text" -> "text/raw", response.ToString()
         | _ -> raise(ArgumentException("Unknown format [" + format + "]"))
 
-    let private getPropertyKeys(kv : NameValueCollection) =
-        match kv.["property"] with
+    let private getValues (kv : NameValueCollection) (key : String) =
+        match kv.[key] with
         | p when not(String.IsNullOrEmpty(p)) -> p.Split([|','|]) 
         | _ -> [| "" |]
+
+    let private getPropertyKeys(kv : NameValueCollection) = getValues kv "properties"
 
     let handleRequest (engine : MyriadEngine) (x : HttpContext) (handler : NameValueCollection -> (String -> WebPart) * String * String) =
         async { 
@@ -167,3 +169,30 @@ module RestHandlers =
                     let contentType, message = getResponseString kv.["format"] response.Value                    
                     OK, contentType, message         
         handleRequest engine x putMeasure
+
+    /// PUT new dimension(s) -> Dimension list
+    let PutDimension (engine : MyriadEngine) (x : HttpContext) =
+        let putDimension(kv : NameValueCollection) =
+            let dimensionNames = getValues kv "dimension"
+            if dimensionNames |> Seq.length = 0 then
+                BAD_REQUEST, "text", "No dimensions were sent."
+            else
+                logger.Info("Adding dimensions [{0}]", String.Join(", ", dimensionNames))                
+                let response = dimensionNames |> Seq.map (fun n -> engine.AddDimension(n)) |> Seq.toList
+                let contentType, message = getResponseString kv.["format"] response
+                OK, contentType, message         
+        handleRequest engine x putDimension
+
+    /// PUT new dimension(s) -> Dimension list
+    let PutDimensionOrder (engine : MyriadEngine) (x : HttpContext) =
+        let putDimensionOrder (kv : NameValueCollection) =
+            let dimensionsOption = fromRequest<Dimension list>(x.request)
+            if dimensionsOption.IsNone then
+                BAD_REQUEST, "text", "Dimension list could not be read."
+            else
+                let dimensions = dimensionsOption.Value
+                logger.Info("Setting dimension order: [{0}]", String.Join(", ", dimensions))
+                let response = engine.SetDimensionOrder(dimensions)
+                let contentType, message = getResponseString kv.["format"] response
+                OK, contentType, message         
+        handleRequest engine x putDimensionOrder

@@ -17,8 +17,8 @@ module Rest =
         builder.Path <- Path.Combine(builder.Path, path)
         uriUpdater(builder)
 
-//    let getQueryUri (baseUri : Uri) update = 
-//        getRestUri baseUri "query" update
+    let getPutDimensionUri (baseUri : Uri) update =
+        getRestUri baseUri "put/dimension" update
 
     let getPutPropertyUri (baseUri : Uri) update =
         getRestUri baseUri "put/property" update

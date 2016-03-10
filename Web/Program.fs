@@ -39,6 +39,8 @@ let app : WebPart =
         PUT >=> choose [
             path (prefix + "put/property") >=> RestHandlers.PutProperty engine 
             path (prefix + "put/measure") >=> RestHandlers.PutMeasure engine 
+            path (prefix + "put/dimension") >=> RestHandlers.PutDimension engine 
+            path (prefix + "put/dimensions") >=> RestHandlers.PutDimensionOrder engine 
         ]
     ]
 

@@ -22,10 +22,20 @@ type MyriadWriter(baseUri : Uri) =
         client.Dispose()
     
     member x.PutProperty(propertyOperation : PropertyOperation) =
-        let uri = Rest.getPutPropertyUri baseUri (fun builder -> builder.Uri)        
+        let uri = Rest.getPutPropertyUri baseUri (fun builder -> builder.Uri)
         let request = JsonConvert.SerializeObject(propertyOperation)        
         let response = client.UploadString(uri, "PUT", request)
         JsonConvert.DeserializeObject<Property>(response)
+
+    member x.AddDimension(dimensionName : String) =
+        let uriUpdater(builder : UriBuilder) =
+            let query = HttpUtility.ParseQueryString("")
+            query.["dimension"] <- dimensionName
+            builder.Query <- query.ToString()     
+            builder.Uri       
+        let uri = Rest.getPutDimensionUri baseUri uriUpdater
+        let response = client.UploadString(uri, "PUT", "")
+        JsonConvert.DeserializeObject<Dimension>(response)
 
     member x.AddMeasure(``measure`` : Measure) =
         let uri = Rest.getPutMeasureUri baseUri (fun builder -> builder.Uri)        

@@ -37,7 +37,9 @@ type MyriadCache() =
         
     let tryHead (ls:seq<'a>) : option<'a>  = ls |> Seq.tryPick Some
 
-    member x.Keys with get() = cache.Keys
+    member x.Keys with get() = cache.Keys    
+
+    member x.Item(key : String) : LockFreeList<Property> = cache.[key]
 
     member x.TryGetValue(key : String, context : Context, [<Out>] value : byref<String>) =
         let success, result = x.TryFind(key, context)
@@ -93,3 +95,5 @@ type MyriadCache() =
         let update (key : string) (current : LockFreeList<Property>) = current.Add property 
         let current = x.AddOrUpdate(property.Key, add, update) 
         current.Value.Head
+
+    

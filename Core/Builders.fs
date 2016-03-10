@@ -30,3 +30,6 @@ type PropertyBuilder(dimensions : Dimension seq) =
         let clustersByWeight = x.OrderClusters clusters 
         Property.Create(key, timestamp, clustersByWeight)
         
+    member x.ApplyDimensionOrder(property : Property) =
+        let clustersByWeight = x.OrderClusters property.Clusters
+        Property.Create(property.Key, property.Description, property.Deprecated, property.Timestamp, clustersByWeight)

@@ -25,6 +25,8 @@ type IMyriadStore =
     abstract AddDimension : String -> Dimension  
     /// Remove a dimension from the list of dimensions
     abstract RemoveDimension : Dimension -> bool
+    /// Remove a dimension from the list of dimensions
+    abstract SetDimensionOrder : Dimension list -> Dimension list
 
     /// Add a value to list of possible values given a dimension and value.
     /// Returns true if the value was added; otherwise false.
@@ -80,9 +82,14 @@ type MemoryStore() =
                 newDimension                            
         )
 
+    let propertyDimension = addDimension "Property" 
+
     let removeDimension (dimension : Dimension) =
         lock criticalSection (fun () ->
-            dimensions.Remove(dimension) && dimensionMap.Remove(dimension.Name) && dimensionValues.Remove(dimension)
+            if dimension = propertyDimension then
+                false
+            else
+                dimensions.Remove(dimension) && dimensionMap.Remove(dimension.Name) && dimensionValues.Remove(dimension)
         )
 
     let addMeasure (``measure`` : Measure) =
@@ -104,13 +111,26 @@ type MemoryStore() =
                 value.Remove(``measure``.Value)            
         )
 
-    let propertyDimension = addDimension "Property" 
-
     let updateMeasures (property : Property) =
         lock criticalSection (fun () ->
             addMeasure { Dimension = propertyDimension; Value = property.Key } |> ignore
             let measures = property.Clusters |> List.map (fun c -> c.Measures) |> Set.unionMany 
             measures |> Set.map addMeasure |> ignore
+        )
+
+    let setDimensionOrder (orderedDimensions : Dimension list) =        
+        let pb = PropertyBuilder(orderedDimensions)        
+        let keys = cache.Keys
+        let properties = keys 
+                            |> Seq.map (fun k -> cache.[k].Value.Head) 
+                            |> Seq.toList
+                            |> List.map pb.ApplyDimensionOrder
+        properties |> Seq.iter (fun p -> cache.SetProperty p |> ignore) 
+
+        lock criticalSection (fun () ->            
+            dimensions.Clear()
+            dimensions.AddRange(orderedDimensions)                        
+            orderedDimensions
         )
 
     interface IMyriadStore with
@@ -120,6 +140,7 @@ type MemoryStore() =
         member x.GetDimension(dimensionName) = x.GetDimension(dimensionName)    
         member x.AddDimension(dimensionName) = x.AddDimension(dimensionName)
         member x.RemoveDimension(dimension) = x.RemoveDimension(dimension)
+        member x.SetDimensionOrder(dimensions) = x.SetDimensionOrder(dimensions)
         member x.AddMeasure(``measure``) = x.AddMeasure(``measure``)
         member x.RemoveMeasure(``measure``) = x.RemoveMeasure(``measure``)
         member x.GetProperties(history) = x.GetProperties(history)
@@ -151,6 +172,12 @@ type MemoryStore() =
 
     member x.RemoveMeasure(``measure`` : Measure) = removeMeasure ``measure`` 
     
+    member x.SetDimensionOrder(orderedDimensions : Dimension list) =       
+        let current = dimensions |> Set.ofSeq
+        let proposed = orderedDimensions |> Set.ofList
+        // If this is not the same set, we cannot reorder
+        if current <> proposed then dimensions |> List.ofSeq else setDimensionOrder orderedDimensions                       
+
     member x.GetProperties(history : MyriadHistory) = cache.GetProperties() |> Seq.toList
 
     member x.GetAny(propertyKey : String, context : Context) = 
