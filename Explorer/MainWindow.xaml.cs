@@ -29,6 +29,7 @@ namespace Myriad.Explorer
             ContextControl.Subscribe(Observer.Create<List<DimensionValues>>(OnQuery));
             ContextControl.Subscribe(Observer.Create<HashSet<Measure>>(OnGet));
             ContextControl.Subscribe(Observer.Create<Cluster>(OnCluster));
+            ContextControl.Subscribe(Observer.Create<int>(OnCreate));
             ContextControl.IsEnabled = false;
 
             _dataSet.Tables.Add(new DataTable("Results"));
@@ -38,6 +39,17 @@ namespace Myriad.Explorer
         private void OnRefresh(Uri uri)
         {
             ResetClient(uri);
+        }
+
+        private void OnCreate(int command)
+        {
+
+            var editor = CreateEditor();
+
+
+
+
+            
         }
 
         private void OnQuery(List<DimensionValues> dimensionValuesList)
@@ -227,6 +239,15 @@ namespace Myriad.Explorer
             return Cluster.Create(view["Value"].ToString(), measures, view["UserName"].ToString(), timestamp);
         }
 
+        private PropertyEditorWindow CreateEditor()
+        {
+            return new PropertyEditorWindow
+            {
+                Owner = this,
+                Dimensions = _dimensionValues
+            };
+        }
+
         private void OnResultsDoubleClick(object sender, MouseButtonEventArgs e)
         {
             if( ResultView.SelectedItems.Count == 0 )
@@ -246,14 +267,10 @@ namespace Myriad.Explorer
             var response = _reader.GetProperties(new[] {valueMap["Property"]});
             var property = response.Properties.FirstOrDefault();
 
-            var editor = new PropertyEditorWindow
-            {
-                Owner = this,
-                Property = property,
-                Cluster = ToCluster(view, _dimensionValues),
-                ValueMap = valueMap,
-                Dimensions = _dimensionValues
-            };
+            var editor = CreateEditor();
+            editor.Property = property;
+            editor.Cluster = ToCluster(view, _dimensionValues);
+            editor.ValueMap = valueMap;
 
             var result = editor.ShowDialog();
             if (result.HasValue == false || result.Value == false)

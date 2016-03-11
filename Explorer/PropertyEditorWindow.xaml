@@ -40,7 +40,8 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <Label Content="Name" Margin="3" FontWeight="SemiBold" VerticalAlignment="Center" HorizontalAlignment="Left"/>
-                        <TextBox Grid.Column="1" x:Name="txtPropertyName" Text="[Property]" Margin="3" FontWeight="Bold" VerticalContentAlignment="Center" VerticalAlignment="Center" HorizontalAlignment="Left" BorderThickness="0"/>
+                        <TextBox Grid.Column="1" x:Name="txtPropertyName" Text="[Property]" Margin="3" FontWeight="Bold" VerticalContentAlignment="Center" VerticalAlignment="Center" 
+                                 HorizontalAlignment="Left" BorderThickness="0" IsReadOnly="True"/>
                         <CheckBox Grid.Column="2" x:Name="chkDeprecated" Content="Deprecated" Margin="3" VerticalAlignment="Center" HorizontalAlignment="Right"/>
                     </Grid>
                     <Label Content="Value" Margin="3,3,3,0" FontWeight="SemiBold"/>
