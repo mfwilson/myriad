@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Myriad.Explorer"
         mc:Ignorable="d" WindowStartupLocation="CenterOwner" WindowStyle="ToolWindow" 
-        Title="New..." Height="95" Width="320">
+        SizeToContent="WidthAndHeight" Title="New...">
     <Grid>
         <Grid.Resources>
             <Style TargetType="Button">
@@ -19,11 +19,14 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <local:DimensionItemControl x:Name="dimensionItemControl" DimensionName="Name" VerticalAlignment="Top" HorizontalAlignment="Stretch" IsSingle="True" />
+        <local:KeyValueControl Grid.Row ="0" x:Name="measureControl" Key="Name" TabIndex="0" VerticalAlignment="Top" HorizontalAlignment="Stretch" IsSingle="True" MinWidth="300" Width="375" />
 
-        <Grid Grid.Row ="1">
+        <local:KeyValueControl Grid.Row ="1" x:Name="defaultControl" Key="Default" VerticalAlignment="Top" HorizontalAlignment="Stretch" IsSingle="True" Visibility="Collapsed" />
+
+        <Grid Grid.Row ="2" Margin="0 5 0 5">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
@@ -32,6 +35,5 @@
             <Button Grid.Column="0" Content="OK" IsDefault="True" Click="OnClickOk"/>
             <Button Grid.Column="1" Content="Cancel" IsCancel="True" />
         </Grid>
-
     </Grid>
 </Window>

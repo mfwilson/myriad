@@ -2,29 +2,30 @@
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 
 namespace Myriad.Explorer
 {
     /// <summary>
     /// Interaction logic for DimensionItemControl.xaml
     /// </summary>
-    public partial class DimensionItemControl : UserControl  
+    public partial class KeyValueControl : UserControl  
     {
         private bool _isSingle;
 
-        public DimensionItemControl()
+        public KeyValueControl()
         {
             InitializeComponent();            
             cmbItems.Visibility = Visibility.Visible;
         }
 
-        public static DimensionItemControl Create(DimensionValues dimensionValues)
+        public static KeyValueControl Create(DimensionValues dimensionValues)
         {
-            return new DimensionItemControl
+            return new KeyValueControl
             {
-                Name = string.Concat("dim", dimensionValues.Dimension.Name),
+                Name = string.Concat("control", dimensionValues.Dimension.Name),
                 Tag = dimensionValues.Dimension,
-                lblName = { Content = dimensionValues.Dimension.Name },
+                lblKey = { Content = dimensionValues.Dimension.Name },
                 cmbItems = { ItemsSource = dimensionValues.Values.OrderBy(d => d).ToList() }
             };
         }
@@ -40,22 +41,25 @@ namespace Myriad.Explorer
         private void UpdateView()
         {
             cmbItems.Visibility = IsSingle ? Visibility.Hidden : Visibility.Visible;
-            txtDimension.Visibility = IsSingle ? Visibility.Visible : Visibility.Hidden;
+            txtValue.Visibility = IsSingle ? Visibility.Visible : Visibility.Hidden;
+
+            var focused = IsSingle ? txtValue as IInputElement: cmbItems;
+            Keyboard.Focus(focused);
         }
 
-        public object DimensionName
+        public object Key
         {
-            get { return lblName.Content; }
-            set { lblName.Content = value; }
+            get { return lblKey.Content; }
+            set { lblKey.Content = value; }
         }
 
-        public string DimensionValue
+        public string Value
         {
-            get { return IsSingle ? txtDimension.Text : cmbItems.SelectedValue.ToString(); }
+            get { return IsSingle ? txtValue.Text : cmbItems.SelectedValue.ToString(); }
             set
             {
                 if (IsSingle)
-                    txtDimension.Text = value;
+                    txtValue.Text = value;
                 else
                     cmbItems.SelectedValue = value;    
             }

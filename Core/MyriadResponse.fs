@@ -61,9 +61,9 @@ type MyriadGetPropertyResponse =
         x.Properties |> Seq.iter (fun p -> p.WriteXml(writer))
         writer.WriteEndElement()
 
-/// Response data from a property set
+/// Response data from a property put
 [<CLIMutable>]
-type MyriadSetPropertyResponse =
+type MyriadPutPropertyResponse =
     { Requested : DateTimeOffset; Property : Property }
     
     interface IXmlSerializable with

@@ -26,7 +26,7 @@ namespace Myriad.Explorer
 
             foreach(var child in panelDimensions.Children)
             {
-                var control = child as DimensionItemControl;
+                var control = child as KeyValueControl;
                 var measure = control?.GetMeasure();
                 if( measure != null )
                     measures.Add(measure);
@@ -48,7 +48,7 @@ namespace Myriad.Explorer
             var propertyName = Property.Key;
 
             Title = "Edit [" + propertyName + "]";
-            lblPropertyName.Content = propertyName;
+            txtPropertyName.Text = propertyName;
             txtPropertyValue.Text = Cluster.Value;
 
             chkDeprecated.IsChecked = Property.Deprecated;
@@ -59,7 +59,7 @@ namespace Myriad.Explorer
                 if (dimension.Dimension.Name == "Property")
                     continue;
 
-                var control = DimensionItemControl.Create(dimension);
+                var control = KeyValueControl.Create(dimension);
                 control.cmbItems.SelectedItem = ValueMap[dimension.Dimension.Name];
                 panelDimensions.Children.Add(control);
             }

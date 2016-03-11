@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reactive.Subjects;
@@ -14,7 +15,7 @@ namespace Myriad.Explorer
     public partial class DimensionControl : UserControl
     {        
         private readonly ObservableCollection<string> _selectedSet = new ObservableCollection<string>();
-        private readonly Subject<Measure> _measureSubject = new Subject<Measure>();
+        private readonly Subject<Cluster> _clusterSubject = new Subject<Cluster>();
 
         public DimensionControl()
         {
@@ -22,29 +23,30 @@ namespace Myriad.Explorer
             listItems.ItemsSource = _selectedSet;                        
         }
 
-        public IDisposable Subscribe(IObserver<Measure> observer)
+        public IDisposable Subscribe(IObserver<Cluster> observer)
         {
-            return _measureSubject.Subscribe(observer);
+            return _clusterSubject.Subscribe(observer);
         }
 
         private void OnClickNew(object sender, RoutedEventArgs e)
         {
             var dimension = Tag as Dimension;
             if (dimension == null)
-                return;
+                return;            
 
             var dialog = new NewMeasureWindow
             {
                 Owner = Application.Current.MainWindow,
+                ShowDefault = dimension.Name == "Property",
                 Title = string.Concat("New ", dimension.Name, "...")
             };
 
             var result = dialog.ShowDialog();
-            if ( result.HasValue && result.Value && string.IsNullOrEmpty(dialog.DimensionValue) == false )
-            {
-                // raise new dimension value
-                var measure = new Measure(dimension, dialog.DimensionValue);
-                _measureSubject.OnNext(measure);
+            if ( result.HasValue && result.Value && string.IsNullOrEmpty(dialog.MeasureValue) == false )
+            {                
+                var measure = new Measure(dimension, dialog.MeasureValue);
+                var cluster = Cluster.Create(dialog.DefaultValue, new HashSet<Measure>(new[] { measure }), Environment.UserName, Epoch.UtcNow);
+                _clusterSubject.OnNext(cluster);
             }
         }
 
@@ -93,10 +95,33 @@ namespace Myriad.Explorer
             };
         }
 
+        public void Update(Property property)
+        {
+            var dimension = Tag as Dimension;
+            var collection = cmbItems.ItemsSource as IEnumerable<string>;
+            if (property == null || dimension == null || collection == null )
+                return;
+
+            var newValues = new HashSet<string>(collection);
+            if (dimension.Name == "Property")
+                newValues.Add(property.Key);
+
+            foreach (var cluster in property.Clusters)
+            {
+                foreach (var measure in cluster.Measures)
+                {
+                    if (measure.Dimension.Equals(dimension) == false)
+                        continue;
+                    newValues.Add(measure.Value);
+                }
+            }
+
+            cmbItems.ItemsSource = newValues.OrderBy(d => d).ToList();
+        }
+
         public void Update(DimensionValues dimensionValues)
         {
-            if (dimensionValues == null || 
-                dimensionValues.Dimension == null ||
+            if (dimensionValues?.Dimension == null ||
                 dimensionValues.Values == null || 
                 dimensionValues.Dimension.Equals(Tag as Dimension) == false )
                 return;

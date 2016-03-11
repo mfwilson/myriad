@@ -51,7 +51,6 @@ type Property =
     static member Create(key : String, description : String, deprecated : bool, timestamp : Int64, clusters : Cluster list) = 
         { Key = key; Description = description; Deprecated = deprecated; Timestamp = timestamp; Clusters = clusters }
 
-
 type Operation<'T> = 
 | Add of Added : 'T
 | Update of Previous : 'T * Updated : 'T
@@ -60,17 +59,21 @@ type Operation<'T> =
 type PropertyOperation =
     { Key : String; Description : String; Deprecated : bool; Timestamp : Int64; Operations : Operation<Cluster> list }
 
-    member x.ToProperty(sort : Cluster list -> Cluster list) =
-        PropertyOperation.ToProperty(x, sort)
+    member x.ToProperty(sort : Cluster list -> Cluster list, filter : Dimension list) =
+        PropertyOperation.ToProperty(x, sort, filter)
 
-    static member ToProperty(value : PropertyOperation, sort : Cluster list -> Cluster list) =
+    static member FilterMeasures(cluster : Cluster, filter : Dimension list) =
+        let measures = cluster.Measures |> Set.filter (fun m -> not (filter |> List.exists (fun d -> d = m.Dimension)))
+        Cluster.Create(cluster.Value, measures, cluster.UserName, cluster.Timestamp)
+
+    static member ToProperty(value : PropertyOperation, sort : Cluster list -> Cluster list, filter : Dimension list) =
         let toCluster(clusterOperation) =
             match clusterOperation with
             | Add(cluster) -> Some(cluster)
             | Update(previous, updated) -> Some(updated)
             | Remove(cluster) -> None
 
-        let clusters = value.Operations |> List.choose toCluster 
+        let clusters = value.Operations |> List.choose toCluster |> List.map (fun c -> PropertyOperation.FilterMeasures(c, filter))
         Property.Create(value.Key, value.Description, value.Deprecated, value.Timestamp, sort clusters)
 
     static member Create(key : String, description : String, deprecated : bool, timestamp : Int64, operations : List<Operation<Cluster>>) =

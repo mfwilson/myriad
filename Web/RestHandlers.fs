@@ -26,9 +26,12 @@ module RestHandlers =
         | json when String.IsNullOrEmpty(json) -> None
         | _ -> Some(JsonConvert.DeserializeObject(json, typeof<'a>) :?> 'a)
 
-    let private fromRequest<'a> (req : HttpRequest) = 
+    let private getRawForm(req : HttpRequest) = 
         let getString rawForm = Encoding.UTF8.GetString(rawForm)
-        req.rawForm |> getString |> fromJson<'a>
+        req.rawForm |> getString 
+
+    let private fromRequest<'a> (req : HttpRequest) = 
+        getRawForm req |> fromJson<'a>
 
     let private getAsOf (kv : NameValueCollection) =
         let value = kv.["asOf"]     // Compare is case-insensitive
@@ -61,18 +64,21 @@ module RestHandlers =
         | p when not(String.IsNullOrEmpty(p)) -> p.Split([|','|]) 
         | _ -> [| "" |]
 
-    let private getPropertyKeys(kv : NameValueCollection) = getValues kv "properties"
+    let private getPropertyKeys(kv : NameValueCollection) = getValues kv "property"
 
     let handleRequest (engine : MyriadEngine) (x : HttpContext) (handler : NameValueCollection -> (String -> WebPart) * String * String) =
         async { 
             let requestId = Guid.NewGuid()
             try
                 logger.Info("RECV: [{0}] [{1}]", requestId, x.request.url)
+                logger.Debug("RECV: [{0}] [{1}]", requestId, fromRequest x.request)
+
                 let kv = HttpUtility.ParseQueryString(x.request.rawQuery)
                 let webResponse, contentType, message = handler(kv)
-                let! ctx = Writers.setMimeType contentType x                                
                 logger.Info("SEND: [{0}] [{1}] {2} Length: {3}", requestId, x.request.url, contentType, message.Length)
                 logger.Debug("SEND: [{0}] [{1}]", requestId, message)                                
+
+                let! ctx = Writers.setMimeType contentType x                                
                 return! webResponse message ctx.Value
             with 
             | :? ArgumentException as ex -> 
@@ -125,6 +131,7 @@ module RestHandlers =
             let properties = getPropertyKeys(kv)
                              |> Seq.map (fun p -> engine.Get(p, context))
                              |> Seq.concat
+                             |> Seq.toList
 
             let response = { MyriadGetResponse.Requested = DateTimeOffset.UtcNow; Context = context; Properties = properties }            
             let contentType, message = getResponseString kv.["format"] response

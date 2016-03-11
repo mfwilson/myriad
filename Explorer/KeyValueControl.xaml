@@ -1,9 +1,8 @@
-﻿<UserControl x:Class="Myriad.Explorer.DimensionItemControl"
+﻿<UserControl x:Class="Myriad.Explorer.KeyValueControl"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-             xmlns:local="clr-namespace:Myriad.Explorer"
              HorizontalAlignment="Stretch" VerticalAlignment="Stretch" HorizontalContentAlignment="Stretch"  VerticalContentAlignment="Stretch"
              mc:Ignorable="d" d:DesignWidth="300" DataContext="{Binding}">
     <Grid>
@@ -32,10 +31,10 @@
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
-        <Label Grid.Column="0" x:Name="lblName" Content="[Dimension]" Width="100" />
+        <Label Grid.Column="0" x:Name="lblKey" Content="[Value]" Width="100" />
         
-        <ComboBox Grid.Column="1" x:Name="cmbItems" Visibility="Hidden"/>
+        <ComboBox Grid.Column="1" x:Name="cmbItems" Visibility="Hidden" Focusable="True"/>
 
-        <TextBox Grid.Column="1" x:Name="txtDimension" Visibility="Hidden" />
+        <TextBox Grid.Column="1" x:Name="txtValue" Visibility="Hidden" Focusable="True" />
     </Grid>
 </UserControl>

@@ -83,7 +83,7 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="DimensionItemControl.xaml">
+    <Page Include="KeyValueControl.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -101,8 +101,8 @@
     <Compile Include="DimensionControl.xaml.cs">
       <DependentUpon>DimensionControl.xaml</DependentUpon>
     </Compile>
-    <Compile Include="DimensionItemControl.xaml.cs">
-      <DependentUpon>DimensionItemControl.xaml</DependentUpon>
+    <Compile Include="KeyValueControl.xaml.cs">
+      <DependentUpon>KeyValueControl.xaml</DependentUpon>
     </Compile>
     <Compile Include="MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>

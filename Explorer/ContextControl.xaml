@@ -7,17 +7,25 @@
              mc:Ignorable="d">
     <StackPanel Orientation="Vertical" x:Name="stackPanel">
         <Grid>
+            <Grid.Resources>
+                <Style TargetType="Button">
+                    <Setter Property="HorizontalAlignment" Value="Right"/>
+                    <Setter Property="Margin" Value="3"/>
+                    <Setter Property="VerticalAlignment" Value="Center"/>
+                    <Setter Property="Width" Value="75"/>
+                </Style>
+            </Grid.Resources>
+
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="50"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
 
-            <Label Grid.Column="0" Content="As Of:" Margin="3" HorizontalAlignment="Left" VerticalAlignment="Center"/>
-            <DatePicker Grid.Column="1" Margin="3" HorizontalAlignment="Left" VerticalAlignment="Center"/>
-            <Button Grid.Column="2" Content="Query" Width="75" Margin="3" HorizontalAlignment="Right" VerticalAlignment="Center" Click="OnClickQuery"/>
-            <Button Grid.Column="3" Content="Get" Width="75" Margin="3" HorizontalAlignment="Right" VerticalAlignment="Center" Click="OnClickGet"/>
+            <Button Grid.Column="0" Content="Query" Click="OnClickQuery"/>
+            <Button Grid.Column="1" Content="Get" Click="OnClickGet"/>
+            <Button Grid.Column="3" Content="Create" Click="OnClickCreate"/>
         </Grid>
     </StackPanel>
 </UserControl>

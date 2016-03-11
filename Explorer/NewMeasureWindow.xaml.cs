@@ -1,16 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
+﻿using System.Windows;
 
 namespace Myriad.Explorer
 {
@@ -24,21 +12,39 @@ namespace Myriad.Explorer
             InitializeComponent();
         }
 
-        public object DimensionName
+        public object MeasureName
         {
-            get { return dimensionItemControl.DimensionName; }
-            set { dimensionItemControl.DimensionName = value; }
+            get { return measureControl.Key; }
+            set { measureControl.Key = value; }
         }
-        public string DimensionValue
+        public string MeasureValue
         {
-            get { return dimensionItemControl.DimensionValue; }
-            set { dimensionItemControl.DimensionValue = value; }
+            get { return measureControl.Value; }
+            set { measureControl.Value = value; }
+        }
+
+        public object DefaultName
+        {
+            get { return defaultControl.Key; }
+            set { defaultControl.Key = value; }
+        }
+
+        public string DefaultValue
+        {
+            get { return defaultControl.Value; }
+            set { defaultControl.Value = value; }
         }
 
         private void OnClickOk(object sender, RoutedEventArgs e)
         {
             DialogResult = true;
             Close();
+        }
+
+        public bool ShowDefault
+        {
+            get { return defaultControl.Visibility == Visibility.Visible; }
+            set { defaultControl.Visibility = value ? Visibility.Visible : Visibility.Collapsed; }
         }
     }
 }

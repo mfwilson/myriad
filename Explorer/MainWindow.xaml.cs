@@ -28,7 +28,7 @@ namespace Myriad.Explorer
             NavigationControl.Subscribe(Observer.Create<Uri>(OnRefresh));
             ContextControl.Subscribe(Observer.Create<List<DimensionValues>>(OnQuery));
             ContextControl.Subscribe(Observer.Create<HashSet<Measure>>(OnGet));
-            ContextControl.Subscribe(Observer.Create<Measure>(OnMeasure));
+            ContextControl.Subscribe(Observer.Create<Cluster>(OnCluster));
             ContextControl.IsEnabled = false;
 
             _dataSet.Tables.Add(new DataTable("Results"));
@@ -95,10 +95,26 @@ namespace Myriad.Explorer
             }
         }
 
-        private void OnMeasure(Measure measure)
+        private void OnCluster(Cluster cluster)
         {
-            var dimensionValues = _writer.AddMeasure(measure);
-            ContextControl.Update(dimensionValues);
+            var measure = cluster.Measures.FirstOrDefault();
+            if (measure == null)
+                return;
+
+            if( measure.Dimension.Name == "Property" && string.IsNullOrEmpty(cluster.Value) == false )
+            {
+                var operations = new List<Operation<Cluster>> { Operation<Cluster>.NewAdd(cluster) };
+                var propertyOperation = PropertyOperation.Create(measure.Value, "", false, Epoch.UtcNow, operations);
+                var response = _writer.PutProperty(propertyOperation);
+                ResetProperty(response.Property);
+                ContextControl.Update(response.Property);
+            }
+            else
+            {
+                // Adding the measure only
+                var dimensionValues = _writer.AddMeasure(measure);
+                ContextControl.Update(dimensionValues);
+            }
         }
 
         private void ResetResults()
@@ -135,15 +151,57 @@ namespace Myriad.Explorer
 
         private void ResetClient(Uri uri)
         {
-            _reader = new MyriadReader(uri);
-            _writer = new MyriadWriter(uri);
+            try
+            {
+                _reader = new MyriadReader(uri);
+                _writer = new MyriadWriter(uri);
 
-            ResetResults();
+                ResetResults();
 
-            _dimensionValues.Clear();
-            _dimensionValues.AddRange(_reader.GetMetadata());
-            ContextControl.Reset(_dimensionValues);
-            ContextControl.IsEnabled = true;
+                _dimensionValues.Clear();
+                _dimensionValues.AddRange(_reader.GetMetadata());
+                ContextControl.Reset(_dimensionValues);
+                ContextControl.IsEnabled = true;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Myriad Explorer", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void ResetProperty(Property property)
+        {
+            if (property == null)
+                return;
+
+            var table = _dataSet.Tables[0];
+
+            // Remove current
+            var rows = table.Select("Property = '" + property.Key + "'");
+            foreach(var row in rows)
+                table.Rows.Remove(row);
+
+            if (property.Clusters == null)
+                return;
+
+            foreach(var cluster in property.Clusters)
+            {
+                var row = table.NewRow();
+
+                row["Property"] = property.Key;
+                row["Value"] = cluster.Value;
+                row["UserName"] = cluster.UserName;
+                row["Timestamp"] = Epoch.ToDateTimeOffset(cluster.Timestamp);
+
+                foreach (var measure in cluster.Measures)
+                {
+                    if (table.Columns.Contains(measure.Dimension.Name) == false)
+                        continue;
+                    row[measure.Dimension.Name] = measure.Value;
+                }
+
+                table.Rows.Add(row);
+            }
         }
 
         private static Int64 GetTimestamp(DataRowView view)
@@ -201,7 +259,8 @@ namespace Myriad.Explorer
             if (result.HasValue == false || result.Value == false)
                 return;
 
-            var newProperty = _writer.PutProperty(editor.GetPropertyOperation());
+            var propertyResponse = _writer.PutProperty(editor.GetPropertyOperation());
+            ResetProperty(propertyResponse.Property);
         }
     }
 }

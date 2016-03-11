@@ -25,7 +25,7 @@ type MyriadWriter(baseUri : Uri) =
         let uri = Rest.getPutPropertyUri baseUri (fun builder -> builder.Uri)
         let request = JsonConvert.SerializeObject(propertyOperation)        
         let response = client.UploadString(uri, "PUT", request)
-        JsonConvert.DeserializeObject<Property>(response)
+        JsonConvert.DeserializeObject<MyriadPutPropertyResponse>(response)
 
     member x.AddDimension(dimensionName : String) =
         let uriUpdater(builder : UriBuilder) =

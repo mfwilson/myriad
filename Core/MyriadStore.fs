@@ -209,19 +209,20 @@ type MemoryStore() =
 
     member x.PutProperty(value : PropertyOperation) =
         let pb = x.GetPropertyBuilder()
-
+        let filter = [ propertyDimension ]
+        
         let add (key : string) = 
-            let property = value.ToProperty(pb.OrderClusters)
+            let property = value.ToProperty(pb.OrderClusters, filter)
             new LockFreeList<Property>( [ property ] ) 
 
         let update (key : string) (current : LockFreeList<Property>) = 
             let currentProperty = current.Value.Head
-            let applyOperations(current : Cluster list) (operation : Operation<Cluster>) =                
+            let filterMeasures(cluster) = PropertyOperation.FilterMeasures(cluster, filter)
+            let applyOperations(current : Cluster list) (operation : Operation<Cluster>) =
                 match operation with
-                | Add(cluster) -> cluster :: current
-                | Update(previous, updated) -> updated :: (current |> List.filter (fun c -> c <> previous))
+                | Add(cluster) -> filterMeasures(cluster) :: current
+                | Update(previous, updated) -> filterMeasures(updated) :: (current |> List.filter (fun c -> c <> previous))
                 | Remove(cluster) -> current |> List.filter (fun c -> c <> cluster)
-
             let clusters = pb.OrderClusters (value.Operations |> List.fold applyOperations currentProperty.Clusters) 
             let property = Property.Create(currentProperty.Key, value.Description, value.Deprecated, value.Timestamp, clusters)
             current.Add property        
