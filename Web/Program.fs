@@ -1,4 +1,5 @@
 ﻿open System
+open System.Configuration
 open System.Net
 
 open Suave
@@ -12,8 +13,10 @@ open Myriad
 open Myriad.Store
 open Myriad.Web
 
-let store = new MemoryStore()
-[ "Customer"; "Environment"; "Application"; "Instance" ] |> List.iter (fun d -> store.AddDimension(d) |> ignore)
+//let store = new MemoryStore()
+//[ "Customer"; "Environment"; "Application"; "Instance" ] |> List.iter (fun d -> store.AddDimension(d) |> ignore)
+let connectionString = ConfigurationManager.ConnectionStrings.["mySql"].ConnectionString
+let store = new MySqlStore(connectionString)
 let engine = new MyriadEngine(store)
 
 let port = Sockets.Port.Parse("7888")

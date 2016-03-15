@@ -13,8 +13,8 @@ type LoggingAdapter() =
         | LogLevel.Warn -> NLog.LogLevel.Warn
         | LogLevel.Error -> NLog.LogLevel.Error
         | LogLevel.Fatal -> NLog.LogLevel.Fatal
-        | LogLevel.Verbose -> NLog.LogLevel.Trace        
-        | _ -> NLog.LogLevel.Off
+        | LogLevel.Debug -> NLog.LogLevel.Debug
+        | LogLevel.Verbose -> NLog.LogLevel.Trace                
 
     interface Logger with
         member x.Log level fLine = x.Log level fLine

@@ -6,6 +6,7 @@ open Newtonsoft.Json
 
 open Myriad
 
+/// Mock store that adds dimensions and properties; backed by the in-memory store
 type MockStore() =
 
     inherit MemoryStore()
