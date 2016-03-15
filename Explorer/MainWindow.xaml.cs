@@ -43,13 +43,19 @@ namespace Myriad.Explorer
 
         private void OnCreate(int command)
         {
+            var observer = Observer.Create<PropertyOperation>(
+                o =>
+                {
+                    var propertyResponse = _writer.PutProperty(o);
+                    ResetProperty(propertyResponse.Property);
+                    ResetDimensions();
+                }
+            );
 
             var editor = CreateEditor();
+            editor.Subscribe(observer);
 
-
-
-
-            
+            editor.ShowDialog();
         }
 
         private void OnQuery(List<DimensionValues> dimensionValuesList)
@@ -169,16 +175,20 @@ namespace Myriad.Explorer
                 _writer = new MyriadWriter(uri);
 
                 ResetResults();
-
-                _dimensionValues.Clear();
-                _dimensionValues.AddRange(_reader.GetMetadata());
-                ContextControl.Reset(_dimensionValues);
-                ContextControl.IsEnabled = true;
+                ResetDimensions();
             }
             catch (Exception ex)
             {
                 MessageBox.Show(ex.Message, "Myriad Explorer", MessageBoxButton.OK, MessageBoxImage.Error);
             }
+        }
+
+        private void ResetDimensions()
+        {
+            _dimensionValues.Clear();
+            _dimensionValues.AddRange(_reader.GetMetadata());
+            ContextControl.Reset(_dimensionValues);
+            ContextControl.IsEnabled = true;
         }
 
         private void ResetProperty(Property property)
@@ -243,7 +253,7 @@ namespace Myriad.Explorer
         {
             return new PropertyEditorWindow
             {
-                Owner = this,
+                Owner = this,                
                 Dimensions = _dimensionValues
             };
         }
@@ -267,17 +277,22 @@ namespace Myriad.Explorer
             var response = _reader.GetProperties(new[] {valueMap["Property"]});
             var property = response.Properties.FirstOrDefault();
 
+            var observer = Observer.Create<PropertyOperation>(
+                o =>
+                {
+                    var propertyResponse = _writer.PutProperty(o);
+                    ResetProperty(propertyResponse.Property);
+                    ResetDimensions();
+                }
+            );
+
             var editor = CreateEditor();
             editor.Property = property;
             editor.Cluster = ToCluster(view, _dimensionValues);
             editor.ValueMap = valueMap;
+            editor.Subscribe(observer);
 
-            var result = editor.ShowDialog();
-            if (result.HasValue == false || result.Value == false)
-                return;
-
-            var propertyResponse = _writer.PutProperty(editor.GetPropertyOperation());
-            ResetProperty(propertyResponse.Property);
+            editor.ShowDialog();
         }
     }
 }

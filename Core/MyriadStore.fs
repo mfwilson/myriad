@@ -3,6 +3,7 @@
 open System
 open System.Collections.Concurrent
 open System.Collections.Generic
+open System.Diagnostics
 
 type MyriadHistory =
     | All of unit
@@ -53,6 +54,7 @@ type IMyriadStore =
 
 
 type MemoryStore() =
+    static let ts = new TraceSource( "Myriad.Core", SourceLevels.Information )
     let cache = new MyriadCache()
     
     let criticalSection = new Object()
@@ -79,6 +81,7 @@ type MemoryStore() =
                 dimensions.Add(newDimension)
                 dimensionMap.[dimensionName] <- newDimension
                 dimensionValues.[newDimension] <- new SortedSet<String>()
+                ts.TraceEvent(TraceEventType.Information, 0, "Added dimension: [{0}]", dimensionName)
                 newDimension                            
         )
 
@@ -89,7 +92,9 @@ type MemoryStore() =
             if dimension = propertyDimension then
                 false
             else
-                dimensions.Remove(dimension) && dimensionMap.Remove(dimension.Name) && dimensionValues.Remove(dimension)
+                let removed = dimensions.Remove(dimension) && dimensionMap.Remove(dimension.Name) && dimensionValues.Remove(dimension)
+                if removed then ts.TraceEvent(TraceEventType.Information, 0, "Removed dimension: [{0}]", dimension.Name)
+                removed
         )
 
     let addMeasure (``measure`` : Measure) =
@@ -98,7 +103,8 @@ type MemoryStore() =
             if not success then
                 None
             else
-                value.Add(``measure``.Value) |> ignore
+                if value.Add(``measure``.Value) then
+                    ts.TraceEvent(TraceEventType.Information, 0, "Added measure: [{0}/{1}]", ``measure``.Dimension.Name, ``measure``.Value)
                 Some({ Dimension = ``measure``.Dimension; Values = value |> Seq.toArray })
         )
         
@@ -108,7 +114,9 @@ type MemoryStore() =
             if not success then
                 false
             else
-                value.Remove(``measure``.Value)            
+                let removed = value.Remove(``measure``.Value)            
+                if removed then ts.TraceEvent(TraceEventType.Information, 0, "Removed measure: [{0}/{1}]", ``measure``.Dimension.Name, ``measure``.Value)
+                removed
         )
 
     let updateMeasures (property : Property) =
