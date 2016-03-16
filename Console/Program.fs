@@ -38,10 +38,10 @@ let print (color : System.ConsoleColor) (depth : int) (text : string) =
 // Application -> Rook, Knight, Pawn, Bishop
 // Instance -> mary, jimmy, rex
 let getDimensions() =
-    [ { Dimension.Id = 32L; Name = "Environment" };
-      { Dimension.Id = 21L; Name = "Location" };
-      { Dimension.Id = 44L; Name = "Application" };
-      { Dimension.Id = 98L; Name = "Instance" } ] 
+    [ { Dimension.Id = 32UL; Name = "Environment" };
+      { Dimension.Id = 21UL; Name = "Location" };
+      { Dimension.Id = 44UL; Name = "Application" };
+      { Dimension.Id = 98UL; Name = "Instance" } ] 
     
 
 let getClusters(mb : MeasureBuilder) =

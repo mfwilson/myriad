@@ -11,8 +11,8 @@ type MemoryStore() =
     let cache = new MyriadCache()    
     let store = new MyriadStore()
 
-    let idMap = new ConcurrentDictionary<String, Int64>()
-    let mutable currentId = 1L
+    let idMap = new ConcurrentDictionary<String, UInt64>()
+    let mutable currentId = 1UL
 
     let setDimensionOrder (orderedDimensions : Dimension list) =        
         let pb = PropertyBuilder(orderedDimensions)        
@@ -55,7 +55,7 @@ type MemoryStore() =
     member x.AddDimension(dimensionName : String) = 
         let newId(name : String) =            
             let add(key : string) =
-                currentId <- currentId + 1L
+                currentId <- currentId + 1UL
                 currentId
             idMap.GetOrAdd(name, add)         
         store.AddDimension dimensionName newId
@@ -98,7 +98,7 @@ type MemoryStore() =
         PropertyBuilder(x.GetDimensions())
 
     member x.SetProperty(property : Property) =
-        store.UpdateMeasures property
+        store.UpdateMeasures property |> ignore
         cache.SetProperty property
 
     member x.PutProperty(value : PropertyOperation) =
@@ -123,7 +123,7 @@ type MemoryStore() =
 
         let current = cache.AddOrUpdate(value.Key, add, update)
         let property = current.Value.Head
-        store.UpdateMeasures property
+        store.UpdateMeasures property |> ignore
         property
 
 

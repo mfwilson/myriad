@@ -7,7 +7,7 @@ open System.Xml.Serialization
 /// Dimensions are equivalent over their ids
 [<CustomEquality;CustomComparison>]
 type Dimension =
-    { Id : Int64; Name : String }
+    { Id : uint64; Name : String }
     
     interface IComparable with
         member x.CompareTo other = 
@@ -35,7 +35,7 @@ type Dimension =
         writer.WriteAttributeString("Name", x.Name)
         writer.WriteEndElement()
     
-    static member Create(id : Int64, name : String) = { Id = id; Name = name }
+    static member Create(id : uint64, name : String) = { Id = id; Name = name }
 
     static member Create(dimension : Dimension) = { Id = dimension.Id; Name = dimension.Name }
 

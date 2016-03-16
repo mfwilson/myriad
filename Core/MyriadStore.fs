@@ -61,7 +61,7 @@ type MyriadStore() =
     let dimensionMap = new Dictionary<String, Dimension>(StringComparer.InvariantCultureIgnoreCase)
     let dimensionValues = new Dictionary<Dimension, SortedSet<String>>()
 
-    let addDimension (dimensionName : String) (newId : String -> int64) =
+    let addDimension (dimensionName : String) (newId : String -> uint64) =
         lock criticalSection (fun () ->
             let success, value = dimensionMap.TryGetValue(dimensionName)
             if success then
@@ -75,7 +75,7 @@ type MyriadStore() =
                 newDimension                            
         )   
 
-    let propertyDimension = addDimension "Property" (fun d -> 1L)
+    let propertyDimension = addDimension "Property" (fun d -> 1UL)
 
     member x.GetDimension (dimensionName : String) =
         lock criticalSection (fun () ->
@@ -120,6 +120,7 @@ type MyriadStore() =
             x.AddMeasure { Dimension = propertyDimension; Value = property.Key } |> ignore
             let measures = property.Clusters |> List.map (fun c -> c.Measures) |> Set.unionMany 
             measures |> Set.map x.AddMeasure |> ignore
+            measures
         )
 
     member x.SetDimensionOrder (orderedDimensions : Dimension list) = 
@@ -134,9 +135,10 @@ type MyriadStore() =
         |> Seq.map (fun kv -> { Dimension = kv.Key; Values = kv.Value |> Seq.toArray } ) 
         |> Seq.toList
 
-    member x.GetDimensions() = dimensions |> Seq.toList
-    member x.AddDimension(dimensionName : String) (newId : String -> int64) = addDimension dimensionName newId
+    member x.GetDimensions() = dimensions |> Seq.toList    
+    member x.AddDimension(dimensionName : String) (newId : String -> uint64) = addDimension dimensionName newId
     member x.PutDimension(dimension : Dimension) = addDimension dimension.Name (fun n -> dimension.Id)
+
     member x.PropertyDimension with get() = propertyDimension
     member x.Dimensions with get() = dimensions
 

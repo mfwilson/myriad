@@ -143,7 +143,7 @@ type RedisStore(configuration : String) =
         PropertyBuilder(x.GetDimensions())
 
     member x.SetProperty(property : Property) =
-        store.UpdateMeasures property
+        store.UpdateMeasures property |> ignore
         cache.SetProperty property
 
     member x.PutProperty(value : PropertyOperation) =
@@ -168,7 +168,7 @@ type RedisStore(configuration : String) =
 
         let current = cache.AddOrUpdate(value.Key, add, update)
         let property = current.Value.Head
-        store.UpdateMeasures property
+        store.UpdateMeasures property |> ignore
         property
 
 

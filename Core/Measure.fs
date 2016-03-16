@@ -40,7 +40,7 @@ type Measure =
 
     static member CompareTo(x : Measure, y : Measure) = compare (x.Dimension.Id, x.Value) (y.Dimension.Id, y.Value)
 
-    static member Create(dimensionId : Int64, dimensionName : String, value : String) =
+    static member Create(dimensionId : uint64, dimensionName : String, value : String) =
         { Dimension = Dimension.Create(dimensionId, dimensionName); Value = value}
 
     static member Create(dimension : Dimension, value : String) = 

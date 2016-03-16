@@ -26,7 +26,7 @@ type PropertyBuilder(dimensions : Dimension seq) =
     member x.OrderClusters(clusters : Cluster seq) =
         clusters |> Set.ofSeq |> Seq.toList |> List.sortWith compareMeasures 
 
-    member x.Create(key : String) (timestamp : Int64) (clusters : Cluster seq) =
+    member x.Create(key : String) (timestamp : int64) (clusters : Cluster seq) =
         let clustersByWeight = x.OrderClusters clusters 
         Property.Create(key, timestamp, clustersByWeight)
         
