@@ -136,6 +136,7 @@ type MyriadStore() =
 
     member x.GetDimensions() = dimensions |> Seq.toList
     member x.AddDimension(dimensionName : String) (newId : String -> int64) = addDimension dimensionName newId
+    member x.PutDimension(dimension : Dimension) = addDimension dimension.Name (fun n -> dimension.Id)
     member x.PropertyDimension with get() = propertyDimension
     member x.Dimensions with get() = dimensions
 

@@ -55,7 +55,7 @@
     <Compile Include="MemoryStore.fs" />
     <Compile Include="MockStore.fs" />
     <Compile Include="MySqlStore.fs" />
-    <Compile Include="RedisConnection.fs" />
+    <Compile Include="RedisStore.fs" />
     <Content Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
