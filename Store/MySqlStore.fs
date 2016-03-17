@@ -3,6 +3,7 @@
 open System
 open System.Collections.Concurrent
 open System.Collections.Generic
+open System.Configuration
 open System.Data
 open System.Diagnostics
 open System.Runtime.InteropServices
@@ -49,6 +50,10 @@ type MySqlStore(connectionString : String) =
             ts.TraceEvent(TraceEventType.Information, 0, "Loaded {0} properties; {1} unique keys.", properties.Length, cache.Count)
             updateTimestamp properties.[properties.Length - 1].Timestamp
 
+    new() =
+        let connectionString = ConfigurationManager.ConnectionStrings.["mysql"].ConnectionString
+        MySqlStore(connectionString)
+
     interface IMyriadStore with
         member x.Initialize() = x.Initialize()        
         member x.GetMetadata() = x.GetMetadata()
@@ -69,7 +74,7 @@ type MySqlStore(connectionString : String) =
         member x.PutProperty(property) = x.PutProperty(property)
 
     member x.Initialize() =
-        ts.TraceEvent(TraceEventType.Information, 0, "Initializing MySql store.")        
+        ts.TraceEvent(TraceEventType.Information, 0, "Initializing MySql store.")
         updateProperties()
         
     member x.GetMetadata() =         

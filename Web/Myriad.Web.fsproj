@@ -58,6 +58,7 @@
   <ItemGroup>
     <None Include="App.config" />
     <Compile Include="AssemblyInfo.fs" />
+    <Compile Include="AppConfiguration.fs" />
     <Compile Include="LoggingAdapter.fs" />
     <Compile Include="XmlConvert.fs" />
     <Compile Include="RestHandlers.fs" />

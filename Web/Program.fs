@@ -13,19 +13,14 @@ open Myriad
 open Myriad.Store
 open Myriad.Web
 
-//let store = new MemoryStore()
-//[ "Customer"; "Environment"; "Application"; "Instance" ] |> List.iter (fun d -> store.AddDimension(d) |> ignore)
-let connectionString = ConfigurationManager.ConnectionStrings.["mySql"].ConnectionString
-let store = new MySqlStore(connectionString)
-let engine = new MyriadEngine(store)
-
-let port = Sockets.Port.Parse("7888")
-let prefix = "/api/1/myriad/"
+let engine = AppConfiguration.getEngine()
+let port = AppConfiguration.getPort()
+let prefix = AppConfiguration.getPrefix()
 
 let serverConfig = 
     { defaultConfig with
        bindings = [ HttpBinding.mk HTTP IPAddress.Any port ]
-       logger = LoggingAdapter()
+       logger = LoggingAdapter()       
     }
 
 let setAccessControl =

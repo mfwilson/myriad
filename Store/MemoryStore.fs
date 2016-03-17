@@ -44,7 +44,7 @@ type MemoryStore() =
         member x.PutProperty(property) = x.PutProperty(property)
 
     member x.Initialize() =
-        ignore()
+        ts.TraceEvent(TraceEventType.Information, 0, "Initializing Memory store (no values will be persisted).")
         
     member x.GetMetadata() = store.GetMetadata()       
 
