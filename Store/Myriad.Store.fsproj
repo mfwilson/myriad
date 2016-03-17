@@ -54,6 +54,7 @@
     <Compile Include="AssemblyInfo.fs" />
     <Compile Include="MemoryStore.fs" />
     <Compile Include="MockStore.fs" />
+    <Compile Include="MySqlAccessor.fs" />
     <Compile Include="MySqlStore.fs" />
     <Compile Include="RedisStore.fs" />
     <Content Include="packages.config" />

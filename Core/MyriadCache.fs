@@ -4,8 +4,7 @@ open System
 open System.Collections.Concurrent
 open System.Runtime.InteropServices
 
-type MyriadCache() =
-    let cache = new ConcurrentDictionary<String, LockFreeList<Property>>(StringComparer.InvariantCultureIgnoreCase)
+module CachePrimitives =
 
     let isSubset (first : Set<Measure>) (second : Set<Measure>) = Set.isSubset first second
             
@@ -22,16 +21,19 @@ type MyriadCache() =
         property.Clusters 
         |> List.filter (fun cluster -> isSubset (context.Measures) (cluster.Measures)) 
         |> List.map (fun cluster -> property, cluster)
+
+type MyriadCache() =
+    let cache = new ConcurrentDictionary<String, LockFreeList<Property>>(StringComparer.InvariantCultureIgnoreCase)
         
     let getMatch (properties : LockFreeList<Property> seq) (context : Context) =
         properties
-        |> Seq.choose (fun p -> getPropertyByTime context.AsOf.UtcTicks p.Value)
-        |> Seq.choose (fun p -> getPropertyByContext context p)
+        |> Seq.choose (fun p -> CachePrimitives.getPropertyByTime context.AsOf.UtcTicks p.Value)
+        |> Seq.choose (fun p -> CachePrimitives.getPropertyByContext context p)
 
     let getAny (properties : LockFreeList<Property> seq) (context : Context) =
         let any = properties
-                  |> Seq.choose (fun c -> getPropertyByTime context.AsOf.UtcTicks c.Value)
-                  |> Seq.map (fun c -> getAnyPropertyByContext context c)
+                  |> Seq.choose (fun c -> CachePrimitives.getPropertyByTime context.AsOf.UtcTicks c.Value)
+                  |> Seq.map (fun c -> CachePrimitives.getAnyPropertyByContext context c)
                   |> Seq.concat
         if Seq.isEmpty any then getMatch properties context else any
         
@@ -58,8 +60,8 @@ type MyriadCache() =
         else
             // Find 1st item less then timestamp
             value <- [ result.Value ]
-                     |> Seq.choose (fun c -> getPropertyByTime context.AsOf.UtcTicks c)
-                     |> Seq.choose (fun c -> getPropertyByContext context c)
+                     |> Seq.choose (fun c -> CachePrimitives.getPropertyByTime context.AsOf.UtcTicks c)
+                     |> Seq.choose (fun c -> CachePrimitives.getPropertyByContext context c)
                      |> tryHead
             value.IsSome
 
@@ -78,7 +80,7 @@ type MyriadCache() =
         else
             // Find 1st item less then timestamp
             [ result.Value ]
-            |> Seq.choose (fun p -> getPropertyByTime asOf.UtcTicks p)
+            |> Seq.choose (fun p -> CachePrimitives.getPropertyByTime asOf.UtcTicks p)
             |> tryHead
 
     member x.GetProperties() =         
