@@ -71,6 +71,15 @@ module MySqlAccessor =
 
     let private toDimension(row : DataRow) = { Id = Convert.ToUInt64(row.["dimension_id"]); Name = row.["name"].ToString() }
 
+    let private toPropertyOption(row : DataRow) =
+        let json = row.["property_json"].ToString()
+        try
+            let property = JsonConvert.DeserializeObject<Property>(json)
+            Some(property)
+        with
+        | ex -> ts.TraceEvent(TraceEventType.Error, 0, "Unable to deserialize to property. Data: " + json)
+                None
+
     let getMetadata (connectionString : string) =
         let sqlText = 
             """SELECT d.dimension_id, d.name dimension_name, m.measure_id, m.value measure_value
@@ -87,7 +96,7 @@ module MySqlAccessor =
     let getDimension (connectionString : string) (dimensionName : String) =
         let sqlText = String.Format("SELECT dimension_id, name dimensions WHERE name = '{0}'", dimensionName)
         use connection = openConnection connectionString
-        executeText<Dimension> connection sqlText toDimension |> List.tryPick Some        
+        executeText<Dimension> connection sqlText toDimension |> List.tryPick Some
 
     let getDimensionValues (connectionString : string) (dimensionId : uint64) =
         let sqlText = String.Format("SELECT value FROM measures WHERE dimension_id = '{0}' ORDER BY value", dimensionId)
@@ -119,6 +128,23 @@ module MySqlAccessor =
         use connection = openConnection connectionString
         executeNonQuery connection sqlText 
 
+    let getProperties (connectionString : String) (asOf : int64) =
+        let sqlFormat = "SELECT property_json FROM properties WHERE `timestamp` > '{0}' ORDER BY `timestamp`"
+        let sqlText = String.Format(sqlFormat, asOf)
+        use connection = openConnection connectionString
+        executeText<Property option> connection sqlText toPropertyOption |> List.choose id
+
+    let private getMeasureId (connection : IDbConnection) (propertyKey : String) (propertyDimensionId : uint64) =
+        let sqlFormat = "SELECT measure_id FROM measures WHERE dimension_id = '{0}' AND value = '{1}'"
+        let sqlText = String.Format(sqlFormat, propertyDimensionId, propertyKey)
+        let commandFn = fun (command : IDbCommand) -> setText command sqlText 
+        executeScalarCommand<uint64> connection commandFn
+
+    let private getLatestProperty (connection : IDbConnection) (measureId : uint64) =
+        let sqlFormat = "SELECT property_json FROM properties WHERE measure_id = '{0}' ORDER BY `timestamp` DESC LIMIT 1;"
+        let sqlText = String.Format(sqlFormat, measureId)
+        executeText<Property option> connection sqlText toPropertyOption |> List.choose id |> List.tryPick Some 
+
     let addProperty (connectionString : String) (``measure`` : Measure) (property : Property) =
         let parameters : IDbDataParameter[] = 
             [| new MySqlParameter("inDimensionId", ``measure``.Dimension.Id); 
@@ -129,33 +155,37 @@ module MySqlAccessor =
         use connection = openConnection connectionString
         executeScalar<uint64> connection "sp_measures_merge" parameters
 
-    let putProperty (connectionString : String) (measureId : uint64) (property : Property) =
+    let private putPropertyInternal (connection : IDbConnection) (measureId : uint64) (property : Property) =
         let parameters : IDbDataParameter[] = 
             [| new MySqlParameter("inMeasureId", measureId); 
                new MySqlParameter("inTimestamp", property.Timestamp); 
                new MySqlParameter("inPropertyJson", JsonConvert.SerializeObject(property))
             |]
-        use connection = openConnection connectionString
         executeScalar<uint64> connection "sp_properties_merge" parameters |> ignore       
 
-    let setProperty (connectionString : String) (property : Property) =
-        
-        // overwrite existing property (instead of merge)
-        property
+    let putProperty (connectionString : String) (measureId : uint64) (property : Property) =
+        use connection = openConnection connectionString
+        putPropertyInternal connection measureId property        
 
-    let addOrUpdateProperty (connectionString : String) (propertyKey : String) (add : String -> Property) (update : string -> Property -> Property) = 
+    let addOrUpdateProperty (connectionString : String) (propertyKey : String) (propertyDimensionId : uint64) (add : String -> Property) (update : string -> Property -> Property) = 
         
         use connection = openConnection connectionString
         let txn = connection.BeginTransaction()
         try
             // Select latest from DB
+            let measureId = getMeasureId connection propertyKey propertyDimensionId            
+            let property = getLatestProperty connection measureId
+        
             // If nothing exists, call add else call update
-            let property = add(propertyKey)
-
+            let updated = match property with
+                          | None -> add propertyKey
+                          | Some p -> update propertyKey p
+                    
             // Write property to DB
+            putPropertyInternal connection measureId updated
 
             txn.Commit()
-            Some(property)
+            Some(updated)
         with
         | ex -> txn.Rollback()
                 ts.TraceEvent(TraceEventType.Error, 0, ex.ToString())

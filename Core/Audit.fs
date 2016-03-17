@@ -16,6 +16,9 @@ type Epoch =
     static member ToDateTimeOffset(epochOffsetMicroseconds : Int64) = 
         DateTimeOffset( (epochOffsetMicroseconds + Epoch.EpochMicroseconds) * 10L, TimeSpan.Zero )
 
+    static member FormatDateTimeOffset(value : DateTimeOffset) =
+        value.ToString("yyyy-MM-dd HH:mm:ss.ffffff")
+
 type IAudit =
     abstract Timestamp : Int64 with get
     abstract UserName : String with get

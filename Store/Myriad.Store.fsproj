@@ -55,6 +55,7 @@
     <Compile Include="MemoryStore.fs" />
     <Compile Include="MockStore.fs" />
     <Compile Include="MySqlAccessor.fs" />
+    <None Include="MySqlSchema.sql" />
     <Compile Include="MySqlStore.fs" />
     <Compile Include="RedisStore.fs" />
     <Content Include="packages.config" />
@@ -82,8 +83,6 @@
     <Reference Include="System.Numerics" />
     <Reference Include="System.Transactions" />
     <Reference Include="System.Xml" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\Core\Myriad.Core.fsproj">
       <Name>Myriad.Core</Name>
       <Project>{78a04ed6-655d-44bd-b83e-6032495b8538}</Project>
