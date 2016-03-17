@@ -16,11 +16,22 @@ type MySqlStore(connectionString : String) =
     let cache = new MyriadCache()    
     let mutable timestamp = 0L
 
+    let propertyDimension = 
+        let dimension = MySqlAccessor.getDimension connectionString "Property"
+        match dimension with
+        | Some d -> d
+        | None -> raise(new Exception("Check database setup, cannot find Property dimension.")) 
+
     let addMeasure (``measure`` : Measure) =
         MySqlAccessor.addMeasure connectionString ``measure`` 
 
-    let addProperty (``measure`` : Measure) (property : Property) =
-        MySqlAccessor.addProperty connectionString ``measure`` property
+    let addProperty (property : Property) =
+        let propertyMeasure = { Dimension = propertyDimension; Value = property.Key }
+        MySqlAccessor.addProperty connectionString propertyMeasure property.Deprecated property.Description
+
+    let addPropertyOperation (value : PropertyOperation) =
+        let propertyMeasure = { Dimension = propertyDimension; Value = value.Key }
+        MySqlAccessor.addProperty connectionString propertyMeasure value.Deprecated value.Description
 
     let getTimestamp() = Interlocked.Read(&timestamp)
     
@@ -30,18 +41,13 @@ type MySqlStore(connectionString : String) =
             let datetime = Epoch.ToDateTimeOffset(newTimestamp)
             ts.TraceEvent(TraceEventType.Information, 0, "Latest timestamp: [{0}] ({1})", newTimestamp, Epoch.FormatDateTimeOffset(datetime))
 
-    let propertyDimension = 
-        let dimension = MySqlAccessor.getDimension connectionString "Property"
-        match dimension with
-        | Some d -> d
-        | None -> raise(new Exception("Check database setup, cannot find Property dimension.")) 
-
     /// Get latest properties from properties table
     let updateProperties() =        
         let properties = MySqlAccessor.getProperties connectionString (getTimestamp())
         properties |> List.iter (fun p -> cache.SetProperty p |> ignore) 
-        ts.TraceEvent(TraceEventType.Information, 0, "Loaded {0} properties; {1} unique keys.", properties.Length, cache.Count)
-        updateTimestamp properties.[properties.Length - 1].Timestamp
+        if properties.Length > 0 then
+            ts.TraceEvent(TraceEventType.Information, 0, "Loaded {0} properties; {1} unique keys.", properties.Length, cache.Count)
+            updateTimestamp properties.[properties.Length - 1].Timestamp
 
     interface IMyriadStore with
         member x.Initialize() = x.Initialize()        
@@ -138,13 +144,16 @@ type MySqlStore(connectionString : String) =
         PropertyBuilder(x.GetDimensions())
 
     member x.SetProperty(property : Property) =
+        let measureId = addProperty property
         updateProperties()
-        x.UpdateMeasures property        
-        cache.SetProperty property
+        x.UpdateMeasures property measureId
+        property
 
     member x.PutProperty(value : PropertyOperation) =        
         let pb = x.GetPropertyBuilder()
         let filter = [ propertyDimension ]
+        
+        let measureId = addPropertyOperation value
         
         let add (key : string) = 
             value.ToProperty(pb.OrderClusters, filter)
@@ -157,19 +166,15 @@ type MySqlStore(connectionString : String) =
                 | Update(previous, updated) -> filterMeasures(updated) :: (current |> List.filter (fun c -> c <> previous))
                 | Remove(cluster) -> current |> List.filter (fun c -> c <> cluster)
             let clusters = pb.OrderClusters (value.Operations |> List.fold applyOperations currentProperty.Clusters) 
-            Property.Create(currentProperty.Key, value.Description, value.Deprecated, value.Timestamp, clusters)       
+            Property.Create(value.Key, value.Description, value.Deprecated, value.Timestamp, clusters)       
 
-        let property = MySqlAccessor.addOrUpdateProperty connectionString value.Key propertyDimension.Id add update
+        let property = MySqlAccessor.addOrUpdateProperty connectionString value.Key measureId add update
         if property.IsNone then raise(new Exception("Unable to put property to database."))
-        x.UpdateMeasures property.Value
-        updateProperties()  // update property cache        
+        updateProperties()  
+        x.UpdateMeasures property.Value measureId
         property.Value
 
-    member private x.UpdateMeasures (property : Property) =
-        let propertyMeasure = { Dimension = propertyDimension; Value = property.Key }
-        let propertyId = addProperty propertyMeasure property
-        MySqlAccessor.putProperty connectionString propertyId property
-        updateTimestamp property.Timestamp
-
+    member private x.UpdateMeasures (property : Property) (measureId : uint64) =
+        MySqlAccessor.putProperty connectionString measureId property
         let measures = property.Clusters |> List.map (fun c -> c.Measures) |> Set.unionMany 
         measures |> Set.iter (fun m -> MySqlAccessor.addMeasure connectionString m |> ignore)

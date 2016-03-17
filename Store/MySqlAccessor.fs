@@ -78,11 +78,11 @@ module MySqlAccessor =
             Some(property)
         with
         | ex -> ts.TraceEvent(TraceEventType.Error, 0, "Unable to deserialize to property. Data: " + json)
-                None
+                None    
 
     let getMetadata (connectionString : string) =
         let sqlText = 
-            """SELECT d.dimension_id, d.name dimension_name, m.measure_id, m.value measure_value
+            """SELECT d.dimension_id, d.name, m.measure_id, m.value measure_value
                  FROM dimensions d INNER JOIN measures m ON d.dimension_id = m.dimension_id
                 ORDER BY d.dimension_id, m.value;"""
         let convert(row : DataRow) = toDimension row, row.["measure_value"].ToString() 
@@ -94,7 +94,7 @@ module MySqlAccessor =
         executeText<Dimension> connection "SELECT dimension_id, name FROM dimensions ORDER BY ordinal, dimension_id" toDimension
 
     let getDimension (connectionString : string) (dimensionName : String) =
-        let sqlText = String.Format("SELECT dimension_id, name dimensions WHERE name = '{0}'", dimensionName)
+        let sqlText = String.Format("SELECT dimension_id, name FROM dimensions WHERE name = '{0}'", dimensionName)
         use connection = openConnection connectionString
         executeText<Dimension> connection sqlText toDimension |> List.tryPick Some
 
@@ -134,23 +134,17 @@ module MySqlAccessor =
         use connection = openConnection connectionString
         executeText<Property option> connection sqlText toPropertyOption |> List.choose id
 
-    let private getMeasureId (connection : IDbConnection) (propertyKey : String) (propertyDimensionId : uint64) =
-        let sqlFormat = "SELECT measure_id FROM measures WHERE dimension_id = '{0}' AND value = '{1}'"
-        let sqlText = String.Format(sqlFormat, propertyDimensionId, propertyKey)
-        let commandFn = fun (command : IDbCommand) -> setText command sqlText 
-        executeScalarCommand<uint64> connection commandFn
-
     let private getLatestProperty (connection : IDbConnection) (measureId : uint64) =
         let sqlFormat = "SELECT property_json FROM properties WHERE measure_id = '{0}' ORDER BY `timestamp` DESC LIMIT 1;"
         let sqlText = String.Format(sqlFormat, measureId)
         executeText<Property option> connection sqlText toPropertyOption |> List.choose id |> List.tryPick Some 
 
-    let addProperty (connectionString : String) (``measure`` : Measure) (property : Property) =
+    let addProperty (connectionString : String) (``measure`` : Measure) (deprecated : bool) (description : String) =
         let parameters : IDbDataParameter[] = 
             [| new MySqlParameter("inDimensionId", ``measure``.Dimension.Id); 
                new MySqlParameter("inValue", ``measure``.Value);
-               new MySqlParameter("inDeprecated", property.Deprecated);
-               new MySqlParameter("inDescription", property.Description);
+               new MySqlParameter("inDeprecated", deprecated);
+               new MySqlParameter("inDescription", description);
             |]
         use connection = openConnection connectionString
         executeScalar<uint64> connection "sp_measures_merge" parameters
@@ -167,13 +161,12 @@ module MySqlAccessor =
         use connection = openConnection connectionString
         putPropertyInternal connection measureId property        
 
-    let addOrUpdateProperty (connectionString : String) (propertyKey : String) (propertyDimensionId : uint64) (add : String -> Property) (update : string -> Property -> Property) = 
+    let addOrUpdateProperty (connectionString : String) (propertyKey : String) (measureId : uint64) (add : String -> Property) (update : string -> Property -> Property) = 
         
         use connection = openConnection connectionString
         let txn = connection.BeginTransaction()
         try
-            // Select latest from DB
-            let measureId = getMeasureId connection propertyKey propertyDimensionId            
+            // Select latest from DB        
             let property = getLatestProperty connection measureId
         
             // If nothing exists, call add else call update
