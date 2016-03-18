@@ -48,20 +48,28 @@ type MySqlStore(connectionString : String) =
             let datetime = Epoch.ToDateTimeOffset(newTimestamp)
             ts.TraceEvent(TraceEventType.Information, 0, "Latest timestamp: [{0}] ({1})", newTimestamp, Epoch.FormatDateTimeOffset(datetime))
 
-    /// Get latest properties from properties table
-    let updateProperties() =        
-        let properties = MySqlAccessor.getProperties connectionString (getTimestamp())
+    let setProperties (properties : Property list) =
         properties |> List.iter (fun p -> cache.SetProperty p |> ignore) 
         if properties.Length > 0 then
-            ts.TraceEvent(TraceEventType.Information, 0, "Loaded {0} properties; {1} unique keys.", properties.Length, cache.Count)
+            ts.TraceEvent(TraceEventType.Information, 0, "Set {0} properties; {1} unique keys.", properties.Length, cache.Count)
             updateTimestamp properties.[properties.Length - 1].Timestamp
+
+    let updatePropertiesByTimeAndLatest (timespan : TimeSpan) =        
+        let cutoff = DateTimeOffset.UtcNow.Subtract(timespan)
+        let asOf = Epoch.GetOffset(cutoff.Ticks)
+        ts.TraceEvent(TraceEventType.Information, 0, "Loading properties from asOf: [{0}] ({1})", asOf, Epoch.FormatDateTimeOffset(cutoff))
+        MySqlAccessor.getRecentProperties connectionString asOf |> setProperties
+
+    /// Get latest properties from properties table
+    let updateProperties() =        
+        MySqlAccessor.getProperties connectionString (getTimestamp()) |> setProperties
 
     new() =
         let connectionString = ConfigurationManager.ConnectionStrings.["mysql"].ConnectionString
         MySqlStore(connectionString)
 
     interface IMyriadStore with
-        member x.Initialize() = x.Initialize()        
+        member x.Initialize(history) = x.Initialize(history)
         member x.GetMetadata() = x.GetMetadata()
         member x.GetDimensions() = x.GetDimensions()    
         member x.GetDimension(dimensionName) = x.GetDimension(dimensionName)    
@@ -70,7 +78,7 @@ type MySqlStore(connectionString : String) =
         member x.SetDimensionOrder(dimensions) = x.SetDimensionOrder(dimensions)
         member x.AddMeasure(``measure``) = x.AddMeasure(``measure``)
         member x.RemoveMeasure(``measure``) = x.RemoveMeasure(``measure``)
-        member x.GetProperties(history) = x.GetProperties(history)
+        member x.GetProperties() = x.GetProperties()
         member x.GetAny(propertyKey, context) = x.GetAny(propertyKey, context)
         member x.GetMatches(propertyKey, context) = x.GetMatches(propertyKey, context)
         member x.GetProperty(propertyKey, asOf) = x.GetProperty(propertyKey, asOf)
@@ -79,9 +87,11 @@ type MySqlStore(connectionString : String) =
         member x.SetProperty(property) = x.SetProperty(property)
         member x.PutProperty(property) = x.PutProperty(property)
 
-    member x.Initialize() =
-        ts.TraceEvent(TraceEventType.Information, 0, "Initializing MySql store.")
-        updateProperties()
+    member x.Initialize(history : MyriadHistory) =
+        ts.TraceEvent(TraceEventType.Information, 0, sprintf "Initializing MySql store with %A" history)
+        match history with
+        | All() -> updateProperties()
+        | TimeAndLatest(t) -> updatePropertiesByTimeAndLatest t
         
     member x.GetMetadata() =         
         let values = MySqlAccessor.getMetadata connectionString
@@ -126,7 +136,7 @@ type MySqlStore(connectionString : String) =
 //        // If this is not the same set, we cannot reorder
 //        if current <> proposed then store.Dimensions |> List.ofSeq else setDimensionOrder orderedDimensions                       
 
-    member x.GetProperties(history : MyriadHistory) = 
+    member x.GetProperties() = 
         updateProperties()    
         cache.GetProperties() |> Seq.toList        
 

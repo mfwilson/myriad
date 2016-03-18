@@ -7,11 +7,13 @@ open System.Diagnostics
 
 type MyriadHistory =
     | All of unit
-    | Depth of int
-    | Time of TimeSpan
+    | TimeAndLatest of TimeSpan
+    //| Depth of int
+    //| Time of TimeSpan
+    //| TimeAndDepth of TimeSpan * int
 
 type IMyriadStore =
-    abstract Initialize : unit -> unit
+    abstract Initialize : MyriadHistory -> unit
 
     /// Return list of name+values where name is a dimension name and values contains the list of possible values
     abstract GetMetadata : unit -> DimensionValues list 
@@ -43,7 +45,7 @@ type IMyriadStore =
     abstract PutProperty : PropertyOperation -> Property
 
     // Querying
-    abstract GetProperties : MyriadHistory -> Property list
+    abstract GetProperties : unit -> Property list
     abstract GetAny : String * Context -> (Property * Cluster) seq
     abstract GetMatches : String * Context -> (Property * Cluster) seq
     abstract GetProperty : String * DateTimeOffset -> Property option

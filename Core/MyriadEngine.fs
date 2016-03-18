@@ -2,9 +2,11 @@
 
 open System 
 
-type MyriadEngine(store : IMyriadStore) =
+type MyriadEngine(store : IMyriadStore, history : MyriadHistory) =
     do
-        store.Initialize()
+        store.Initialize(history)
+
+    new(store : IMyriadStore) = MyriadEngine(store, MyriadHistory.All())
 
     member x.MeasureBuilder with get() = store.GetMeasureBuilder()
     member x.PropertyBuilder with get() = store.GetPropertyBuilder()

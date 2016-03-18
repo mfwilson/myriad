@@ -65,7 +65,7 @@ type RedisStore(configuration : String) =
         member x.Dispose() = connection.Dispose()
 
     interface IMyriadStore with
-        member x.Initialize() = x.Initialize()        
+        member x.Initialize(history) = x.Initialize(history)
         member x.GetMetadata() = x.GetMetadata()
         member x.GetDimensions() = x.GetDimensions()    
         member x.GetDimension(dimensionName) = x.GetDimension(dimensionName)    
@@ -74,7 +74,7 @@ type RedisStore(configuration : String) =
         member x.SetDimensionOrder(dimensions) = x.SetDimensionOrder(dimensions)
         member x.AddMeasure(``measure``) = x.AddMeasure(``measure``)
         member x.RemoveMeasure(``measure``) = x.RemoveMeasure(``measure``)
-        member x.GetProperties(history) = x.GetProperties(history)
+        member x.GetProperties() = x.GetProperties()
         member x.GetAny(propertyKey, context) = x.GetAny(propertyKey, context)
         member x.GetMatches(propertyKey, context) = x.GetMatches(propertyKey, context)
         member x.GetProperty(propertyKey, asOf) = x.GetProperty(propertyKey, asOf)
@@ -83,9 +83,8 @@ type RedisStore(configuration : String) =
         member x.SetProperty(property) = x.SetProperty(property)
         member x.PutProperty(property) = x.PutProperty(property)
 
-    member x.Initialize() =
+    member x.Initialize(history : MyriadHistory) =
         // TODO: Initialize internal cache from Redis
-
         let dimensions = RedisAccessor.getDimensions connection       
         dimensions |> List.iter (fun d -> store.PutDimension d |> ignore)
 
@@ -117,7 +116,7 @@ type RedisStore(configuration : String) =
 //        // If this is not the same set, we cannot reorder
 //        if current <> proposed then store.Dimensions |> List.ofSeq else setDimensionOrder orderedDimensions                       
 
-    member x.GetProperties(history : MyriadHistory) = cache.GetProperties() |> Seq.toList        
+    member x.GetProperties() = cache.GetProperties() |> Seq.toList        
 
     member x.GetAny(propertyKey : String, context : Context) = 
         match propertyKey with

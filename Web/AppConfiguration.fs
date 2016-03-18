@@ -38,8 +38,8 @@ module AppConfiguration =
 
         let keys = [ "port", ["--port"; "-p"]; 
                      "prefix", ["--prefix"; "-#"]; 
-                     "storeType", ["--store-type"; "-s"] ]                   
-
+                     "storeType", ["--store-type"; "-s"] 
+                     "history", ["--history"; "-h"] ]                   
         keys 
         |> List.map (fun k -> fst k, getArgumentValue arguments (snd k)) 
         |> List.filter (fun kv -> (snd kv).IsSome)
@@ -62,13 +62,18 @@ module AppConfiguration =
 
     let getPrefix() = getValue "prefix" "/api/1/myriad/" id
 
+    let getHistory() =        
+        let timespan = getValue "history" TimeSpan.Zero (TimeSpan.Parse)            
+        if timespan = TimeSpan.Zero then MyriadHistory.All() else MyriadHistory.TimeAndLatest(timespan)
+
     let getEngine() =        
         let defaultStoreType = "Myriad.Store.MemoryStore, Myriad.Store, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null"
         let typeString = getValue "storeType" defaultStoreType id
         let storeType = Type.GetType(typeString)
         if storeType = null then raise(TypeLoadException("Cannot create data store type: " + typeString))
         let store = Activator.CreateInstance(storeType) :?> IMyriadStore        
-        MyriadEngine(store)
+        let history = getHistory()
+        MyriadEngine(store, history)
 
         
 

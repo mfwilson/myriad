@@ -25,7 +25,7 @@ type MemoryStore() =
         store.SetDimensionOrder orderedDimensions
 
     interface IMyriadStore with
-        member x.Initialize() = x.Initialize()        
+        member x.Initialize(history) = x.Initialize(history)        
         member x.GetMetadata() = x.GetMetadata()
         member x.GetDimensions() = x.GetDimensions()    
         member x.GetDimension(dimensionName) = x.GetDimension(dimensionName)    
@@ -34,7 +34,7 @@ type MemoryStore() =
         member x.SetDimensionOrder(dimensions) = x.SetDimensionOrder(dimensions)
         member x.AddMeasure(``measure``) = x.AddMeasure(``measure``)
         member x.RemoveMeasure(``measure``) = x.RemoveMeasure(``measure``)
-        member x.GetProperties(history) = x.GetProperties(history)
+        member x.GetProperties() = x.GetProperties()
         member x.GetAny(propertyKey, context) = x.GetAny(propertyKey, context)
         member x.GetMatches(propertyKey, context) = x.GetMatches(propertyKey, context)
         member x.GetProperty(propertyKey, asOf) = x.GetProperty(propertyKey, asOf)
@@ -43,7 +43,7 @@ type MemoryStore() =
         member x.SetProperty(property) = x.SetProperty(property)
         member x.PutProperty(property) = x.PutProperty(property)
 
-    member x.Initialize() =
+    member x.Initialize(history : MyriadHistory) =
         ts.TraceEvent(TraceEventType.Information, 0, "Initializing Memory store (no values will be persisted).")
         
     member x.GetMetadata() = store.GetMetadata()       
@@ -72,7 +72,7 @@ type MemoryStore() =
         // If this is not the same set, we cannot reorder
         if current <> proposed then store.Dimensions |> List.ofSeq else setDimensionOrder orderedDimensions                       
 
-    member x.GetProperties(history : MyriadHistory) = cache.GetProperties() |> Seq.toList
+    member x.GetProperties() = cache.GetProperties() |> Seq.toList
 
     member x.GetAny(propertyKey : String, context : Context) = 
         match propertyKey with

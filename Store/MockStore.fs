@@ -43,7 +43,7 @@ type MockStore() =
             ]
 
     interface IMyriadStore with
-        member x.Initialize() = x.Initialize()
+        member x.Initialize(history) = x.Initialize(history)
         member x.GetMetadata() = base.GetMetadata()
         member x.GetDimensions() = base.GetDimensions()    
         member x.GetDimension(dimensionName) = base.GetDimension(dimensionName)    
@@ -51,15 +51,15 @@ type MockStore() =
         member x.RemoveDimension(dimension) = base.RemoveDimension(dimension)
         member x.AddMeasure(``measure``) = base.AddMeasure(``measure``)
         member x.RemoveMeasure(``measure``) = base.RemoveMeasure(``measure``)
-        member x.GetProperties(history) = base.GetProperties(history)
+        member x.GetProperties() = base.GetProperties()
         member x.GetAny(propertyKey, context) = base.GetAny(propertyKey, context)
         member x.GetMatches(propertyKey, context) = base.GetMatches(propertyKey, context)
         member x.GetProperty(propertyKey, asOf) = base.GetProperty(propertyKey, asOf)
         member x.GetMeasureBuilder() = base.GetMeasureBuilder()
         member x.GetPropertyBuilder() = base.GetPropertyBuilder()
 
-    member x.Initialize() =
-        base.Initialize()
+    member x.Initialize(history : MyriadHistory) =
+        base.Initialize(history)
 
         let createDimension (dimensionValues : string * string list) =
             let dimension = x.AddDimension(fst dimensionValues)

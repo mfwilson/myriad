@@ -139,6 +139,19 @@ module MySqlAccessor =
         let sqlText = String.Format(sqlFormat, measureId)
         executeText<Property option> connection sqlText toPropertyOption |> List.choose id |> List.tryPick Some 
 
+    /// Get all the latest value of all properties and any property set after asof 
+    let getRecentProperties (connectionString : String) (asOf : int64) =
+        let sqlFormat =
+            """SELECT p.measure_id, p.`timestamp`, p.property_json
+                 FROM (SELECT measure_id, max(`timestamp`) max_timestamp FROM properties GROUP BY measure_id) x 
+                      INNER JOIN properties p ON p.measure_id = x.measure_id AND p.timestamp = x.max_timestamp
+               UNION 
+               SELECT measure_id, timestamp, property_json FROM properties WHERE timestamp > '{0}'
+               ORDER BY `timestamp`;"""
+        let sqlText = String.Format(sqlFormat, asOf)
+        use connection = openConnection connectionString
+        executeText<Property option> connection sqlText toPropertyOption |> List.choose id        
+
     let addProperty (connectionString : String) (``measure`` : Measure) (deprecated : bool) (description : String) =
         let parameters : IDbDataParameter[] = 
             [| new MySqlParameter("inDimensionId", ``measure``.Dimension.Id); 
@@ -161,8 +174,7 @@ module MySqlAccessor =
         use connection = openConnection connectionString
         putPropertyInternal connection measureId property        
 
-    let addOrUpdateProperty (connectionString : String) (propertyKey : String) (measureId : uint64) (add : String -> Property) (update : string -> Property -> Property) = 
-        
+    let addOrUpdateProperty (connectionString : String) (propertyKey : String) (measureId : uint64) (add : String -> Property) (update : string -> Property -> Property) =         
         use connection = openConnection connectionString
         let txn = connection.BeginTransaction()
         try
