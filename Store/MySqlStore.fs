@@ -14,14 +14,20 @@ open Myriad
 
 type MySqlStore(connectionString : String) =
     static let ts = new TraceSource( "Myriad.Store", SourceLevels.Information )
-    let cache = new MyriadCache()    
+    let cache = new MyriadCache()        
     let mutable timestamp = 0L
 
+    // Changing the dimensions requires restart
+    let dimensions = MySqlAccessor.getDimensions connectionString       
+
+    let dimensionMap = 
+        let value = new Dictionary<String, Dimension>(StringComparer.InvariantCultureIgnoreCase)
+        dimensions |> List.iter (fun d -> value.[d.Name] <- d)
+        value
+
     let propertyDimension = 
-        let dimension = MySqlAccessor.getDimension connectionString "Property"
-        match dimension with
-        | Some d -> d
-        | None -> raise(new Exception("Check database setup, cannot find Property dimension.")) 
+        let success, dimension = dimensionMap.TryGetValue("Property")        
+        if success then dimension else raise(new Exception("Check database setup, cannot find Property dimension.")) 
 
     let addMeasure (``measure`` : Measure) =
         MySqlAccessor.addMeasure connectionString ``measure`` 
@@ -91,9 +97,11 @@ type MySqlStore(connectionString : String) =
         |> Seq.map (fun kv -> { Dimension = kv.Key; Values = kv.Value |> Seq.toArray } ) 
         |> Seq.toList        
 
-    member x.GetDimensions() = MySqlAccessor.getDimensions connectionString 
+    member x.GetDimensions() = dimensions
 
-    member x.GetDimension(dimensionName : String) = MySqlAccessor.getDimension connectionString dimensionName
+    member x.GetDimension(dimensionName : String) = 
+        let success, result = dimensionMap.TryGetValue(dimensionName)
+        if success then Some result else None        
         
     member x.AddDimension(dimensionName : String) = 
         let dimensionId = MySqlAccessor.addDimension connectionString dimensionName 

@@ -12,20 +12,49 @@ open Myriad.Store
 module AppConfiguration =
     let private ts = new TraceSource( "Myriad.Web", SourceLevels.Information )
 
-    let private configurationMap =
-        let values = new Dictionary<String, String>(StringComparer.InvariantCultureIgnoreCase)
+    let private (|InvariantEqual|_|) (str:string) arg = if String.Compare(str, arg, StringComparison.InvariantCultureIgnoreCase) = 0 then Some() else None
 
+    let private getArgumentValue (arguments : (String * String) seq) (flags : String list) =        
+        let compare a b =
+            match a with
+            | InvariantEqual b -> true
+            | _ -> false            
+
+        let pair = arguments |> Seq.tryFind (fun a -> flags |> List.exists (fun f -> compare (fst a) f))
+        if pair.IsNone then None else Some (snd pair.Value)
+
+    let private applyAppConfig (values : Dictionary<String, String>) =
         let addValue (key : String) = 
             try                
                 values.[key] <- ConfigurationManager.AppSettings.[key]                
             with
             | ex -> ts.TraceEvent(TraceEventType.Error, 0, "Unable to set key: '{0}', exception: {1}",key, ex)
-        ConfigurationManager.AppSettings.AllKeys |> Seq.iter addValue        
+        ConfigurationManager.AppSettings.AllKeys |> Seq.iter addValue 
+
+    let private applyCommandLine (values : Dictionary<String, String>) =        
+        let arguments = Environment.GetCommandLineArgs().[1..] |> Seq.pairwise 
+
+        let keys = [ "port", ["--port"; "-p"]; 
+                     "prefix", ["--prefix"; "-#"]; 
+                     "storeType", ["--store-type"; "-s"] ]                   
+
+        keys 
+        |> List.map (fun k -> fst k, getArgumentValue arguments (snd k)) 
+        |> List.filter (fun kv -> (snd kv).IsSome)
+        |> List.iter (fun kv -> values.[fst kv] <- (snd kv).Value)
+
+    let private configurationMap =
+        let values = new Dictionary<String, String>(StringComparer.InvariantCultureIgnoreCase)
+        applyAppConfig values
+        applyCommandLine values        
         values
 
     let private getValue<'T>(key : String) (defaultValue : 'T) (convert : String -> 'T) =
-        let success, result = configurationMap.TryGetValue(key)
-        if not success then defaultValue else convert(result)
+        try
+            let success, result = configurationMap.TryGetValue(key)
+            if not success then defaultValue else convert(result)
+        with
+        | _ -> defaultValue
 
     let getPort() = getValue "port" 7888us (Convert.ToUInt16)
 
