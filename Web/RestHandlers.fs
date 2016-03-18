@@ -33,6 +33,12 @@ module RestHandlers =
     let private fromRequest<'a> (req : HttpRequest) = 
         getRawForm req |> fromJson<'a>
 
+    let private getRequestParameters (request : HttpRequest) =
+        let parameters = NameValueCollection(StringComparer.InvariantCultureIgnoreCase)        
+        parameters.Add(HttpUtility.ParseQueryString(request.rawQuery))        
+        request.headers |> List.iter (fun kv -> parameters.Add(fst kv, snd kv))                
+        parameters
+
     let private getAsOf (kv : NameValueCollection) =
         let value = kv.["asOf"]     // Compare is case-insensitive
         if value <> null then            
@@ -41,14 +47,26 @@ module RestHandlers =
         else
             DateTimeOffset.UtcNow
 
+    let private getValues (kv : NameValueCollection) (key : String) =
+        match kv.[key] with
+        | p when not(String.IsNullOrEmpty(p)) -> p.Split([|','|]) 
+        | _ -> [| "" |]
+
+    let private getPropertyKeys(kv : NameValueCollection) = getValues kv "property"
+
     let private getContext (getDimension : String -> Dimension option) (kv : NameValueCollection) =
+        let getValue key =
+            let values = getValues kv key         
+            match values with
+            | [||] -> ""
+            | [| v |] -> v
+            | _ -> values.[values.Length - 1]   // Last wins
         let getMeasure(key) = 
             let dimension = getDimension(key)
             match dimension with
             | None -> None
             | Some(d) when d.Name = "Property" -> None
-            | Some(d) -> Some( { Dimension = dimension.Value; Value = kv.[key] } )
-
+            | Some(d) -> Some( { Dimension = dimension.Value; Value = getValue key } )
         let measures = kv.AllKeys |> Seq.choose getMeasure |> Set.ofSeq
         { AsOf = getAsOf kv; Measures = measures }
 
@@ -59,22 +77,15 @@ module RestHandlers =
         | f when format.ToLower() = "text" -> "text/raw", response.ToString()
         | _ -> raise(ArgumentException("Unknown format [" + format + "]"))
 
-    let private getValues (kv : NameValueCollection) (key : String) =
-        match kv.[key] with
-        | p when not(String.IsNullOrEmpty(p)) -> p.Split([|','|]) 
-        | _ -> [| "" |]
-
-    let private getPropertyKeys(kv : NameValueCollection) = getValues kv "property"
-
-    let handleRequest (engine : MyriadEngine) (x : HttpContext) (handler : NameValueCollection -> (String -> WebPart) * String * String) =
+    let handleRequest (engine : MyriadEngine) (x : HttpContext) (handler : Guid -> NameValueCollection -> (String -> WebPart) * String * String) =
         async { 
             let requestId = Guid.NewGuid()
             try
                 logger.Info("RECV: [{0}] [{1}]", requestId, x.request.url)
                 logger.Debug("RECV: [{0}] [{1}]", requestId, fromRequest x.request)
 
-                let kv = HttpUtility.ParseQueryString(x.request.rawQuery)
-                let webResponse, contentType, message = handler(kv)
+                let kv = getRequestParameters x.request
+                let webResponse, contentType, message = handler requestId kv
                 logger.Info("SEND: [{0}] [{1}] {2} Length: {3}", requestId, x.request.url, contentType, message.Length)
                 logger.Debug("SEND: [{0}] [{1}]", requestId, message)                                
 
@@ -93,7 +104,7 @@ module RestHandlers =
         
     /// Provides an ordered list of dimensions 
     let GetDimensions (engine : MyriadEngine) (x : HttpContext) = 
-        let getDimensions (kv : NameValueCollection) =            
+        let getDimensions (requestId : Guid) (kv : NameValueCollection) =            
             let response = engine.GetDimensions() |> List.map (fun d -> d.Name)
             let contentType, message = getResponseString kv.["format"] response
             OK, contentType, message
@@ -101,7 +112,7 @@ module RestHandlers =
 
     /// Provides a view over both properties and dimensions
     let GetMetadata (engine : MyriadEngine) (x : HttpContext) = 
-        let getMetadata (kv : NameValueCollection) =            
+        let getMetadata (requestId : Guid) (kv : NameValueCollection) =            
             let response = engine.GetMetadata()
             let contentType, message = getResponseString kv.["format"] response
             OK, contentType, message
@@ -109,8 +120,9 @@ module RestHandlers =
 
     /// Query -> JSON w/ context
     let Query (engine : MyriadEngine) (x : HttpContext) =
-        let query (kv : NameValueCollection) =
+        let query (requestId : Guid) (kv : NameValueCollection) =
             let context = getContext (engine.GetDimension) kv
+            logger.Info("RECV: [{0}] Context: {1}", requestId, context)
             let properties = getPropertyKeys(kv)
                              |> Seq.map (fun p -> engine.Query(p, context))
                              |> Seq.concat            
@@ -124,22 +136,20 @@ module RestHandlers =
 
     /// GET -> URL properties with dimensions name=value
     let Get (engine : MyriadEngine) (x : HttpContext) =
-        let get (kv : NameValueCollection) =
-            let kv = HttpUtility.ParseQueryString(x.request.rawQuery)
+        let get (requestId : Guid) (kv : NameValueCollection) =            
             let context = getContext (engine.GetDimension) kv
-
+            logger.Info("RECV: [{0}] Context: {1}", requestId, context)
             let properties = getPropertyKeys(kv)
                              |> Seq.map (fun p -> engine.Get(p, context))
                              |> Seq.concat
                              |> Seq.toList
-
             let response = { MyriadGetResponse.Requested = DateTimeOffset.UtcNow; Context = context; Properties = properties }            
             let contentType, message = getResponseString kv.["format"] response
             OK, contentType, message
         handleRequest engine x get
 
     let GetProperty (engine : MyriadEngine) (x : HttpContext) =
-        let getProperty (kv : NameValueCollection) =
+        let getProperty (requestId : Guid) (kv : NameValueCollection) =
             let asOf = getAsOf kv
             let properties = getPropertyKeys(kv) |> Seq.choose (fun p -> engine.Get(p, asOf))
             let response = { Requested = DateTimeOffset.UtcNow; Properties = properties }
@@ -149,7 +159,7 @@ module RestHandlers =
         
     /// PUT property operation (JSON data) -> property
     let PutProperty (engine : MyriadEngine) (x : HttpContext) =
-        let putProperty (kv : NameValueCollection) =
+        let putProperty (requestId : Guid) (kv : NameValueCollection) =
             let property = fromRequest<PropertyOperation>(x.request)
             if property.IsNone then
                 let contentType, message = getResponseString "text" "PropertyOperation could not be read."
@@ -163,7 +173,7 @@ module RestHandlers =
 
     /// PUT new dimension+value (measure) -> Dimension * string list
     let PutMeasure (engine : MyriadEngine) (x : HttpContext) =
-        let putMeasure (kv : NameValueCollection) =
+        let putMeasure (requestId : Guid) (kv : NameValueCollection) =
             let ``measure`` = fromRequest<Measure>(x.request)
             if ``measure``.IsNone then
                 BAD_REQUEST, "text", "Measure could not be read."
@@ -179,7 +189,7 @@ module RestHandlers =
 
     /// PUT new dimension(s) -> Dimension list
     let PutDimension (engine : MyriadEngine) (x : HttpContext) =
-        let putDimension(kv : NameValueCollection) =
+        let putDimension (requestId : Guid) (kv : NameValueCollection) =
             let dimensionNames = getValues kv "dimension"
             if dimensionNames |> Seq.length = 0 then
                 BAD_REQUEST, "text", "No dimensions were sent."
@@ -192,7 +202,7 @@ module RestHandlers =
 
     /// PUT new dimension(s) -> Dimension list
     let PutDimensionOrder (engine : MyriadEngine) (x : HttpContext) =
-        let putDimensionOrder (kv : NameValueCollection) =
+        let putDimensionOrder (requestId : Guid) (kv : NameValueCollection) =
             let dimensionsOption = fromRequest<Dimension list>(x.request)
             if dimensionsOption.IsNone then
                 BAD_REQUEST, "text", "Dimension list could not be read."

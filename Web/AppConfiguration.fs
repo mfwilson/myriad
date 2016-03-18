@@ -6,11 +6,13 @@ open System.Configuration
 open System.Diagnostics
 open System.Reflection
 
+open NLog
+
 open Myriad
 open Myriad.Store
 
 module AppConfiguration =
-    let private ts = new TraceSource( "Myriad.Web", SourceLevels.Information )
+    let private logger = LogManager.GetCurrentClassLogger()    
 
     let private (|InvariantEqual|_|) (str:string) arg = if String.Compare(str, arg, StringComparison.InvariantCultureIgnoreCase) = 0 then Some() else None
 
@@ -28,7 +30,7 @@ module AppConfiguration =
             try                
                 values.[key] <- ConfigurationManager.AppSettings.[key]                
             with
-            | ex -> ts.TraceEvent(TraceEventType.Error, 0, "Unable to set key: '{0}', exception: {1}",key, ex)
+            | ex -> logger.Error(ex, "Unable to set key: '{0}'", key)
         ConfigurationManager.AppSettings.AllKeys |> Seq.iter addValue 
 
     let private applyCommandLine (values : Dictionary<String, String>) =        

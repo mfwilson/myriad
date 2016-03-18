@@ -18,4 +18,8 @@ type Context =
         x.Measures |> Seq.iter (fun m -> m.WriteXml(writer))
         writer.WriteEndElement()
 
+    override x.ToString() = 
+        let measures = x.Measures |> Seq.map (fun m -> m.Dimension.Name + " = [" + m.Value + "]")
+        String.Format("AsOf: {0} Measures: {1}", Epoch.FormatDateTimeOffset(x.AsOf), String.Join(", ", measures))
+
     static member Latest with get() = { AsOf = DateTimeOffset.MaxValue; Measures = Set.empty }
