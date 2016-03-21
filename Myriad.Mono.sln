@@ -1,0 +1,58 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+VisualStudioVersion = 14.0.23107.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{f2a71f9b-5d33-465a-a702-920d77279786}") = "Myriad.Core", "Core\Myriad.Core.fsproj", "{78A04ED6-655D-44BD-B83E-6032495B8538}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{E3FF9D21-00D1-4A66-AF46-91A3826C1013}"
+	ProjectSection(SolutionItems) = preProject
+		.gitattributes = .gitattributes
+		.gitignore = .gitignore
+		LICENSE = LICENSE
+		README.md = README.md
+	EndProjectSection
+EndProject
+Project("{f2a71f9b-5d33-465a-a702-920d77279786}") = "Myriad.Store", "Store\Myriad.Store.fsproj", "{853C35E9-A3BA-48FF-A058-44E12441DCEB}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{A8EAF13D-EFE0-4B55-AD62-A90A82A83A51}"
+EndProject
+Project("{f2a71f9b-5d33-465a-a702-920d77279786}") = "Myriad.Core.Tests", "Tests\Myriad.Core.Tests\Myriad.Core.Tests.fsproj", "{981412F4-10AF-4215-972E-CAEA5EDF1A7A}"
+EndProject
+Project("{f2a71f9b-5d33-465a-a702-920d77279786}") = "Myriad.Web", "Web\Myriad.Web.fsproj", "{D630C95D-8497-46CB-9F31-6E1998CF962F}"
+EndProject
+Project("{f2a71f9b-5d33-465a-a702-920d77279786}") = "Myriad.Client", "Client\Myriad.Client.fsproj", "{AFD27BA9-F3E6-4F2B-831F-2297D9FA52AF}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{78A04ED6-655D-44BD-B83E-6032495B8538}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{78A04ED6-655D-44BD-B83E-6032495B8538}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{78A04ED6-655D-44BD-B83E-6032495B8538}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{78A04ED6-655D-44BD-B83E-6032495B8538}.Release|Any CPU.Build.0 = Release|Any CPU
+		{853C35E9-A3BA-48FF-A058-44E12441DCEB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{853C35E9-A3BA-48FF-A058-44E12441DCEB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{853C35E9-A3BA-48FF-A058-44E12441DCEB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{853C35E9-A3BA-48FF-A058-44E12441DCEB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{981412F4-10AF-4215-972E-CAEA5EDF1A7A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{981412F4-10AF-4215-972E-CAEA5EDF1A7A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{981412F4-10AF-4215-972E-CAEA5EDF1A7A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AFD27BA9-F3E6-4F2B-831F-2297D9FA52AF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AFD27BA9-F3E6-4F2B-831F-2297D9FA52AF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AFD27BA9-F3E6-4F2B-831F-2297D9FA52AF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AFD27BA9-F3E6-4F2B-831F-2297D9FA52AF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D630C95D-8497-46CB-9F31-6E1998CF962F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D630C95D-8497-46CB-9F31-6E1998CF962F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D630C95D-8497-46CB-9F31-6E1998CF962F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D630C95D-8497-46CB-9F31-6E1998CF962F}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{981412F4-10AF-4215-972E-CAEA5EDF1A7A} = {A8EAF13D-EFE0-4B55-AD62-A90A82A83A51}
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
