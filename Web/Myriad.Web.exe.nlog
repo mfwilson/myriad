@@ -4,7 +4,7 @@
       autoReload="true" throwExceptions="false" internalLogLevel="Debug" internalLogToConsole="false">
 
     <variable name="Application" value="myriad"/>
-    <variable name="LogFolder" value="${environment:SystemDrive}/nx/log/${Application}/"/>
+    <variable name="LogFolder" value="${environment:SystemDrive}/var/log/${Application}/"/>
     <variable name="LogDate" value="${date:format=yyyy-MM-dd}"/>
 
     <variable name="UtcTimestampLayout" value="${date:universalTime=true:format=yyyy-MM-ddTHH\:mm\:ss.fff}"/>
