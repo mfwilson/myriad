@@ -126,17 +126,17 @@ BEGIN
 	IF (SELECT @measure_id := measure_id FROM properties WHERE measure_id = inMeasureId AND `timestamp` = inTimestamp) THEN
 		BEGIN		
             UPDATE properties
-               SET propertyJson = inPropertyJson
+               SET property_json = inPropertyJson
              WHERE measure_id = inMeasureId AND `timestamp` = inTimestamp;
              
-			SELECT @measure_id measure_id, inTimestamp `timestamp`, inPropertyJson propertyJson;
+			SELECT @measure_id measure_id, inTimestamp `timestamp`, inPropertyJson property_json;
 		END;
 		ELSE
 		BEGIN
-			INSERT INTO properties ( `measure_id`, `timestamp`, `propertyJson` ) 
+			INSERT INTO properties ( `measure_id`, `timestamp`, `property_json` ) 
                    VALUES ( inMeasureId, inTimestamp, inPropertyJson );
 
-			SELECT LAST_INSERT_ID() measure_id, inTimestamp `timestamp`, inPropertyJson propertyJson;
+			SELECT LAST_INSERT_ID() measure_id, inTimestamp `timestamp`, inPropertyJson property_json;
 		END;
 	END IF;    
 END//
