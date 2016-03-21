@@ -65,9 +65,9 @@
     <Compile Include="RestHandlers.fs" />
     <Compile Include="Program.fs" />
     <Content Include="packages.config" />
-    <Content Include="nlog.config">
+    <None Include="Myriad.Web.exe.nlog">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FSharp.Core">
