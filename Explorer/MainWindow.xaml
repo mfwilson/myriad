@@ -5,27 +5,50 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Myriad.Explorer"
         mc:Ignorable="d" 
-        Title="Myriad Explorer" Height="600" Width="1000">
+        Title="Myriad Explorer" Height="600" Width="1200">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="35"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         
-        <local:NavigationControl x:Name="NavigationControl"/>
+        <local:NavigationControl x:Name="navigationControl"/>
 
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="330"/>
+                <ColumnDefinition Width="275"/>
                 <ColumnDefinition Width="5"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
 
-            <local:ContextControl Grid.Column="0" x:Name="ContextControl" VerticalAlignment="Top"/>            
+            <local:ContextControl Grid.Column="0" x:Name="contextControl" VerticalAlignment="Top"/>            
 
             <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Stretch"/>
 
-            <DataGrid Grid.Column="2" VerticalContentAlignment="Top" x:Name="ResultView" ItemsSource="{Binding}" IsReadOnly="True" MouseDoubleClick="OnResultsDoubleClick" SelectionMode="Single" />
+            <DataGrid Grid.Column="2" VerticalContentAlignment="Top" x:Name="resultView" ItemsSource="{Binding}" AutoGeneratingColumn="ResultView_OnAutoGeneratingColumn" 
+                      IsReadOnly="True" MouseDoubleClick="ResultView_OnDoubleClick" KeyDown="ResultView_OnKeyDown" PreviewKeyUp="ResultView_OnPreviewKeyUp" SelectionMode="Single">
+                <DataGrid.Resources>
+                    <local:BooleanToBrushConverter x:Key="BooleanToBrushConverter"/>
+                    <Color x:Key="RedColor">IndianRed</Color>
+                    <Color x:Key="DefaultColor">GhostWhite</Color>
+                </DataGrid.Resources>
+                <DataGrid.RowStyle>
+                    <Style TargetType="DataGridRow">
+                        <Setter Property="Background" >
+                            <Setter.Value>
+                                <Binding Path="Deprecated" Converter="{StaticResource BooleanToBrushConverter}">
+                                    <Binding.ConverterParameter>
+                                        <x:Array Type="SolidColorBrush">
+                                            <SolidColorBrush Color="{StaticResource RedColor}"/>
+                                            <SolidColorBrush Color="{StaticResource DefaultColor}"/>
+                                        </x:Array>
+                                    </Binding.ConverterParameter>
+                                </Binding>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </DataGrid.RowStyle>
+            </DataGrid>
             
         </Grid>
     </Grid>

@@ -46,11 +46,12 @@ type Cluster =
         x.Measures |> Seq.iter (fun m -> m.WriteXml(writer))
         writer.WriteEndElement()
 
-    static member ToMap(propertyKey : String, cluster : Cluster, dimensions : Dimension seq, ordinal : int) =
+    static member ToMap(propertyKey : String, deprecated : bool, cluster : Cluster, dimensions : Dimension seq, ordinal : int) =
         let values = [ 
             "Property", propertyKey; 
             "Value", cluster.Value; 
             "Ordinal", ordinal.ToString();
+            "Deprecated", deprecated.ToString();
             "UserName", cluster.UserName;
             "Timestamp", cluster.Timestamp.ToString()
         ]

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reactive.Subjects;
 using System.Windows;
 
@@ -67,7 +66,7 @@ namespace Myriad.Explorer
             }
             else
             {
-                Title = "Create Property...";
+                Title = "New Property...";
 
                 txtPropertyName.Text = "";
                 txtPropertyName.BorderThickness = new Thickness(1.0);

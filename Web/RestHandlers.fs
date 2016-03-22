@@ -127,7 +127,7 @@ module RestHandlers =
                              |> Seq.map (fun p -> engine.Query(p, context))
                              |> Seq.concat            
             let dimensions = engine.GetDimensions() 
-            let dataRows = properties |> Seq.mapi (fun i p -> Cluster.ToMap(fst(p).Key, snd(p), dimensions, i))
+            let dataRows = properties |> Seq.mapi (fun i p -> Cluster.ToMap(fst(p).Key, fst(p).Deprecated, snd(p), dimensions, i))
 
             let response = { data = dataRows }            
             let contentType, message = getResponseString kv.["format"] response

@@ -23,28 +23,10 @@ namespace Myriad.Explorer
             set { measureControl.Value = value; }
         }
 
-        public object DefaultName
-        {
-            get { return defaultControl.Key; }
-            set { defaultControl.Key = value; }
-        }
-
-        public string DefaultValue
-        {
-            get { return defaultControl.Value; }
-            set { defaultControl.Value = value; }
-        }
-
         private void OnClickOk(object sender, RoutedEventArgs e)
         {
             DialogResult = true;
             Close();
-        }
-
-        public bool ShowDefault
-        {
-            get { return defaultControl.Visibility == Visibility.Visible; }
-            set { defaultControl.Visibility = value ? Visibility.Visible : Visibility.Collapsed; }
         }
     }
 }

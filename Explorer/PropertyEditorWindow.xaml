@@ -14,8 +14,7 @@
                 <Setter Property="Width" Value="75"/>
             </Style>
             <Style TargetType="TextBox">
-                <Setter Property="AcceptsReturn" Value="True"/>
-                <Setter Property="AcceptsTab" Value="True"/>                
+                <Setter Property="AcceptsReturn" Value="True"/>                
                 <Setter Property="Margin" Value="3,0,3,3"/>
             </Style>
         </Grid.Resources>

@@ -15,7 +15,7 @@ namespace Myriad.Explorer
     public partial class DimensionControl : UserControl
     {        
         private readonly ObservableCollection<string> _selectedSet = new ObservableCollection<string>();
-        private readonly Subject<Cluster> _clusterSubject = new Subject<Cluster>();
+        private readonly Subject<Dimension> _subject = new Subject<Dimension>();
 
         public DimensionControl()
         {
@@ -23,67 +23,50 @@ namespace Myriad.Explorer
             listItems.ItemsSource = _selectedSet;                        
         }
 
-        public IDisposable Subscribe(IObserver<Cluster> observer)
+        public IDisposable Subscribe(IObserver<Dimension> observer)
         {
-            return _clusterSubject.Subscribe(observer);
+            return _subject.Subscribe(observer);
         }
 
         private void OnClickNew(object sender, RoutedEventArgs e)
         {
-            var dimension = Tag as Dimension;
-            if (dimension == null)
-                return;            
-
-            var dialog = new NewMeasureWindow
-            {
-                Owner = Application.Current.MainWindow,
-                ShowDefault = dimension.Name == "Property",
-                Title = string.Concat("New ", dimension.Name, "...")
-            };
-
-            var result = dialog.ShowDialog();
-            if ( result.HasValue && result.Value && string.IsNullOrEmpty(dialog.MeasureValue) == false )
-            {                
-                var measure = new Measure(dimension, dialog.MeasureValue);
-                var cluster = Cluster.Create(dialog.DefaultValue, new HashSet<Measure>(new[] { measure }), Environment.UserName, Epoch.UtcNow);
-                _clusterSubject.OnNext(cluster);
-            }
+            _subject.OnNext(Tag as Dimension);
         }
 
         private void OnClickClear(object sender, RoutedEventArgs e)
         {
-            _selectedSet.Clear();            
+            //_selectedSet.Clear();            
         }
 
         private void OnSelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            var dimension = Tag as Dimension;
-            if (dimension == null || dimension.Name != "Property")
-                return;
+            //var dimension = Tag as Dimension;
+            //if (dimension == null || dimension.Name != "Property")
+            //    return;
 
-            foreach (var item in e.AddedItems)
-            {
-                var selectedItem = item.ToString();
-                if( _selectedSet.Contains(selectedItem) == false )
-                    _selectedSet.Add(selectedItem);
-            }
+            //foreach (var item in e.AddedItems)
+            //{
+            //    var selectedItem = item.ToString();
+            //    if( _selectedSet.Contains(selectedItem) == false )
+            //        _selectedSet.Add(selectedItem);
+            //}
         }
 
         private void OnListKeyUp(object sender, KeyEventArgs e)
         {
-            if( e.Key == Key.Delete )
-            {
-                for(var i = listItems.SelectedItems.Count - 1; i >= 0; i--)
-                {
-                    var item = listItems.SelectedItems[i] as string;
-                    _selectedSet.Remove(item);
-                }
-            }
+            //if( e.Key == Key.Delete )
+            //{
+            //    for(var i = listItems.SelectedItems.Count - 1; i >= 0; i--)
+            //    {
+            //        var item = listItems.SelectedItems[i] as string;
+            //        _selectedSet.Remove(item);
+            //    }
+            //}
         }
 
         public static DimensionControl Create(DimensionValues dimensionValues)
         {
-            var visibility = dimensionValues.Dimension.Name == "Property" ? Visibility.Visible : Visibility.Collapsed;
+            var visibility = /*dimensionValues.Dimension.Name == "Property" ? Visibility.Visible :*/ Visibility.Collapsed;
 
             return new DimensionControl
             {

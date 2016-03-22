@@ -27,12 +27,14 @@ type MyriadCache() =
         properties
         |> Seq.choose (fun p -> getPropertyByTime context.AsOf.UtcTicks p.Value)
         |> Seq.choose (fun p -> getPropertyByContext context p)
+        |> Seq.sortBy (fun pc -> fst(pc).Key)
 
     let getAny (properties : LockFreeList<Property> seq) (context : Context) =
         let any = properties
                   |> Seq.choose (fun c -> getPropertyByTime context.AsOf.UtcTicks c.Value)
                   |> Seq.map (fun c -> getAnyPropertyByContext context c)
                   |> Seq.concat
+                  |> Seq.sortBy (fun pc -> fst(pc).Key)
         if Seq.isEmpty any then getMatch properties context else any
         
     let tryHead (ls:seq<'a>) : option<'a>  = ls |> Seq.tryPick Some

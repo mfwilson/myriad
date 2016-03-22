@@ -4,6 +4,7 @@ using System.Data;
 using System.Linq;
 using System.Reactive;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 
 using Myriad;
@@ -25,12 +26,11 @@ namespace Myriad.Explorer
         {
             InitializeComponent();
 
-            NavigationControl.Subscribe(Observer.Create<Uri>(OnRefresh));
-            ContextControl.Subscribe(Observer.Create<List<DimensionValues>>(OnQuery));
-            ContextControl.Subscribe(Observer.Create<HashSet<Measure>>(OnGet));
-            ContextControl.Subscribe(Observer.Create<Cluster>(OnCluster));
-            ContextControl.Subscribe(Observer.Create<int>(OnCreate));
-            ContextControl.IsEnabled = false;
+            navigationControl.Subscribe(Observer.Create<Uri>(OnRefresh));
+            contextControl.Subscribe(Observer.Create<List<DimensionValues>>(OnQuery));
+            contextControl.Subscribe(Observer.Create<HashSet<Measure>>(OnGet));
+            contextControl.Subscribe(Observer.Create<Dimension>(OnDimension));            
+            contextControl.IsEnabled = false;
 
             _dataSet.Tables.Add(new DataTable("Results"));
             DataContext = _dataSet.Tables[0].DefaultView;
@@ -39,23 +39,6 @@ namespace Myriad.Explorer
         private void OnRefresh(Uri uri)
         {
             ResetClient(uri);
-        }
-
-        private void OnCreate(int command)
-        {
-            var observer = Observer.Create<PropertyOperation>(
-                o =>
-                {
-                    var propertyResponse = _writer.PutProperty(o);
-                    ResetProperty(propertyResponse.Property);
-                    ResetDimensions();
-                }
-            );
-
-            var editor = CreateEditor();
-            editor.Subscribe(observer);
-
-            editor.ShowDialog();
         }
 
         private void OnQuery(List<DimensionValues> dimensionValuesList)
@@ -81,6 +64,8 @@ namespace Myriad.Explorer
                         var timestamp = Int64.Parse(pair.Value);
                         row[pair.Key] = Epoch.ToDateTimeOffset(timestamp);
                     }
+                    else if( column.DataType == typeof(bool))
+                        row[pair.Key] = bool.Parse(pair.Value);
                     else
                         row[pair.Key] = pair.Value;
                 }
@@ -101,8 +86,9 @@ namespace Myriad.Explorer
                 var row = table.NewRow();
                 row["Property"] = property.Name;
                 row["Value"] = property.Value;
+                row["Deprecated"] = property.Deprecated;
 
-                foreach(var measure in result.Context.Measures)
+                foreach (var measure in result.Context.Measures)
                 {
                     if (table.Columns.Contains(measure.Dimension.Name) == false)
                         continue;
@@ -113,26 +99,43 @@ namespace Myriad.Explorer
             }
         }
 
-        private void OnCluster(Cluster cluster)
+        private void OnDimension(Dimension dimension)
         {
-            var measure = cluster.Measures.FirstOrDefault();
-            if (measure == null)
+            if (dimension == null)
                 return;
 
-            if( measure.Dimension.Name == "Property" && string.IsNullOrEmpty(cluster.Value) == false )
+            if (dimension.Name == "Property")
             {
-                var operations = new List<Operation<Cluster>> { Operation<Cluster>.NewAdd(cluster) };
-                var propertyOperation = PropertyOperation.Create(measure.Value, "", false, Epoch.UtcNow, operations);
-                var response = _writer.PutProperty(propertyOperation);
-                ResetProperty(response.Property);
-                ContextControl.Update(response.Property);
+                var observer = Observer.Create<PropertyOperation>(
+                    o =>
+                    {
+                        var propertyResponse = _writer.PutProperty(o);
+                        ResetProperty(propertyResponse.Property);
+                        ResetDimensions();
+                    }
+                );
+
+                var editor = CreateEditor();
+                editor.Subscribe(observer);
+                editor.ShowDialog();
             }
             else
             {
                 // Adding the measure only
-                var dimensionValues = _writer.AddMeasure(measure);
-                ContextControl.Update(dimensionValues);
-            }
+                var dialog = new NewMeasureWindow
+                {
+                    Owner = Application.Current.MainWindow,
+                    Title = string.Concat("New ", dimension.Name, "...")
+                };
+
+                var result = dialog.ShowDialog();
+                if (result.HasValue && result.Value && string.IsNullOrEmpty(dialog.MeasureValue) == false)
+                {
+                    var measure = new Measure(dimension, dialog.MeasureValue);
+                    var dimensionValues = _writer.AddMeasure(measure);
+                    contextControl.Update(dimensionValues);
+                }
+            }            
         }
 
         private void ResetResults()
@@ -160,7 +163,7 @@ namespace Myriad.Explorer
                 };
 
             dimensions.ForEach(d => table.Columns.Add(d, getColumnType(d)));
-
+            table.Columns.Add("Deprecated", typeof(bool));
 
             _dataSet.Reset();
             _dataSet.Tables.Add(table);
@@ -187,8 +190,8 @@ namespace Myriad.Explorer
         {
             _dimensionValues.Clear();
             _dimensionValues.AddRange(_reader.GetMetadata());
-            ContextControl.Reset(_dimensionValues);
-            ContextControl.IsEnabled = true;
+            contextControl.Reset(_dimensionValues);
+            contextControl.IsEnabled = true;
         }
 
         private void ResetProperty(Property property)
@@ -211,6 +214,7 @@ namespace Myriad.Explorer
                 var row = table.NewRow();
 
                 row["Property"] = property.Key;
+                row["Deprecated"] = property.Deprecated;
                 row["Value"] = cluster.Value;
                 row["UserName"] = cluster.UserName;
                 row["Timestamp"] = Epoch.ToDateTimeOffset(cluster.Timestamp);
@@ -258,24 +262,35 @@ namespace Myriad.Explorer
             };
         }
 
-        private void OnResultsDoubleClick(object sender, MouseButtonEventArgs e)
+        private static DataRowView GetSelectedDataRow(DataGrid grid)
         {
-            if( ResultView.SelectedItems.Count == 0 )
-                return;
+            if (grid.SelectedItems.Count == 0)
+                return null;
+            return grid.SelectedItems[0] as DataRowView;
+        }
 
-            var view = ResultView.SelectedItems[0] as DataRowView;
+        private static Property GetSelectedProperty(MyriadReader reader, DataRowView view)
+        {
             if (view == null)
-                return;
+                return null;
 
             // Hack, we don't currently support edits on rows returned via "Get"
             if (GetTimestamp(view) == Int64.MinValue)
+                return null;
+            
+            // Get Property
+            var response = reader.GetProperties(new[] { view["Property"].ToString() });
+            return response.Properties.FirstOrDefault();
+        }
+
+        private void ResultView_OnDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            var view = GetSelectedDataRow(resultView);
+            if (view == null)
                 return;
 
             var valueMap = _dimensionValues.ToDictionary(d => d.Dimension.Name, d => view[d.Dimension.Name].ToString());
-
-            // Get Property
-            var response = _reader.GetProperties(new[] {valueMap["Property"]});
-            var property = response.Properties.FirstOrDefault();
+            var property = GetSelectedProperty(_reader, view);
 
             var observer = Observer.Create<PropertyOperation>(
                 o =>
@@ -293,6 +308,51 @@ namespace Myriad.Explorer
             editor.Subscribe(observer);
 
             editor.ShowDialog();
+        }
+
+        private void ResultView_OnAutoGeneratingColumn(object sender, DataGridAutoGeneratingColumnEventArgs e)
+        {
+            if (e.PropertyType == typeof(DateTimeOffset))
+            {
+                var dataGridTextColumn = e.Column as DataGridTextColumn;
+                if( dataGridTextColumn != null )
+                    dataGridTextColumn.Binding.StringFormat = "{0:yyyy-MM-dd HH:mm:ss.fff}";
+            }
+
+            if( e.PropertyName == "Deprecated" )
+            {
+                var column = e.Column as DataGridCheckBoxColumn;
+                if( column != null )
+                    column.Visibility = Visibility.Collapsed;
+            }
+        }
+
+        private void ResultView_OnKeyDown(object sender, KeyEventArgs e)
+        {
+        }
+
+        private void ResultView_OnPreviewKeyUp(object sender, KeyEventArgs e)
+        {
+            if (e.Key != Key.Delete)
+                return;
+
+            // Delete current value    
+            var view = GetSelectedDataRow(resultView);
+            if (view == null)
+                return;
+
+            var property = GetSelectedProperty(_reader, view);
+            if (property == null)
+                return;
+
+            var measures = Extensions.GetMeasures(_dimensionValues, view);
+            var operation = property.GetDeleteOperation(measures);
+            if (operation == null)
+                return;
+
+            var propertyResponse = _writer.PutProperty(operation);
+            ResetProperty(propertyResponse.Property);
+            ResetDimensions();
         }
     }
 }

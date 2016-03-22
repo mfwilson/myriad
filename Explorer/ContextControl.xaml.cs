@@ -14,8 +14,7 @@ namespace Myriad.Explorer
     {
         private readonly ISubject<List<DimensionValues>> _querySubject = new Subject<List<DimensionValues>>();
         private readonly ISubject<HashSet<Measure>> _getSubject = new Subject<HashSet<Measure>>();
-        private readonly ISubject<Cluster> _clusterSubject = new Subject<Cluster>();
-        private readonly ISubject<int> _createSubject = new Subject<int>();
+        private readonly ISubject<Dimension> _dimensionSubject = new Subject<Dimension>();
 
         public ContextControl()
         {
@@ -32,13 +31,9 @@ namespace Myriad.Explorer
             return _getSubject.Subscribe(observer);
         }
 
-        public IDisposable Subscribe(IObserver<Cluster> observer)
+        public IDisposable Subscribe(IObserver<Dimension> observer)
         {
-            return _clusterSubject.Subscribe(observer);
-        }
-        public IDisposable Subscribe(IObserver<int> observer)
-        {
-            return _createSubject.Subscribe(observer);
+            return _dimensionSubject.Subscribe(observer);
         }
 
         public void Reset(List<DimensionValues> dimensionValuesList)
@@ -48,7 +43,7 @@ namespace Myriad.Explorer
             foreach(var dimensionValues in dimensionValuesList)
             {
                 var control = DimensionControl.Create(dimensionValues);
-                control.Subscribe(_clusterSubject);
+                control.Subscribe(_dimensionSubject);
                 stackPanel.Children.Add(control);
             }
         }
@@ -108,14 +103,10 @@ namespace Myriad.Explorer
         {
             _querySubject.OnNext( GetDimensionValuesList() );
         }
+
         private void OnClickGet(object sender, RoutedEventArgs e)
         {
             _getSubject.OnNext(GetMeasures());
-        }
-
-        private void OnClickCreate(object sender, RoutedEventArgs e)
-        {
-            _createSubject.OnNext(0);
         }
     }
 }

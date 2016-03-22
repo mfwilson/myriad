@@ -19,13 +19,10 @@
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="50"/>
-                <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
 
-            <Button Grid.Column="0" Content="Query" Click="OnClickQuery"/>
-            <Button Grid.Column="1" Content="Get" Click="OnClickGet"/>
-            <Button Grid.Column="3" Content="Create" Click="OnClickCreate"/>
+            <Button Grid.Column="0" Content="Query" Click="OnClickQuery" ToolTip="Query for all values for a context."/>
+            <Button Grid.Column="1" Content="Get" Click="OnClickGet" ToolTip="Get matching values for a context."/>            
         </Grid>
     </StackPanel>
 </UserControl>
