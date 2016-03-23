@@ -65,7 +65,7 @@ type MySqlStore(connectionString : String) =
         MySqlAccessor.getProperties connectionString (getTimestamp()) |> setProperties
 
     new() =
-        let connectionString = ConfigurationManager.ConnectionStrings.["mysql"].ConnectionString
+        let connectionString = ConfigurationManager.AppSettings.["mysqlConnection"]
         MySqlStore(connectionString)
 
     interface IMyriadStore with

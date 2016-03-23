@@ -65,6 +65,9 @@
     <Compile Include="RestHandlers.fs" />
     <Compile Include="Program.fs" />
     <Content Include="packages.config" />
+    <Content Include="Myriad.Web.config.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <None Include="Myriad.Web.exe.nlog">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
