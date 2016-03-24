@@ -52,7 +52,7 @@
   <Import Project="$(FSharpTargetsPath)" />
   <ItemGroup>
     <Compile Include="AssemblyInfo.fs" />
-    <Compile Include="Audit.fs" />
+    <Compile Include="Common.fs" />
     <Compile Include="Dimension.fs" />
     <Compile Include="Measure.fs" />
     <Compile Include="Cluster.fs" />

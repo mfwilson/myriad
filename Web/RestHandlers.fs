@@ -2,10 +2,12 @@
 
 open System
 open System.Collections.Specialized
+open System.Diagnostics
 open System.Globalization
 open System.Net
 open System.Text
 open System.Web
+open System.Xml
 
 open NLog 
 
@@ -70,14 +72,16 @@ module RestHandlers =
         let measures = kv.AllKeys |> Seq.choose getMeasure |> Set.ofSeq
         { AsOf = getAsOf kv; Measures = measures }
 
-    let private getResponseString<'T> (format : String) (response : 'T) =
+    let private getResponseString<'T> (kv : NameValueCollection) (response : 'T) =
+        let format = [ kv.["format"]; kv.["as"] ] |> List.tryFind (fun f -> not(String.IsNullOrEmpty f))
         match format with
-        | f when String.IsNullOrEmpty(format) || format.ToLower() = "json" -> "text/json", JsonConvert.SerializeObject(response)
-        | f when format.ToLower() = "xml" -> "text/xml", XmlConvert.SerializeObject(response)
-        | f when format.ToLower() = "text" -> "text/raw", response.ToString()
-        | _ -> raise(ArgumentException("Unknown format [" + format + "]"))
+        | None -> "text/json", JsonConvert.SerializeObject(response)
+        | Some(f) when f.ToLower() = "json" -> "text/json", JsonConvert.SerializeObject(response)        
+        | Some(f) when f.ToLower() = "xml" -> "text/xml", XmlConvert.SerializeObject(response)
+        | Some(f) when f.ToLower() = "text" -> "text/raw", response.ToString()
+        | Some(f) -> raise(ArgumentException("Unknown format [" + f + "]"))
 
-    let handleRequest (engine : MyriadEngine) (x : HttpContext) (handler : Guid -> NameValueCollection -> (String -> WebPart) * String * String) =
+    let handleRequest (x : HttpContext) (handler : Guid -> NameValueCollection -> (String -> WebPart) * String * String) =
         async { 
             let requestId = Guid.NewGuid()
             try
@@ -101,22 +105,35 @@ module RestHandlers =
                 let! ctx = Writers.setMimeType "text/plain" x
                 return! BAD_REQUEST (ex.Message) ctx.Value
         }        
+
+    let Root (startTime : DateTimeOffset) (x : HttpContext) =
+        let appInfo (requestId : Guid) (kv : NameValueCollection) =                        
+            logger.Info("RECV: [{0}] Getting application info", requestId)
+            let uptime = XmlConvert.ToString(DateTimeOffset.UtcNow.Subtract startTime)
+            let response = { Name = CurrentProcess.GetTitle(); 
+                             Version = CurrentProcess.GetVersionAsString(); 
+                             ProcessId = CurrentProcess.GetProcessId(); 
+                             StartTime = startTime; 
+                             UpTime = uptime }
+            let contentType, message = getResponseString kv response
+            OK, contentType, message
+        handleRequest x appInfo
         
     /// Provides an ordered list of dimensions 
     let GetDimensions (engine : MyriadEngine) (x : HttpContext) = 
         let getDimensions (requestId : Guid) (kv : NameValueCollection) =            
             let response = engine.GetDimensions() |> List.map (fun d -> d.Name)
-            let contentType, message = getResponseString kv.["format"] response
+            let contentType, message = getResponseString kv response
             OK, contentType, message
-        handleRequest engine x getDimensions
+        handleRequest x getDimensions
 
     /// Provides a view over both properties and dimensions
     let GetMetadata (engine : MyriadEngine) (x : HttpContext) = 
         let getMetadata (requestId : Guid) (kv : NameValueCollection) =            
             let response = engine.GetMetadata()
-            let contentType, message = getResponseString kv.["format"] response
+            let contentType, message = getResponseString kv response
             OK, contentType, message
-        handleRequest engine x getMetadata
+        handleRequest x getMetadata
 
     /// Query -> JSON w/ context
     let Query (engine : MyriadEngine) (x : HttpContext) =
@@ -130,9 +147,9 @@ module RestHandlers =
             let dataRows = properties |> Seq.mapi (fun i p -> Cluster.ToMap(fst(p).Key, fst(p).Deprecated, snd(p), dimensions, i))
 
             let response = { data = dataRows }            
-            let contentType, message = getResponseString kv.["format"] response
+            let contentType, message = getResponseString kv response
             OK, contentType, message
-        handleRequest engine x query
+        handleRequest x query
 
     /// GET -> URL properties with dimensions name=value
     let Get (engine : MyriadEngine) (x : HttpContext) =
@@ -144,32 +161,32 @@ module RestHandlers =
                              |> Seq.concat
                              |> Seq.toList
             let response = { MyriadGetResponse.Requested = DateTimeOffset.UtcNow; Context = context; Properties = properties }            
-            let contentType, message = getResponseString kv.["format"] response
+            let contentType, message = getResponseString kv response
             OK, contentType, message
-        handleRequest engine x get
+        handleRequest x get
 
     let GetProperty (engine : MyriadEngine) (x : HttpContext) =
         let getProperty (requestId : Guid) (kv : NameValueCollection) =
             let asOf = getAsOf kv
             let properties = getPropertyKeys(kv) |> Seq.choose (fun p -> engine.Get(p, asOf))
             let response = { Requested = DateTimeOffset.UtcNow; Properties = properties }
-            let contentType, message = getResponseString kv.["format"] response       
+            let contentType, message = getResponseString kv response       
             OK, contentType, message
-        handleRequest engine x getProperty
+        handleRequest x getProperty
         
     /// PUT property operation (JSON data) -> property
     let PutProperty (engine : MyriadEngine) (x : HttpContext) =
         let putProperty (requestId : Guid) (kv : NameValueCollection) =
             let property = fromRequest<PropertyOperation>(x.request)
             if property.IsNone then
-                let contentType, message = getResponseString "text" "PropertyOperation could not be read."
+                let contentType, message = getResponseString kv "PropertyOperation could not be read."
                 BAD_REQUEST, contentType, message
             else
                 let newProperty = engine.Put(property.Value)
                 let response = { Requested = DateTimeOffset.UtcNow; Property = newProperty }
-                let contentType, message = getResponseString kv.["format"] response       
+                let contentType, message = getResponseString kv response       
                 OK, contentType, message
-        handleRequest engine x putProperty                                
+        handleRequest x putProperty                                
 
     /// PUT new dimension+value (measure) -> Dimension * string list
     let PutMeasure (engine : MyriadEngine) (x : HttpContext) =
@@ -183,9 +200,9 @@ module RestHandlers =
                 if response.IsNone then
                     BAD_REQUEST, "text", "Measure could not be added."
                 else
-                    let contentType, message = getResponseString kv.["format"] response.Value                    
+                    let contentType, message = getResponseString kv response.Value                    
                     OK, contentType, message         
-        handleRequest engine x putMeasure
+        handleRequest x putMeasure
 
     /// PUT new dimension(s) -> Dimension list
     let PutDimension (engine : MyriadEngine) (x : HttpContext) =
@@ -196,9 +213,9 @@ module RestHandlers =
             else
                 logger.Info("Adding dimensions [{0}]", String.Join(", ", dimensionNames))                
                 let response = dimensionNames |> Seq.map (fun n -> engine.AddDimension(n)) |> Seq.toList
-                let contentType, message = getResponseString kv.["format"] response
+                let contentType, message = getResponseString kv response
                 OK, contentType, message         
-        handleRequest engine x putDimension
+        handleRequest x putDimension
 
     /// PUT new dimension(s) -> Dimension list
     let PutDimensionOrder (engine : MyriadEngine) (x : HttpContext) =
@@ -210,6 +227,6 @@ module RestHandlers =
                 let dimensions = dimensionsOption.Value
                 logger.Info("Setting dimension order: [{0}]", String.Join(", ", dimensions))
                 let response = engine.SetDimensionOrder(dimensions)
-                let contentType, message = getResponseString kv.["format"] response
+                let contentType, message = getResponseString kv response
                 OK, contentType, message         
-        handleRequest engine x putDimensionOrder
+        handleRequest x putDimensionOrder

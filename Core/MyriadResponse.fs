@@ -5,6 +5,22 @@ open System.Runtime.Serialization
 open System.Xml
 open System.Xml.Serialization
 
+[<CLIMutable>]
+type MyriadAppInfo =
+    { Name : String; Version : String; ProcessId : int32; StartTime : DateTimeOffset; UpTime : String }
+
+    interface IXmlSerializable with
+        member x.GetSchema() = null
+        member x.ReadXml(reader) = ignore()
+        member x.WriteXml(writer) = x.WriteXml(writer)
+
+    member x.WriteXml(writer : XmlWriter) =         
+        writer.WriteAttributeString("Name", x.Name)
+        writer.WriteAttributeString("Version", x.Version)
+        writer.WriteAttributeString("ProcessId", x.ProcessId.ToString())
+        writer.WriteAttributeString("StartTime", x.StartTime.ToString("o"))
+        writer.WriteAttributeString("UpTime", x.UpTime)
+
 type MyriadProperty = 
     { Name : String; Value : String; Deprecated : bool }
 

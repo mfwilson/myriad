@@ -41,8 +41,6 @@ type Dimension =
 
     static member CompareTo(x : Dimension, y : Dimension) = compare (x.Id) (y.Id)
 
-type DimensionAudit = Audit<Dimension>
-
 type DimensionValues = 
     { Dimension : Dimension; Values : String[] }
     override x.ToString() = String.Concat(x.Dimension.Name, " Values: ", x.Values.Length)
