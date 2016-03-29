@@ -31,18 +31,18 @@ let setAccessControl =
 let app : WebPart =
     choose [
         GET >=> choose [ 
-            path prefix >=> setAccessControl >=> RestHandlers.Root startTime
-            path (prefix + "/") >=> setAccessControl >=> RestHandlers.Root startTime
-            path (prefix + "/get") >=> setAccessControl >=> RestHandlers.Get engine 
-            path (prefix + "/query") >=> setAccessControl >=> Writers.setMimeType("text/json") >=> RestHandlers.Query engine
-            path (prefix + "/get/property") >=> setAccessControl >=> RestHandlers.GetProperty engine 
-            path (prefix + "/get/metadata") >=> Writers.setMimeType("text/json") >=> RestHandlers.GetMetadata engine 
-            path (prefix + "/get/dimensions") >=> Writers.setMimeType("text/json") >=> RestHandlers.GetDimensions engine
+            path prefix                       >=> setAccessControl >=> RestHandlers.Root startTime
+            path (prefix + "/")               >=> setAccessControl >=> RestHandlers.Root startTime
+            path (prefix + "/get")            >=> setAccessControl >=> RestHandlers.Get engine 
+            path (prefix + "/query")          >=> setAccessControl >=> RestHandlers.Query engine
+            path (prefix + "/get/property")   >=> setAccessControl >=> RestHandlers.GetProperty engine 
+            path (prefix + "/get/metadata")   >=> setAccessControl >=> RestHandlers.GetMetadata engine 
+            path (prefix + "/get/dimensions") >=> setAccessControl >=> RestHandlers.GetDimensions engine
         ]
         PUT >=> choose [
-            path (prefix + "/put/property") >=> RestHandlers.PutProperty engine 
-            path (prefix + "/put/measure") >=> RestHandlers.PutMeasure engine 
-            path (prefix + "/put/dimension") >=> RestHandlers.PutDimension engine 
+            path (prefix + "/put/property")   >=> RestHandlers.PutProperty engine 
+            path (prefix + "/put/measure")    >=> RestHandlers.PutMeasure engine 
+            path (prefix + "/put/dimension")  >=> RestHandlers.PutDimension engine 
             path (prefix + "/put/dimensions") >=> RestHandlers.PutDimensionOrder engine 
         ]
     ]
