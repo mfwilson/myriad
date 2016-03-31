@@ -6,6 +6,7 @@ open System.Diagnostics
 open System.Globalization
 open System.Net
 open System.Text
+open System.Text.RegularExpressions
 open System.Web
 open System.Xml
 
@@ -14,7 +15,9 @@ open NLog
 open Suave
 open Suave.Http
 open Suave.RequestErrors
+open Suave.Operators
 open Suave.Successful
+open Suave.Writers
 
 open Newtonsoft.Json
 
@@ -22,6 +25,30 @@ open Myriad
 
 module RestHandlers =
     let logger = LogManager.GetCurrentClassLogger()
+
+    let requestMappings = AppConfiguration.getRequestMappings()
+
+    let setAccessControl =
+        Writers.setHeader "Access-Control-Allow-Origin" "*" 
+        >=> Writers.setHeader "Access-Control-Allow-Headers" "Origin, X-Requested-With, Content-Type, Accept, Key"
+
+    let setCustomHeaders (ctx : HttpContext) =
+        let getHeader (key : String) = 
+            ctx.request.headers |> List.tryFind (fun kv -> fst(kv).Equals(key, StringComparison.InvariantCultureIgnoreCase))
+        let getValue (mapping : RequestMapping) =
+            let current = getHeader mapping.Source
+            if current.IsNone then
+                None
+            else
+                let m = Regex.Match(snd current.Value, mapping.Value)            
+                if m.Success then Some(mapping.Target, m.Groups.[1].ToString().Replace(",", "")) else None
+        let applyMapping(mapping : RequestMapping) =
+            match mapping.Type with
+            | RequestMappingType.Set -> Some(mapping.Target, mapping.Value)
+            | RequestMappingType.Regex -> getValue mapping
+        let newKeys = requestMappings |> List.choose applyMapping     
+        let headers' = List.concat [ newKeys; ctx.request.headers ] |> Seq.distinctBy (fun kv -> fst kv) |> Seq.toList
+        { ctx with request = { ctx.request with headers = headers' } } |> succeed
 
     let private fromJson<'a> json =
         match json with

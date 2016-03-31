@@ -1,0 +1,8 @@
+﻿[    
+    {
+        "Source": "Auth-Certificate",
+        "Target": "customer",
+        "Type": { "Case": "Regex" },
+        "Value": "/O=([\\w| |,|.]+)"
+    }
+]

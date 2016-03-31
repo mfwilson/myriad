@@ -1,6 +1,7 @@
 ﻿open System
 open System.Configuration
 open System.Net
+open System.Text.RegularExpressions
 
 open Suave
 open Suave.Operators
@@ -24,26 +25,25 @@ let serverConfig =
        logger = LoggingAdapter()       
     }
 
-let setAccessControl =
-    Writers.setHeader "Access-Control-Allow-Origin" "*" 
-    >=> Writers.setHeader "Access-Control-Allow-Headers" "Origin, X-Requested-With, Content-Type, Accept, Key"
+let modifyRequest = 
+    RestHandlers.setAccessControl >=> RestHandlers.setCustomHeaders
 
 let app : WebPart =
     choose [
         GET >=> choose [ 
-            path prefix                       >=> setAccessControl >=> RestHandlers.Root startTime
-            path (prefix + "/")               >=> setAccessControl >=> RestHandlers.Root startTime
-            path (prefix + "/get")            >=> setAccessControl >=> RestHandlers.Get engine 
-            path (prefix + "/query")          >=> setAccessControl >=> RestHandlers.Query engine
-            path (prefix + "/get/property")   >=> setAccessControl >=> RestHandlers.GetProperty engine 
-            path (prefix + "/get/metadata")   >=> setAccessControl >=> RestHandlers.GetMetadata engine 
-            path (prefix + "/get/dimensions") >=> setAccessControl >=> RestHandlers.GetDimensions engine
+            path prefix                       >=> modifyRequest >=> RestHandlers.Root startTime
+            path (prefix + "/")               >=> modifyRequest >=> RestHandlers.Root startTime
+            path (prefix + "/get")            >=> modifyRequest >=> RestHandlers.Get engine 
+            path (prefix + "/query")          >=> modifyRequest >=> RestHandlers.Query engine
+            path (prefix + "/get/property")   >=> modifyRequest >=> RestHandlers.GetProperty engine 
+            path (prefix + "/get/metadata")   >=> modifyRequest >=> RestHandlers.GetMetadata engine 
+            path (prefix + "/get/dimensions") >=> modifyRequest >=> RestHandlers.GetDimensions engine
         ]
         PUT >=> choose [
-            path (prefix + "/put/property")   >=> RestHandlers.PutProperty engine 
-            path (prefix + "/put/measure")    >=> RestHandlers.PutMeasure engine 
-            path (prefix + "/put/dimension")  >=> RestHandlers.PutDimension engine 
-            path (prefix + "/put/dimensions") >=> RestHandlers.PutDimensionOrder engine 
+            path (prefix + "/put/property")   >=> modifyRequest >=> RestHandlers.PutProperty engine 
+            path (prefix + "/put/measure")    >=> modifyRequest >=> RestHandlers.PutMeasure engine 
+            path (prefix + "/put/dimension")  >=> modifyRequest >=> RestHandlers.PutDimension engine 
+            path (prefix + "/put/dimensions") >=> modifyRequest >=> RestHandlers.PutDimensionOrder engine 
         ]
     ]
 

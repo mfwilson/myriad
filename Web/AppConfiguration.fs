@@ -4,12 +4,20 @@ open System
 open System.Collections.Generic
 open System.Configuration
 open System.Diagnostics
+open System.IO
 open System.Reflection
 
+open Newtonsoft.Json
 open NLog
 
 open Myriad
 open Myriad.Store
+
+type RequestMappingType = Set | Regex
+
+type RequestMapping = { Source : String; Target : String; Type : RequestMappingType; Value : String }
+
+type RequestMappings = RequestMapping list
 
 module AppConfiguration =
     let private logger = LogManager.GetCurrentClassLogger()    
@@ -75,6 +83,33 @@ module AppConfiguration =
         let history = getHistory()
         MyriadEngine(store, history)
 
-        
+    let getRequestMappings() =
+        try
+            let file = getValue "requestMappings" "" id
+            match file with
+            | f when String.IsNullOrEmpty file -> []
+            | f when not(File.Exists file) -> logger.Warn("Request mappings file does not exist [{0}]", file); []
+            | _  -> JsonConvert.DeserializeObject<RequestMappings>(File.ReadAllText(file))
+        with
+        | ex -> logger.Error(ex, "Unable to load request mappings.")
+                []
 
-        
+
+(*
+Example mappings:
+
+[    
+    {
+        "Source": "",
+        "Target": "foo",
+        "Type": { "Case": "Set" },
+        "Value": "bar"
+    },
+    {
+        "Source": "Auth-Certificate",
+        "Target": "customer",
+        "Type": { "Case": "Regex" },
+        "Value": "/O=([\\w| |,|.]+)"
+    }
+]
+*)
