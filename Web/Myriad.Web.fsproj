@@ -65,6 +65,9 @@
     <Compile Include="RestHandlers.fs" />
     <Compile Include="Program.fs" />
     <Content Include="packages.config" />
+    <None Include="Myriad.RequestMappings.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <Content Include="Myriad.Web.config.xml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
