@@ -28,4 +28,3 @@ https://www.devopsonwindows.com/implement-context-aware-key-value-store/
 3. Lookups are accomplished by, for a given key, matching the provided context against the set for the first
    positive match; matches must match over all dimensions to be considered equal
    
-## API
