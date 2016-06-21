@@ -2,6 +2,11 @@
 Configuration as a Service (CaaS)
 "having innumerable aspects or elements"
 
+## Build Status
+|  |  Status of last build |
+| :------ | :------: |
+| **Mono** | [![Travis build status](https://api.travis-ci.org/mfwilson/myriad.svg?branch=master)](https://api.travis-ci.org/mfwilson/myriad.svg?branch=master) |
+
 ## Why?
 Inspired by this article:
 https://www.devopsonwindows.com/implement-context-aware-key-value-store/
