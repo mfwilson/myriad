@@ -5,7 +5,7 @@ Configuration as a Service (CaaS)
 ## Build Status
 |  |  Status of last build |
 | :------ | :------: |
-| **Mono** | [![Travis Build status](https://api.travis-ci.org/mfwilson/myriad.svg?branch=master)](https://travis-ci.org/mfwilson/myriad) |
+| **Mono** | [![Travis build status](https://api.travis-ci.org/mfwilson/myriad.svg?branch=master)](https://travis-ci.org/mfwilson/myriad) |
 | **Windows** | [![AppVeyor Build status](https://ci.appveyor.com/api/projects/status/df7nicjda1av5lim?svg=true)](https://ci.appveyor.com/project/mfwilson/myriad) |
 
 ## Why?
