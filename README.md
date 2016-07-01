@@ -12,6 +12,18 @@ Configuration as a Service (CaaS)
 Inspired by this article:
 https://www.devopsonwindows.com/implement-context-aware-key-value-store/
 
+Context-aware key-value stores (CA-KVS) can be critical to operational stability in environments where there may be a high cost to deploying software and managing multiple system components with shared configuration. CA-KVS seeks to decrease overall system complexity by centralizing all configuration in one place. Applications provide a context and key name and the service provides a value specific to that context.
+
+### Terminology
+- **Context-aware key-value stores (CA-KVS or store):** Repository where configuration data is stored
+- **Dimension:** Defines a scope of context. This is a named value that describes a single extent of the configuration space, e.g. "Environment" or "Application". 
+- **Measure:** Defines a value for a dimension; e.g. Dimension(Environment) = "Production" 
+- **Cluster:** Defines a set of measures and value; e.g. Dimension(Environment) = "Production" and Dimension(Application) = "MyApp" have the value "foo". 
+- **Property:** Defines a key and ordered list of clusters. Clusters are ordered by weight as described below.
+- **Context:** Defines a point in time (as of) and set of measures. The context is matched against a property in order to extract a value from one of the clusters. Note that any or none of the clusters could match a context and only the first is returned when resolving a property value. 
+ 
+Generally, context defines the degrees of freedom over which configuration key-values are needed. The ordered list of all dimensions defines the supported context for a given store. In a single application space, for example, there may only be a distinction between environments, like "production" and "development". For multiple components, another dimension like "Application" may be required.  
+
 ## Approach
 
 1. Take dimensions and determine weights based on ordering
@@ -34,3 +46,13 @@ https://www.devopsonwindows.com/implement-context-aware-key-value-store/
 3. Lookups are accomplished by, for a given key, matching the provided context against the set for the first
    positive match; matches must match over all dimensions to be considered equal
    
+## System Details
+
+### Platforms
+Myriad runs on Windows and Linux under Mono and can be hosted in Amazon Web Services. Support for Azure is planned.
+
+### Persistence
+Myriad supports the following persistent stores:
+- MySql
+- Redis (in progress)
+- Microsoft SQL Server (planned)
