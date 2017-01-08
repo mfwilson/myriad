@@ -1,7 +1,10 @@
 ﻿namespace Myriad.Store
 
 open System
+open System.Collections.Generic
+open System.Configuration
 open System.Diagnostics
+open System.Threading
 
 open Newtonsoft.Json
 
@@ -10,56 +13,51 @@ open StackExchange.Redis.KeyspaceIsolation
 
 open Myriad
 
-type RedisConnection(configuration : String) =
-    let namespaceKey = RedisKey.op_Implicit("configuration/")
-    let connection = ConnectionMultiplexer.Connect(configuration)
-    let getDatabase() = connection.GetDatabase().WithKeyPrefix(namespaceKey)
-    new() = new RedisConnection("localhost:6379")
-    interface IDisposable with
-        member x.Dispose() = x.Dispose()
-    member x.Dispose() = connection.Dispose()
-    member x.GetDatabase() = getDatabase()
-
-module RedisAccessor =
-
-    let getKey(objectType : String) (objectId : String option) =
-        match objectId with
-        | Some o -> RedisKey.op_Implicit(String.Concat(objectType, "/", objectId.Value)) 
-        | None -> RedisKey.op_Implicit(objectType)            
-
-    let getDimensions(connection : RedisConnection) =
-        let database = connection.GetDatabase()
-        let key = getKey "dimensions" None
-        let redis = database.SortedSetRangeByScore(key, order = Order.Descending, take = 1L) |> Array.tryPick Some
-        if redis.IsNone then [] else JsonConvert.DeserializeObject<Dimension list>(redis.Value.ToString())
-
-
 type RedisStore(configuration : String) = 
     static let ts = new TraceSource( "Myriad.Store", SourceLevels.Information )
     let cache = new MyriadCache()
+    let mutable timestamp = 0L
+
     let store = new MyriadStore()    
 
     let connection = new RedisConnection(configuration)
 
-//    let connection = ConnectionMultiplexer.Connect(configuration)
-//
-//    let namespaceKey = RedisKey.op_Implicit("configuration/")
-//
-//    let updateUser = Environment.UserName
-//
-//    let getCurrentTimestamp() = Epoch.GetOffset(DateTimeOffset.UtcNow.Ticks)
-//
-//    let getAudit() = Audit.Create(getCurrentTimestamp(), updateUser)
-//
-//    let getDatabase() = connection.GetDatabase().WithKeyPrefix(namespaceKey)
-//
-//    let getKey(objectType : String, objectId : String option) =
-//        if objectId.IsNone then
-//            RedisKey.op_Implicit(objectType)
-//        else
-//            RedisKey.op_Implicit(String.Concat(objectType, "/", objectId.Value)) 
+    // Changing the dimensions requires restart
+    let dimensions = RedisAccessor.getDimensions connection
 
-    new() = new RedisStore("localhost:6379")
+    let dimensionMap = 
+        let value = new Dictionary<String, Dimension>(StringComparer.InvariantCultureIgnoreCase)
+        dimensions |> List.iter (fun d -> value.[d.Name] <- d)
+        value
+
+    let getTimestamp() = Interlocked.Read(&timestamp)
+
+    let updateTimestamp (newTimestamp : int64) =
+        if getTimestamp() < newTimestamp then
+            Interlocked.Exchange(&timestamp, newTimestamp) |> ignore
+            let datetime = Epoch.ToDateTimeOffset(newTimestamp)
+            ts.TraceEvent(TraceEventType.Information, 0, "Latest timestamp: [{0}] ({1})", newTimestamp, Epoch.FormatDateTimeOffset(datetime))
+
+    let setProperties (properties : Property list) =
+        properties |> List.iter (fun p -> cache.SetProperty p |> ignore) 
+        if properties.Length > 0 then
+            ts.TraceEvent(TraceEventType.Information, 0, "Set {0} properties; {1} unique keys.", properties.Length, cache.Count)
+            updateTimestamp properties.[properties.Length - 1].Timestamp
+
+    let updatePropertiesByTimeAndLatest (timespan : TimeSpan) =        
+        let cutoff = DateTimeOffset.UtcNow.Subtract(timespan)
+        let asOf = Epoch.GetOffset(cutoff.Ticks)
+        ts.TraceEvent(TraceEventType.Information, 0, "Loading properties from asOf: [{0}] ({1})", asOf, Epoch.FormatDateTimeOffset(cutoff))
+        RedisAccessor.getRecentProperties connection asOf //|> setProperties
+
+    /// Get latest properties from properties table
+    let updateProperties() =        
+        RedisAccessor.getProperties connection (getTimestamp()) //|> setProperties
+
+
+    new() = 
+        let configuration = ConfigurationManager.AppSettings.["redisConnection"]
+        new RedisStore(configuration)
 
     interface IDisposable with
         member x.Dispose() = connection.Dispose()
@@ -84,15 +82,14 @@ type RedisStore(configuration : String) =
         member x.PutProperty(property) = x.PutProperty(property)
 
     member x.Initialize(history : MyriadHistory) =
-        // TODO: Initialize internal cache from Redis
-        let dimensions = RedisAccessor.getDimensions connection       
-        dimensions |> List.iter (fun d -> store.PutDimension d |> ignore)
-
-        ignore()
+        ts.TraceEvent(TraceEventType.Information, 0, sprintf "Initializing Redis store with %A" history)
+        match history with
+        | All() -> updateProperties()
+        | TimeAndLatest(t) -> updatePropertiesByTimeAndLatest t        
 
     member x.GetMetadata() = store.GetMetadata()       
 
-    member x.GetDimensions() = store.GetDimensions()
+    member x.GetDimensions() = dimensions
 
     member x.GetDimension(dimensionName : String) = store.GetDimension dimensionName        
 
@@ -171,6 +168,23 @@ type RedisStore(configuration : String) =
         property
 
 
+//    let connection = ConnectionMultiplexer.Connect(configuration)
+//
+//    let namespaceKey = RedisKey.op_Implicit("configuration/")
+//
+//    let updateUser = Environment.UserName
+//
+//    let getCurrentTimestamp() = Epoch.GetOffset(DateTimeOffset.UtcNow.Ticks)
+//
+//    let getAudit() = Audit.Create(getCurrentTimestamp(), updateUser)
+//
+//    let getDatabase() = connection.GetDatabase().WithKeyPrefix(namespaceKey)
+//
+//    let getKey(objectType : String, objectId : String option) =
+//        if objectId.IsNone then
+//            RedisKey.op_Implicit(objectType)
+//        else
+//            RedisKey.op_Implicit(String.Concat(objectType, "/", objectId.Value)) 
 
 
 //    member private x.GetId() = 

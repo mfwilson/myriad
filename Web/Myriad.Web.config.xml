@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <appSettings>
-    <add key="storeType" value="Myriad.Store.MySqlStore, Myriad.Store, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" />
+    <add key="storeType" value="Myriad.Store.RedisStore, Myriad.Store, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" />
     <add key="port" value="7888" />
     <add key="prefix" value="/api/1/myriad" />
     <add key="history" value="7.00:00:00" />
@@ -8,4 +8,5 @@
     <add key="requestMappings" value="Myriad.RequestMappings.json"/>
     
     <add key="mysqlConnection" value="Server=localhost;Database=configuration;port=3306;User=configuration_service;Password=cfg;Pooling=True;" />
+    <add key="redisConnection" value="localhost:6379" />
 </appSettings>

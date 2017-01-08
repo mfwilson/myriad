@@ -57,6 +57,8 @@
     <Compile Include="MySqlAccessor.fs" />
     <None Include="MySqlSchema.sql" />
     <Compile Include="MySqlStore.fs" />
+    <Compile Include="RedisConnection.fs" />
+    <Compile Include="RedisAccessor.fs" />
     <Compile Include="RedisStore.fs" />
     <Content Include="packages.config" />
   </ItemGroup>
