@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <appSettings>
-    <add key="storeType" value="Myriad.Store.RedisStore, Myriad.Store, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" />
+    <add key="storeType" value="Myriad.Store.MemoryStore, Myriad.Store, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" />
     <add key="port" value="7888" />
     <add key="prefix" value="/api/1/myriad" />
     <add key="history" value="7.00:00:00" />

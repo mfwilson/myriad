@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.23107.0
+VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Myriad.Core", "Core\Myriad.Core.fsproj", "{78A04ED6-655D-44BD-B83E-6032495B8538}"
 EndProject
@@ -22,8 +22,6 @@ EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Myriad.Core.Tests", "Tests\Myriad.Core.Tests\Myriad.Core.Tests.fsproj", "{981412F4-10AF-4215-972E-CAEA5EDF1A7A}"
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Myriad.Web", "Web\Myriad.Web.fsproj", "{D630C95D-8497-46CB-9F31-6E1998CF962F}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Myriad.WebUi", "WebUi\Myriad.WebUi.csproj", "{D29965F4-3E0D-444A-82B7-B7BBD549B7C1}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Myriad.Explorer", "Explorer\Myriad.Explorer.csproj", "{D0219609-64E9-4089-8D90-76F8B1FDBAD5}"
 EndProject
@@ -55,9 +53,6 @@ Global
 		{D630C95D-8497-46CB-9F31-6E1998CF962F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D630C95D-8497-46CB-9F31-6E1998CF962F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D630C95D-8497-46CB-9F31-6E1998CF962F}.Release|Any CPU.Build.0 = Release|Any CPU
-		{D29965F4-3E0D-444A-82B7-B7BBD549B7C1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{D29965F4-3E0D-444A-82B7-B7BBD549B7C1}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{D29965F4-3E0D-444A-82B7-B7BBD549B7C1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D0219609-64E9-4089-8D90-76F8B1FDBAD5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{D0219609-64E9-4089-8D90-76F8B1FDBAD5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D0219609-64E9-4089-8D90-76F8B1FDBAD5}.Release|Any CPU.ActiveCfg = Release|Any CPU
