@@ -16,14 +16,14 @@ type LoggingAdapter() =
         | LogLevel.Debug -> NLog.LogLevel.Debug
         | LogLevel.Verbose -> NLog.LogLevel.Trace                
 
+    let logMessage (level : LogLevel) (getLine : LogLevel -> Message) =
+        async {
+            let logLevel = getNLogLevel level
+            let message = getLine level
+            logger.Log(logLevel, message)
+        } 
+
     interface Logger with
-        member x.Log level fLine = x.Log level fLine
-
-    member x.Log (level : LogLevel) (getLine : unit -> LogLine) =         
-        let logLevel = getNLogLevel level
-        let logEvent = getLine()        
-        logger.Log(logLevel, logEvent.message)
-
-        
-
-
+        member x.name with get() = [| "Suave2NLogAdapter" |]
+        member x.log level getLine = logMessage level getLine
+        member x.logWithAck level getLine = logMessage level getLine

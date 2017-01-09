@@ -21,7 +21,7 @@ let prefix = AppConfiguration.getPrefix()
 
 let serverConfig = 
     { defaultConfig with
-       bindings = [ HttpBinding.mk HTTP IPAddress.Any port ]
+       bindings = [ HttpBinding.create HTTP IPAddress.Any port ]
        logger = LoggingAdapter()       
     }
 

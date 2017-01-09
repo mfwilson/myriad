@@ -11,7 +11,6 @@ open System.Web
 open Newtonsoft.Json
 open Myriad
 
-
 type MyriadReader(baseUri : Uri) =
     let client = new WebClient()
     
