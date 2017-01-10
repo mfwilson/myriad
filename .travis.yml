@@ -3,5 +3,5 @@ language: csharp
 solution: Myriad.Mono.sln
 
 install:
-  - ./.paket/paket.bootstrapper.exe
-  - ./.paket/paket.exe install
+  - mono ./.paket/paket.bootstrapper.exe
+  - mono ./.paket/paket.exe restore
