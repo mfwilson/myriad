@@ -1,0 +1,5 @@
+FSharp.Core
+Mono.Cecil
+Newtonsoft.Json
+NLog
+Suave
