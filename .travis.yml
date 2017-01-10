@@ -4,4 +4,4 @@ solution: Myriad.Mono.sln
 
 install:
   - ./.paket/paket.bootstrapper.exe
-  - ./pakter/paket.exe install
+  - ./.paket/paket.exe install
